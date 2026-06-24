@@ -12,12 +12,20 @@ const ROLES = [
     bg: '#eff3fb',
   },
   {
-    id: 'team_member',
-    label: 'Team Member',
-    icon: '👥',
-    desc: 'View assigned projects, add task estimates, view risk table',
-    color: '#0891b2',
-    bg: '#e0f2fe',
+    id: 'scrum_master',
+    label: 'Scrum Master',
+    icon: '🔄',
+    desc: 'Track sprints, review estimations, flag risks, monitor team progress',
+    color: '#059669',
+    bg: '#ecfdf5',
+  },
+  {
+    id: 'developer',
+    label: 'Developer',
+    icon: '💻',
+    desc: 'View assigned tasks, submit story point estimates, track personal progress',
+    color: '#7c3aed',
+    bg: '#f5f3ff',
   },
 ]
 
@@ -144,10 +152,12 @@ export default function AuthPage() {
                     }}
                   >
                     <span style={{ fontSize: 22 }}>{r.icon}</span>
-                    <span style={{ ...styles.roleLabel, color: selectedRole === r.id ? r.color : '#374151' }}>
-                      {r.label}
+                    <span style={styles.roleContent}>
+                      <span style={{ ...styles.roleLabel, color: selectedRole === r.id ? r.color : '#374151' }}>
+                        {r.label}
+                      </span>
+                      <span style={styles.roleDesc}>{r.desc}</span>
                     </span>
-                    <span style={styles.roleDesc}>{r.desc}</span>
                   </button>
                 ))}
               </div>
@@ -381,30 +391,42 @@ const styles = {
     color: '#111827',
   },
   roleGrid: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: 10,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 8,
     marginTop: 8,
   },
   roleCard: {
     display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'flex-start',
-    gap: 4,
-    padding: '12px 14px',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    padding: '10px 14px',
     borderRadius: 12,
     cursor: 'pointer',
     textAlign: 'left',
     transition: 'all 0.2s',
+    width: '100%',
+  },
+  roleContent: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+    minWidth: 0,
   },
   roleLabel: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: 600,
+    flexShrink: 0,
   },
   roleDesc: {
-    fontSize: 11,
+    fontSize: 10,
     color: '#6b7280',
-    lineHeight: 1.4,
+    lineHeight: 1.2,
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
   },
   submitBtn: {
     padding: '13px',

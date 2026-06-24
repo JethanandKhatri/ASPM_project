@@ -3,3 +3,5 @@ dist/
 .claude/
 .agents/
 .git-template/
+.env
+.env.local

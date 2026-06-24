@@ -60,7 +60,7 @@ export default function CreateEditProject() {
     setFeatures(f => f.map((feat, i) => i === idx ? { ...feat, [key]: val } : feat))
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
     if (!form.name.trim()) { setError('Project name is required.'); return }
     if (!form.startDate || !form.deadline) { setError('Start date and deadline are required.'); return }
@@ -69,10 +69,10 @@ export default function CreateEditProject() {
     setError('')
 
     if (isEdit) {
-      updateProject(id, { ...form, features: validFeatures })
+      await updateProject(id, { ...form, features: validFeatures })
       navigate(`/dashboard/projects/${id}`)
     } else {
-      const newId = addProject({ ...form, features: validFeatures })
+      const newId = await addProject({ ...form, features: validFeatures })
       navigate(`/dashboard/projects/${newId}`)
     }
   }

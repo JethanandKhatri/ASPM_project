@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
 
 const C = { primary: '#3B5998', mainBg: '#F4F6FB', cardBg: '#FFFFFF', border: '#E0E4ED', textPrimary: '#1A1A2E', textSecondary: '#6B7280', danger: '#E24B4A', success: '#639922' }
@@ -15,6 +15,10 @@ export default function Settings() {
   const { profile } = useAuth()
   const [tab, setTab] = useState('Profile')
   const [profileForm, setProfileForm] = useState({ name: profile?.full_name || '', email: profile?.email || '' })
+
+  useEffect(() => {
+    if (profile) setProfileForm({ name: profile.full_name || '', email: profile.email || '' })
+  }, [profile])
   const [saved, setSaved] = useState(false)
   const [team, setTeam] = useState(SAMPLE_TEAM)
   const [inviteEmail, setInviteEmail] = useState('')
