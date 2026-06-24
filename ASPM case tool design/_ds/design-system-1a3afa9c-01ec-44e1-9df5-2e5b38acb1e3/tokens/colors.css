@@ -1,0 +1,70 @@
+/* ============================================================
+   Liquid Technologies — Color tokens
+   Extracted from "CEO Portfolio page.fig" (Hadi Tabani site).
+   ============================================================ */
+:root {
+  /* --- Brand blue (the signature electric / royal blue) --- */
+  --blue-500: #005FE3;   /* primary action blue            rgb(0,95,227)  */
+  --blue-600: #0059D6;   /* pressed / icon blue            rgb(0,89,214)  */
+  --blue-700: #00347D;   /* deep navy blue (gradients)     rgb(0,52,125)  */
+  --blue-800: #263B9D;   /* indigo accent                  rgb(38,59,157) */
+  --blue-900: #213D79;   /* darkest brand navy             rgb(33,61,121) */
+  --blue-400: #299AE6;   /* mid sky blue                   rgb(41,154,230)*/
+  --blue-300: #64BEF2;   /* light sky blue                 rgb(100,190,242)*/
+  --blue-200: #6ABCE9;   /* soft sky blue                  rgb(106,188,233)*/
+  --blue-grad-from: #376EF4; /* hero pill gradient start   rgb(55,110,244)*/
+  --blue-grad-to:   #00A2EA; /* hero pill gradient end     rgb(0,162,234) */
+
+  /* --- Ink / neutrals --- */
+  --ink-900: #060606;    /* near-black body text           rgb(6,6,6)     */
+  --ink-800: #000000;    /* pure black (badges, dark bg)   rgb(0,0,0)     */
+  --ink-700: #212529;    /* slate ink                      rgb(33,37,41)  */
+  --ink-600: #2B2C3F;    /* desaturated navy ink           rgb(43,44,63)  */
+  --ink-500: #393F44;    /* charcoal (secondary text)      rgb(57,63,68)  */
+  --ink-400: #494949;    /* muted gray text                rgb(73,73,73)  */
+  --gray-500: #7D7D7D;   /* placeholder / caption          rgb(125,125,125)*/
+  --gray-400: #9E9E9E;   /* light caption                  rgb(158,158,158)*/
+  --gray-300: #AAAAAA;   /* faint text                     rgb(170,170,170)*/
+  --gray-200: #D3D3D3;   /* hairline / disabled            rgb(211,211,211)*/
+  --gray-150: #DDDDDD;   /* input border                   rgb(217,217,217)*/
+  --gray-100: #F1F1F1;   /* light fill                     rgb(241,241,241)*/
+  --gray-050: #F7F8FA;   /* page wash                                     */
+  --white:    #FFFFFF;
+
+  /* --- Accents (used sparingly: logos, awards, highlights) --- */
+  --red:    #DE1E27;     /* alert / Pakistan-flag red      rgb(222,30,39) */
+  --gold:   #FFC300;     /* award gold / star rating       rgb(255,195,0) */
+  --pink:   #DD0776;     /* Sally / product magenta        rgb(221,7,118) */
+
+  /* --- Dark surfaces (testimonial + recognition sections) --- */
+  --surface-dark:      #0A0E14;  /* full-bleed near-black band            */
+  --surface-dark-2:    #11151C;  /* raised dark card                      */
+  --surface-finance:   #0E2A22;  /* Finance AI deep-green feature card    */
+
+  /* --- Glass / translucency --- */
+  --glass-nav:   rgba(0,147,253,0.10);  /* frosted navbar fill            */
+  --glass-white: rgba(255,255,255,0.10);
+  --glass-line:  rgba(255,255,255,0.12);
+
+  /* ---------- Semantic aliases ---------- */
+  --color-primary:        var(--blue-500);
+  --color-primary-press:  var(--blue-600);
+  --color-accent:         var(--blue-300);
+  --text-heading:         var(--ink-900);
+  --text-body:            var(--ink-500);
+  --text-muted:           var(--gray-500);
+  --text-on-dark:         var(--white);
+  --text-on-dark-muted:   var(--gray-300);
+  --surface-page:         var(--white);
+  --surface-wash:         var(--gray-050);
+  --surface-card:         var(--white);
+  --surface-inverse:      var(--surface-dark);
+  --border-subtle:        var(--gray-150);
+  --border-strong:        var(--gray-200);
+  --focus-ring:           var(--blue-500);
+
+  /* Signature gradients */
+  --gradient-pill:  linear-gradient(153deg, var(--blue-grad-from) -40%, var(--blue-grad-to) 140%); /* @kind color */
+  --gradient-cta:   linear-gradient(247deg, var(--blue-500) 12%, var(--blue-700) 96%); /* @kind color */
+  --gradient-hero-wash: radial-gradient(120% 90% at 80% 0%, rgba(0,95,227,0.10), rgba(255,255,255,0) 60%); /* @kind color */
+}

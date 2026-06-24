@@ -1,0 +1,44 @@
+/* ============================================================
+   Liquid Technologies — Spacing, radii, shadows
+   ============================================================ */
+:root {
+  /* Spacing scale (4px base) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+  --space-32: 128px;
+
+  /* Section rhythm */
+  --section-pad-y: 96px;
+  --container-max: 1274px;   /* matches figma content width */
+  --container-pad: 83px;
+
+  /* Radii — the site mixes a soft 16px card radius with fully
+     rounded pills for actions and a large 25px page frame. */
+  --radius-xs: 8px;
+  --radius-sm: 12px;
+  --radius-md: 16px;     /* badges, tiles                       */
+  --radius-lg: 20px;     /* cards, inputs containers            */
+  --radius-xl: 25px;     /* large panels / page frame           */
+  --radius-pill: 999px;  /* buttons, nav capsule, chips         */
+
+  /* Shadows — soft, layered, low-opacity (multi-stop ambient) */
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-md: 0 10px 30px rgba(0,0,0,0.09);
+  --shadow-lg: 0 24px 60px rgba(0,0,0,0.10);
+  --shadow-card: 0 12px 40px rgba(0,0,0,0.08);
+  --shadow-blue: 0 14px 34px rgba(0,95,227,0.28);   /* glow under blue CTA */
+
+  /* Frosted nav blur */
+  --blur-nav: blur(14px); /* @kind other */
+}

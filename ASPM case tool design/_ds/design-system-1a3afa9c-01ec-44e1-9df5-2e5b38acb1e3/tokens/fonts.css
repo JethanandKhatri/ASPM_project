@@ -1,0 +1,5 @@
+/* Liquid Technologies — Webfonts
+   All four families are available on Google Fonts; no substitution needed.
+   Marcellus = serif display (headlines), Poppins = primary UI/body,
+   Roboto = navigation & secondary UI, Inter = fine print. */
+@import url('https://fonts.googleapis.com/css2?family=Marcellus&family=Poppins:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&family=Roboto+Condensed:wght@400;500&family=Inter:wght@400;500;600;700&display=swap');

@@ -1,0 +1,47 @@
+/* ============================================================
+   Liquid Technologies — Typography tokens
+   Marcellus (serif display), Poppins (UI/body),
+   Roboto / Roboto Condensed (nav & secondary), Inter (fine print).
+   ============================================================ */
+:root {
+  /* Families */
+  --font-display: 'Marcellus', 'Cormorant Garamond', Georgia, serif;
+  --font-sans:    'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-ui:      'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-ui-cond: 'Roboto Condensed', 'Roboto', sans-serif;
+  --font-fine:    'Inter', -apple-system, sans-serif;
+
+  /* Weights */
+  --fw-light: 300; /* @kind font */
+  --fw-regular: 400; /* @kind font */
+  --fw-medium: 500; /* @kind font */
+  --fw-semibold: 600; /* @kind font */
+  --fw-bold: 700; /* @kind font */
+
+  /* Display scale (Marcellus) — section + hero headlines */
+  --text-display-xl: 64px;   /* hero name                         */
+  --text-display-lg: 45px;   /* primary section headlines         */
+  --text-display-md: 40px;   /* dark-section headlines            */
+  --text-display-sm: 30px;   /* sub-section headlines             */
+  --text-display-xs: 24px;   /* card / quote headings             */
+
+  /* Body & UI scale */
+  --text-lg: 18px;           /* lead paragraph / large label      */
+  --text-md: 16px;           /* nav links, base body              */
+  --text-base: 15px;         /* default paragraph                 */
+  --text-sm: 14px;           /* secondary / button label          */
+  --text-xs: 12px;           /* captions, eyebrow, badges         */
+  --text-2xs: 11px;          /* pill labels                       */
+
+  /* Line heights */
+  --lh-tight: 1.1; /* @kind font */
+  --lh-snug: 1.3; /* @kind font */
+  --lh-normal: 1.55; /* @kind font */
+  --lh-relaxed: 1.7; /* @kind font */
+
+  /* Letter spacing */
+  --ls-tight: -0.01em; /* @kind font */
+  --ls-normal: 0; /* @kind font */
+  --ls-wide: 0.04em; /* @kind font */
+  --ls-eyebrow: 0.14em; /* @kind font */
+}
