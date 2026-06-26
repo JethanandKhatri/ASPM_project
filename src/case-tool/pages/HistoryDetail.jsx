@@ -1,9 +1,10 @@
 import { useNavigate, useParams } from 'react-router-dom'
 import { useProjects } from '../context/ProjectContext'
+import { useThemeColors } from '../context/ThemeContext'
 
-const C = { primary: '#3B5998', mainBg: '#F4F6FB', cardBg: '#FFFFFF', border: '#E0E4ED', textPrimary: '#1A1A2E', textSecondary: '#6B7280', danger: '#E24B4A', warning: '#EF9F27', success: '#639922' }
 
 export default function HistoryDetail() {
+  const C = useThemeColors()
   const { id } = useParams()
   const navigate = useNavigate()
   const { getProject } = useProjects()
@@ -12,7 +13,7 @@ export default function HistoryDetail() {
   if (!project) return <div style={{ padding: 32, textAlign: 'center', color: C.textSecondary }}>Project not found.</div>
 
   const priorityColor = { High: C.danger, Medium: C.warning, Low: C.success }
-  const statusBadge = { Active: { bg: '#dbeafe', color: '#1d4ed8' }, Completed: { bg: '#dcfce7', color: '#15803d' } }[project.status] || { bg: '#f3f4f6', color: '#374151' }
+  const statusBadge = { Active: { bg: C.primary + '15', color: C.primary }, Completed: { bg: C.success + '15', color: C.success } }[project.status] || { bg: C.border, color: C.textSecondary }
   const doneFeat = project.features.filter(f => f.status === 'Done').length
 
   return (
@@ -24,7 +25,7 @@ export default function HistoryDetail() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
             {project.status === 'Completed' && (
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#dcfce7', color: '#15803d', padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700, marginBottom: 8 }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: C.success + '15', color: C.success, padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700, marginBottom: 8 }}>
                 ✓ COMPLETED PROJECT
               </div>
             )}
@@ -100,8 +101,8 @@ export default function HistoryDetail() {
                     <span style={{ color: C.textSecondary, marginLeft: 6 }}>({r.category})</span>
                   </div>
                   <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-                    <span style={{ padding: '1px 8px', borderRadius: 4, fontSize: 10, fontWeight: 600, background: (priorityColor[r.priority] || '#6b7280') + '20', color: priorityColor[r.priority] || '#6b7280' }}>{r.priority}</span>
-                    <span style={{ padding: '1px 8px', borderRadius: 4, fontSize: 10, fontWeight: 600, background: r.status === 'Resolved' ? '#dcfce7' : '#fef2f2', color: r.status === 'Resolved' ? '#15803d' : C.danger }}>{r.status}</span>
+                    <span style={{ padding: '1px 8px', borderRadius: 4, fontSize: 10, fontWeight: 600, background: (priorityColor[r.priority] || C.textSecondary) + '20', color: priorityColor[r.priority] || C.textSecondary }}>{r.priority}</span>
+                    <span style={{ padding: '1px 8px', borderRadius: 4, fontSize: 10, fontWeight: 600, background: r.status === 'Resolved' ? C.success + '15' : C.danger + '15', color: r.status === 'Resolved' ? C.success : C.danger }}>{r.status}</span>
                   </div>
                 </div>
               ))}

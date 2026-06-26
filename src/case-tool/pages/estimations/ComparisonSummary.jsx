@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useProjects } from '../../context/ProjectContext'
-
-const C = { primary: '#3B5998', mainBg: '#F4F6FB', cardBg: '#FFFFFF', border: '#E0E4ED', textPrimary: '#1A1A2E', textSecondary: '#6B7280', success: '#639922' }
+import { useThemeColors } from '../../context/ThemeContext'
 
 const BAR_COLORS = ['#3B5998', '#7c3aed', '#0891b2', '#059669', '#d97706', '#dc2626']
 
 function SimpleBarChart({ data, label, formatter }) {
+  const C = useThemeColors()
   if (!data.length) return null
   const maxVal = Math.max(...data.map(d => d.value), 1)
   return (
@@ -16,7 +16,7 @@ function SimpleBarChart({ data, label, formatter }) {
         {data.map((d, i) => (
           <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{ width: 80, fontSize: 11, color: C.textSecondary, textAlign: 'right', flexShrink: 0 }}>{d.label}</div>
-            <div style={{ flex: 1, height: 22, background: '#e5e7eb', borderRadius: 4, overflow: 'hidden' }}>
+            <div style={{ flex: 1, height: 22, background: C.border, borderRadius: 4, overflow: 'hidden' }}>
               <div style={{ height: '100%', width: `${(d.value / maxVal) * 100}%`, background: BAR_COLORS[i % BAR_COLORS.length], borderRadius: 4, display: 'flex', alignItems: 'center', paddingLeft: 8, transition: 'width 0.4s' }}>
                 <span style={{ fontSize: 10, color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>{formatter ? formatter(d.value) : d.value}</span>
               </div>
@@ -29,6 +29,7 @@ function SimpleBarChart({ data, label, formatter }) {
 }
 
 export default function ComparisonSummary() {
+  const C = useThemeColors()
   const { id } = useParams()
   const navigate = useNavigate()
   const { getProject, updateProject } = useProjects()
@@ -73,7 +74,7 @@ export default function ComparisonSummary() {
               </thead>
               <tbody>
                 {project.estimations.map((e, i) => (
-                  <tr key={e.id} style={{ borderBottom: `1px solid ${C.border}`, background: i % 2 === 0 ? '#fff' : C.mainBg }}>
+                  <tr key={e.id} style={{ borderBottom: `1px solid ${C.border}`, background: i % 2 === 0 ? C.cardBg : C.mainBg }}>
                     <td style={{ padding: '13px 16px', fontWeight: 700, color: C.primary, fontSize: 15 }}>{e.version}</td>
                     <td style={{ padding: '13px 16px', fontWeight: 500, color: C.textPrimary }}>{e.technique}</td>
                     <td style={{ padding: '13px 16px', color: C.textSecondary }}>{e.date}</td>
@@ -81,7 +82,7 @@ export default function ComparisonSummary() {
                     <td style={{ padding: '13px 16px', fontWeight: 600, color: C.textPrimary }}>{e.cost}</td>
                     <td style={{ padding: '13px 16px', color: C.textSecondary }}>{e.duration}</td>
                     <td style={{ padding: '13px 16px' }}>
-                      <span style={{ padding: '3px 10px', borderRadius: 4, fontSize: 11, fontWeight: 600, background: '#dcfce7', color: '#15803d' }}>{e.status}</span>
+                      <span style={{ padding: '3px 10px', borderRadius: 4, fontSize: 11, fontWeight: 600, background: C.success + '15', color: C.success }}>{e.status}</span>
                     </td>
                   </tr>
                 ))}

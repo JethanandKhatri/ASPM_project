@@ -15,7 +15,7 @@ create table if not exists public.profiles (
 );
 
 alter table public.profiles drop constraint if exists profiles_role_check;
-alter table public.profiles add constraint profiles_role_check check (role in ('pm', 'scrum_master', 'developer'));
+alter table public.profiles add constraint profiles_role_check check (role in ('pm', 'project_manager', 'scrum_master', 'developer', 'line_manager', 'admin', 'team_member'));
 
 create or replace function public.handle_new_user()
 returns trigger as $$

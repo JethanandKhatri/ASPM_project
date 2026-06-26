@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useProjects } from '../../context/ProjectContext'
+import { useThemeColors } from '../../context/ThemeContext'
 
-const C = { primary: '#3B5998', mainBg: '#F4F6FB', cardBg: '#FFFFFF', border: '#E0E4ED', textPrimary: '#1A1A2E', textSecondary: '#6B7280', success: '#639922', danger: '#E24B4A', warning: '#EF9F27' }
 const SIZES = ['XS', 'S', 'M', 'L', 'XL']
 const SP_VALUES = { XS: 1, S: 2, M: 5, L: 8, XL: 13 }
 
 export default function StoryPoints() {
+  const C = useThemeColors()
   const { id } = useParams()
   const navigate = useNavigate()
   const { getProject, addEstimation } = useProjects()
@@ -138,7 +139,7 @@ export default function StoryPoints() {
                         style={{ width: '100%', padding: '3px 5px', border: `1px solid ${C.border}`, borderRadius: 4, fontSize: 11, outline: 'none', boxSizing: 'border-box' }} />
                     </td>
                     <td style={{ padding: '7px 8px' }}>
-                      <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 6px', borderRadius: 3, background: f.recommendation === 'Include' ? '#dcfce7' : '#fef2f2', color: f.recommendation === 'Include' ? '#15803d' : C.danger }}>
+                      <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 6px', borderRadius: 3, background: f.recommendation === 'Include' ? C.success + '15' : C.danger + '15', color: f.recommendation === 'Include' ? C.success : C.danger }}>
                         {sorted ? f.recommendation : '—'}
                       </span>
                     </td>
@@ -153,7 +154,7 @@ export default function StoryPoints() {
 
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
         {saved ? (
-          <div style={{ padding: '10px 20px', background: '#f0fdf4', border: `1px solid #bbf7d0`, borderRadius: 8, fontSize: 13, color: C.success, fontWeight: 600 }}>✓ Estimation Saved!</div>
+          <div style={{ padding: '10px 20px', background: C.success + '12', border: `1px solid ${C.success}30`, borderRadius: 8, fontSize: 13, color: C.success, fontWeight: 600 }}>✓ Estimation Saved!</div>
         ) : (
           <button onClick={handleSave} style={{ padding: '10px 24px', background: C.primary, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Save Estimation</button>
         )}

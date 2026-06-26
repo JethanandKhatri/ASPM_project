@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useProjects } from '../context/ProjectContext'
+import { useThemeColors } from '../context/ThemeContext'
 
-const C = { primary: '#3B5998', mainBg: '#F4F6FB', cardBg: '#FFFFFF', border: '#E0E4ED', textPrimary: '#1A1A2E', textSecondary: '#6B7280', danger: '#E24B4A', warning: '#EF9F27', success: '#639922' }
-const CHART_COLORS = ['#3B5998', '#7c3aed', '#0891b2', '#059669', '#d97706', '#dc2626']
+const CHART_COLORS = ['#3776A1', '#7c3aed', '#0891b2', '#059669', '#d97706', '#dc2626']
 
 function BarChart({ data, title, formatter, height = 140 }) {
+  const C = useThemeColors()
   if (!data.length) return null
   const max = Math.max(...data.map(d => d.value), 1)
   return (
@@ -27,11 +28,11 @@ function BarChart({ data, title, formatter, height = 140 }) {
 }
 
 function DonutChart({ data, title }) {
+  const C = useThemeColors()
   const total = data.reduce((s, d) => s + d.value, 0) || 1
   let offset = 0
   const r = 50, cx = 60, cy = 60
   const circumference = 2 * Math.PI * r
-
   return (
     <div>
       <div style={{ fontSize: 12, fontWeight: 600, color: C.textPrimary, marginBottom: 12 }}>{title}</div>
@@ -48,7 +49,7 @@ function DonutChart({ data, title }) {
             offset += pct
             return el
           })}
-          <circle cx={cx} cy={cy} r={40} fill="#fff" />
+          <circle cx={cx} cy={cy} r={40} fill={C.cardBg} />
           <text x={cx} y={cy - 5} textAnchor="middle" fontSize="14" fontWeight="700" fill={C.textPrimary}>{total}</text>
           <text x={cx} y={cy + 12} textAnchor="middle" fontSize="9" fill={C.textSecondary}>total</text>
         </svg>
@@ -66,23 +67,67 @@ function DonutChart({ data, title }) {
   )
 }
 
+function BenchmarkRow({ project, actuals, allProjects }) {
+  const C = useThemeColors()
+  const riskDensity = project.features.length > 0
+    ? (project.risks.length / project.features.length).toFixed(2)
+    : '—'
+  const completionRate = project.features.length > 0
+    ? Math.round((project.features.filter(f => f.status === 'Done').length / project.features.length) * 100)
+    : 0
+  const estCount = project.estimations.length
+  const avgEstEffort = estCount > 0
+    ? Math.round(project.estimations.reduce((s, e) => s + (e.effortNum || 0), 0) / estCount)
+    : null
+  const actualEffort = actuals?.effortNum || null
+  const accuracy = avgEstEffort && actualEffort
+    ? Math.round((1 - Math.abs(avgEstEffort - actualEffort) / actualEffort) * 100)
+    : null
+
+  return (
+    <tr style={{ borderBottom: `1px solid ${C.border}` }}>
+      <td style={{ padding: '10px 14px', fontWeight: 600, color: C.textPrimary, fontSize: 13 }}>{project.name}</td>
+      <td style={{ padding: '10px 14px', textAlign: 'center', fontSize: 13, color: C.textSecondary }}>{project.domain}</td>
+      <td style={{ padding: '10px 14px', textAlign: 'center', fontSize: 13, color: C.textPrimary }}>{project.features.length}</td>
+      <td style={{ padding: '10px 14px', textAlign: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div style={{ flex: 1, height: 6, background: C.border, borderRadius: 3 }}>
+            <div style={{ height: '100%', width: `${completionRate}%`, background: completionRate >= 80 ? C.success : completionRate >= 50 ? C.warning : C.primary, borderRadius: 3 }} />
+          </div>
+          <span style={{ fontSize: 11, fontWeight: 600, color: C.textPrimary, minWidth: 32 }}>{completionRate}%</span>
+        </div>
+      </td>
+      <td style={{ padding: '10px 14px', textAlign: 'center', fontSize: 12, color: riskDensity > 1 ? C.danger : C.textSecondary }}>{riskDensity}</td>
+      <td style={{ padding: '10px 14px', textAlign: 'center', fontSize: 13, color: C.primary }}>{estCount}</td>
+      <td style={{ padding: '10px 14px', textAlign: 'center', fontSize: 13, fontWeight: 600, color: accuracy === null ? C.textSecondary : accuracy >= 85 ? C.success : accuracy >= 70 ? C.warning : C.danger }}>
+        {accuracy === null ? <span style={{ color: C.textSecondary, fontWeight: 400 }}>No actuals</span> : `${accuracy}%`}
+      </td>
+    </tr>
+  )
+}
+
 export default function Analytics() {
-  const { projects } = useProjects()
+  const C = useThemeColors()
+  const { projects, getActuals } = useProjects()
   const [selectedProject, setSelectedProject] = useState('all')
 
   const proj = selectedProject === 'all' ? projects : projects.filter(p => p.id === selectedProject)
 
   const totalRisks = proj.reduce((s, p) => s + p.risks.length, 0)
-  const highRisks = proj.reduce((s, p) => s + p.risks.filter(r => r.priority === 'High').length, 0)
-  const activeProjects = proj.filter(p => p.status === 'Active').length
   const completedProjects = proj.filter(p => p.status === 'Completed').length
 
-  const avgAccuracy = proj.length > 0
-    ? Math.round(proj.reduce((s, p) => s + (p.estimations.length > 0 ? 87 : 0), 0) / proj.length)
-    : 0
+  const projectsWithActuals = projects.filter(p => getActuals(p.id))
+  const avgAccuracy = projectsWithActuals.length > 0
+    ? Math.round(projectsWithActuals.reduce((s, p) => {
+        const actuals = getActuals(p.id)
+        const estCount = p.estimations.length
+        if (!estCount || !actuals?.effortNum) return s
+        const avgEst = p.estimations.reduce((a, e) => a + (e.effortNum || 0), 0) / estCount
+        return s + (1 - Math.abs(avgEst - actuals.effortNum) / actuals.effortNum) * 100
+      }, 0) / projectsWithActuals.length)
+    : null
 
   const effortComparison = proj.flatMap(p => p.estimations.map(e => ({ label: `${p.name.substring(0, 8)}… ${e.version}`, value: e.effortNum || 0 }))).slice(0, 6)
-
   const costComparison = proj.flatMap(p => p.estimations.map(e => ({ label: `${e.version} (${e.technique.substring(0, 5)})`, value: e.costNum || 0 }))).slice(0, 6)
 
   const techniqueUsage = (() => {
@@ -97,20 +142,22 @@ export default function Analytics() {
     { label: 'Low Priority', value: proj.reduce((s, p) => s + p.features.filter(f => f.priority === 'Low').length, 0) },
   ].filter(d => d.value > 0)
 
-  const riskExposureTrend = proj.slice(0, 3).map(p => ({
-    label: p.name.substring(0, 10) + '…',
-    value: p.risks.reduce((s, r) => s + r.riskExposure, 0)
+  const riskExposureTrend = proj.slice(0, 6).map(p => ({
+    label: p.name.substring(0, 10) + (p.name.length > 10 ? '…' : ''),
+    value: p.risks.reduce((s, r) => s + r.riskExposure, 0),
   }))
 
+  const card = { background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 10, padding: 20 }
+
   return (
-    <div style={{ padding: 28 }}>
+    <div style={{ padding: 28, background: C.mainBg, minHeight: '100%' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 22 }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: C.textPrimary }}>Analytics Dashboard</h1>
-          <p style={{ margin: '4px 0 0', fontSize: 13, color: C.textSecondary }}>Project-level metrics and estimation accuracy trends</p>
+          <p style={{ margin: '4px 0 0', fontSize: 13, color: C.textSecondary }}>Project-level metrics, estimation accuracy, and cross-project benchmarking</p>
         </div>
         <select value={selectedProject} onChange={e => setSelectedProject(e.target.value)}
-          style={{ padding: '8px 12px', border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 13, outline: 'none', background: '#fff' }}>
+          style={{ padding: '8px 12px', border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 13, outline: 'none', background: C.cardBg, color: C.textPrimary }}>
           <option value="all">All Projects</option>
           {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
@@ -120,11 +167,11 @@ export default function Analytics() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
         {[
           { label: 'Total Projects', value: proj.length, icon: '📁', color: C.primary },
-          { label: 'Avg Accuracy %', value: `${avgAccuracy}%`, icon: '🎯', color: C.success },
+          { label: 'Estimation Accuracy', value: avgAccuracy !== null ? `${avgAccuracy}%` : 'No actuals', icon: '🎯', color: C.success },
           { label: 'Active Risks', value: totalRisks - proj.reduce((s, p) => s + p.risks.filter(r => r.status === 'Resolved').length, 0), icon: '⚠', color: C.danger },
-          { label: 'On-Track', value: `${completedProjects}/${proj.length}`, icon: '✓', color: '#0891b2' },
+          { label: 'Completed', value: `${completedProjects}/${proj.length}`, icon: '✓', color: '#0891b2' },
         ].map(m => (
-          <div key={m.label} style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 10, padding: '16px 18px', display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div key={m.label} style={{ ...card, display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ width: 40, height: 40, borderRadius: 10, background: m.color + '15', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>{m.icon}</div>
             <div>
               <div style={{ fontSize: 22, fontWeight: 700, color: C.textPrimary }}>{m.value}</div>
@@ -134,28 +181,58 @@ export default function Analytics() {
         ))}
       </div>
 
-      {/* Charts 2x2 grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-        <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 10, padding: 20 }}>
-          <BarChart data={effortComparison} title="Estimation Accuracy — Effort per Version (staff months)" formatter={v => `${v}mo`} />
+      {/* Charts 2×2 */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
+        <div style={card}>
+          <BarChart data={effortComparison} title="Estimation Effort per Run (staff months)" formatter={v => `${v}mo`} />
         </div>
-        <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 10, padding: 20 }}>
-          <BarChart data={riskExposureTrend} title="Risk Exposure Trend ($) per Project" formatter={v => `$${(v / 1000).toFixed(0)}k`} />
+        <div style={card}>
+          <BarChart data={riskExposureTrend} title="Total Risk Exposure per Project ($)" formatter={v => `$${(v / 1000).toFixed(0)}k`} />
         </div>
-        <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 10, padding: 20 }}>
-          <DonutChart data={techniqueUsage.length > 0 ? techniqueUsage : [{ label: 'No estimations', value: 1 }]} title="Technique Usage across Projects" />
+        <div style={card}>
+          <DonutChart data={techniqueUsage.length > 0 ? techniqueUsage : [{ label: 'No estimations', value: 1 }]} title="Estimation Technique Usage" />
         </div>
-        <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 10, padding: 20 }}>
+        <div style={card}>
           <DonutChart data={priorityCounts.length > 0 ? priorityCounts : [{ label: 'No features', value: 1 }]} title="Feature Priority Breakdown" />
         </div>
       </div>
 
-      {/* Cost comparison chart */}
       {costComparison.length > 0 && (
-        <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 10, padding: 20, marginTop: 20 }}>
+        <div style={{ ...card, marginBottom: 20 }}>
           <BarChart data={costComparison} title="Cost Comparison across Estimation Runs ($)" formatter={v => `$${(v / 1000).toFixed(0)}k`} height={160} />
         </div>
       )}
+
+      {/* Cross-Project Benchmarking Table */}
+      <div style={card}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+          <span style={{ fontSize: 16 }}>📊</span>
+          <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: C.textPrimary }}>Cross-Project Benchmarking</h3>
+          <span style={{ marginLeft: 'auto', fontSize: 11, color: C.textSecondary }}>Accuracy % requires actuals to be recorded on each project</span>
+        </div>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+            <thead>
+              <tr style={{ background: C.primary + '0d', borderBottom: `2px solid ${C.border}` }}>
+                {['Project', 'Domain', 'Features', 'Completion', 'Risk Density', 'Estimations', 'Est. Accuracy'].map(h => (
+                  <th key={h} style={{ padding: '10px 14px', textAlign: h === 'Features' || h === 'Estimations' || h === 'Est. Accuracy' || h === 'Risk Density' ? 'center' : 'left', fontSize: 11, fontWeight: 700, color: C.primary, textTransform: 'uppercase', letterSpacing: 0.5 }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {projects.length === 0 ? (
+                <tr><td colSpan={7} style={{ padding: 24, textAlign: 'center', color: C.textSecondary }}>No projects yet.</td></tr>
+              ) : projects.map(p => (
+                <BenchmarkRow key={p.id} project={p} actuals={getActuals(p.id)} allProjects={projects} />
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div style={{ marginTop: 12, padding: '10px 14px', background: C.mainBg, borderRadius: 8, fontSize: 11, color: C.textSecondary }}>
+          <strong style={{ color: C.textPrimary }}>Risk Density</strong> = total risks ÷ total features &nbsp;|&nbsp;
+          <strong style={{ color: C.textPrimary }}>Est. Accuracy</strong> = 1 − |avg estimated effort − actual effort| / actual effort
+        </div>
+      </div>
     </div>
   )
 }

@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useProjects } from '../../context/ProjectContext'
-
-const C = { primary: '#3B5998', mainBg: '#F4F6FB', cardBg: '#FFFFFF', border: '#E0E4ED', textPrimary: '#1A1A2E', textSecondary: '#6B7280', success: '#639922' }
+import { useThemeColors } from '../../context/ThemeContext'
 
 export default function Analogy() {
+  const C = useThemeColors()
   const { id } = useParams()
   const navigate = useNavigate()
   const { projects, getProject, addEstimation } = useProjects()
@@ -129,7 +129,7 @@ export default function Analogy() {
             style={{ width: '100%', padding: '10px 12px', border: `1.5px solid ${C.border}`, borderRadius: 8, fontSize: 13, resize: 'vertical', minHeight: 80, boxSizing: 'border-box', outline: 'none', fontFamily: 'Inter, sans-serif' }} />
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 14 }}>
             {saved ? (
-              <div style={{ padding: '10px 20px', background: '#f0fdf4', border: `1px solid #bbf7d0`, borderRadius: 8, fontSize: 13, color: C.success, fontWeight: 600 }}>✓ Estimation Saved!</div>
+              <div style={{ padding: '10px 20px', background: C.success + '12', border: `1px solid ${C.success}30`, borderRadius: 8, fontSize: 13, color: C.success, fontWeight: 600 }}>✓ Estimation Saved!</div>
             ) : (
               <button onClick={handleSave} disabled={!newLOC || !scaledEffort}
                 style={{ padding: '10px 24px', background: C.primary, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', opacity: !newLOC ? 0.5 : 1 }}>

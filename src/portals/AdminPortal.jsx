@@ -1,257 +1,320 @@
-import { useState } from 'react'
-import Sidebar from '../components/Sidebar'
+import { useState, useMemo } from 'react'
+import { useProjects } from '../case-tool/context/ProjectContext'
+import { useThemeColors } from '../case-tool/context/ThemeContext'
+import { useScrum } from '../case-tool/context/ScrumContext'
 
-const NAV = [
-  { icon: '🏠', label: 'Dashboard', path: '/dashboard' },
-  { icon: '📁', label: 'Project Portfolio', path: '/dashboard/portfolio' },
-  { icon: '📊', label: 'Analytics', path: '/dashboard/analytics' },
-  { icon: '💰', label: 'Budget', path: '/dashboard/budget' },
-  { icon: '🎯', label: 'Milestones', path: '/dashboard/milestones' },
-  { icon: '👤', label: 'User Management', path: '/dashboard/users' },
-]
-
-const PROJECTS = [
-  { id: 1, name: 'E-Commerce Platform', status: 'active', progress: 68, team: 5, deadline: 'Aug 15', budget: 85, health: 'good' },
-  { id: 2, name: 'Mobile Banking App', status: 'active', progress: 42, team: 7, deadline: 'Sep 30', budget: 60, health: 'at_risk' },
-  { id: 3, name: 'HR Management System', status: 'planning', progress: 12, team: 4, deadline: 'Oct 15', budget: 20, health: 'good' },
-  { id: 4, name: 'Analytics Dashboard', status: 'completed', progress: 100, team: 3, deadline: 'Jun 1', budget: 100, health: 'good' },
-]
-
-const MILESTONES = [
-  { title: 'MVP Release', project: 'E-Commerce', date: 'Jul 15', status: 'upcoming' },
-  { title: 'Security Audit', project: 'Mobile Banking', date: 'Jun 28', status: 'overdue' },
-  { title: 'Beta Launch', project: 'HR Management', date: 'Aug 20', status: 'upcoming' },
-  { title: 'Final Delivery', project: 'Analytics', date: 'Jun 1', status: 'done' },
-  { title: 'Stakeholder Demo', project: 'E-Commerce', date: 'Jul 5', status: 'upcoming' },
-]
-
-const HEALTH_COLOR = { good: '#10b981', at_risk: '#f59e0b', critical: '#dc2626' }
-const HEALTH_BG = { good: '#d1fae5', at_risk: '#fef3c7', critical: '#fef2f2' }
-
-export default function AdminPortal() {
-  const [activeTab, setActiveTab] = useState('dashboard')
-
-  const activeProjects = PROJECTS.filter((p) => p.status === 'active').length
-  const completedProjects = PROJECTS.filter((p) => p.status === 'completed').length
-  const totalBudgetUsed = Math.round(PROJECTS.reduce((a, p) => a + p.budget, 0) / PROJECTS.length)
-  const atRisk = PROJECTS.filter((p) => p.health === 'at_risk').length
-
+function MetricCard({ label, value, sub, icon, color }) {
+  const C = useThemeColors()
   return (
-    <div style={styles.layout}>
-      <Sidebar navItems={NAV} />
-      <main style={styles.main}>
-        <div style={styles.header}>
-          <div>
-            <h1 style={styles.pageTitle}>Project Manager Portal</h1>
-            <p style={styles.pageSub}>Portfolio Overview · Q3 2026</p>
-          </div>
-          <button style={styles.newProjectBtn}>+ New Project</button>
-        </div>
-
-        <div style={styles.tabs}>
-          {[
-            { id: 'dashboard', label: '📊 Overview' },
-            { id: 'portfolio', label: '📁 Portfolio' },
-            { id: 'milestones', label: '🎯 Milestones' },
-            { id: 'budget', label: '💰 Budget' },
-          ].map((t) => (
-            <button
-              key={t.id}
-              style={{ ...styles.tab, ...(activeTab === t.id ? styles.tabActive : {}) }}
-              onClick={() => setActiveTab(t.id)}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-
-        {activeTab === 'dashboard' && (
-          <>
-            <div style={styles.statsRow}>
-              {[
-                { label: 'Active Projects', value: activeProjects, color: '#6366f1', icon: '📁' },
-                { label: 'Completed', value: completedProjects, color: '#10b981', icon: '✅' },
-                { label: 'At Risk', value: atRisk, color: '#f59e0b', icon: '⚠️' },
-                { label: 'Avg Budget Used', value: `${totalBudgetUsed}%`, color: '#0ea5e9', icon: '💰' },
-              ].map((s) => (
-                <div key={s.label} style={{ ...styles.statCard, borderTop: `3px solid ${s.color}` }}>
-                  <div style={{ fontSize: 26 }}>{s.icon}</div>
-                  <div style={{ fontSize: 26, fontWeight: 700, color: s.color }}>{s.value}</div>
-                  <div style={styles.statLabel}>{s.label}</div>
-                </div>
-              ))}
-            </div>
-
-            {/* Project cards */}
-            <div style={styles.projectGrid}>
-              {PROJECTS.map((p) => (
-                <div key={p.id} style={styles.projectCard}>
-                  <div style={styles.projectTop}>
-                    <div>
-                      <div style={styles.projectName}>{p.name}</div>
-                      <div style={styles.projectMeta}>👥 {p.team} members · 📅 {p.deadline}</div>
-                    </div>
-                    <span style={{ ...styles.healthBadge, color: HEALTH_COLOR[p.health], background: HEALTH_BG[p.health] }}>
-                      {p.health === 'good' ? '✅ Good' : p.health === 'at_risk' ? '⚠️ At Risk' : '🔴 Critical'}
-                    </span>
-                  </div>
-                  <div style={{ marginTop: 16 }}>
-                    <div style={styles.progressHeader}>
-                      <span style={{ fontSize: 12, color: '#6b7280' }}>Progress</span>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: '#6366f1' }}>{p.progress}%</span>
-                    </div>
-                    <div style={styles.progressBg}>
-                      <div style={{ ...styles.progressFill, width: `${p.progress}%` }} />
-                    </div>
-                  </div>
-                  <div style={{ marginTop: 12 }}>
-                    <div style={styles.progressHeader}>
-                      <span style={{ fontSize: 12, color: '#6b7280' }}>Budget Used</span>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: p.budget > 80 ? '#f59e0b' : '#10b981' }}>{p.budget}%</span>
-                    </div>
-                    <div style={styles.progressBg}>
-                      <div style={{ ...styles.progressFill, width: `${p.budget}%`, background: p.budget > 80 ? '#f59e0b' : '#10b981' }} />
-                    </div>
-                  </div>
-                  <div style={{ marginTop: 14, display: 'flex', gap: 8 }}>
-                    <button style={styles.viewBtn}>View Details</button>
-                    <button style={styles.editBtn}>Edit</button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-
-        {activeTab === 'portfolio' && (
-          <div style={styles.card}>
-            <h3 style={styles.sectionTitle}>All Projects</h3>
-            <table style={styles.table}>
-              <thead>
-                <tr>{['Project', 'Status', 'Progress', 'Team', 'Deadline', 'Budget', 'Health'].map((h) => (
-                  <th key={h} style={styles.th}>{h}</th>
-                ))}</tr>
-              </thead>
-              <tbody>
-                {PROJECTS.map((p) => (
-                  <tr key={p.id} style={styles.tr}>
-                    <td style={{ ...styles.td, fontWeight: 600 }}>{p.name}</td>
-                    <td style={styles.td}>
-                      <span style={{ ...styles.statusBadge, background: p.status === 'active' ? '#eef2ff' : p.status === 'completed' ? '#d1fae5' : '#f3f4f6', color: p.status === 'active' ? '#4338ca' : p.status === 'completed' ? '#16a34a' : '#6b7280' }}>
-                        {p.status}
-                      </span>
-                    </td>
-                    <td style={styles.td}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <div style={{ ...styles.progressBg, width: 80, margin: 0 }}>
-                          <div style={{ ...styles.progressFill, width: `${p.progress}%` }} />
-                        </div>
-                        <span style={{ fontSize: 12, fontWeight: 600, color: '#6366f1' }}>{p.progress}%</span>
-                      </div>
-                    </td>
-                    <td style={styles.td}>{p.team} members</td>
-                    <td style={styles.td}>{p.deadline}</td>
-                    <td style={{ ...styles.td, color: p.budget > 80 ? '#f59e0b' : '#10b981', fontWeight: 600 }}>{p.budget}%</td>
-                    <td style={styles.td}>
-                      <span style={{ ...styles.healthBadge, color: HEALTH_COLOR[p.health], background: HEALTH_BG[p.health] }}>
-                        {p.health === 'good' ? '✅ Good' : '⚠️ At Risk'}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {activeTab === 'milestones' && (
-          <div style={styles.card}>
-            <h3 style={styles.sectionTitle}>Project Milestones</h3>
-            <div style={styles.milestoneList}>
-              {MILESTONES.map((m, i) => (
-                <div key={i} style={styles.milestoneRow}>
-                  <div style={{ ...styles.milestoneDot, background: m.status === 'done' ? '#10b981' : m.status === 'overdue' ? '#dc2626' : '#6366f1' }} />
-                  <div style={styles.milestoneConnector} />
-                  <div style={styles.milestoneContent}>
-                    <div style={styles.milestoneTitle}>{m.title}</div>
-                    <div style={styles.milestoneMeta}>{m.project} · {m.date}</div>
-                  </div>
-                  <span style={{ ...styles.milestoneBadge, color: m.status === 'done' ? '#16a34a' : m.status === 'overdue' ? '#dc2626' : '#4338ca', background: m.status === 'done' ? '#d1fae5' : m.status === 'overdue' ? '#fef2f2' : '#eef2ff' }}>
-                    {m.status === 'done' ? '✅ Done' : m.status === 'overdue' ? '🔴 Overdue' : '⏳ Upcoming'}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'budget' && (
-          <div style={styles.card}>
-            <h3 style={styles.sectionTitle}>Budget Overview</h3>
-            {PROJECTS.map((p) => (
-              <div key={p.id} style={{ marginBottom: 24 }}>
-                <div style={styles.budgetHeader}>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>{p.name}</span>
-                  <span style={{ fontSize: 13, color: '#6b7280' }}>PKR {(p.budget * 150000).toLocaleString()} / PKR 15,000,000</span>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: p.budget > 80 ? '#f59e0b' : '#10b981' }}>{p.budget}%</span>
-                </div>
-                <div style={styles.progressBg}>
-                  <div style={{ ...styles.progressFill, width: `${p.budget}%`, background: p.budget > 80 ? '#f59e0b' : '#10b981' }} />
-                </div>
-              </div>
-            ))}
-            <div style={styles.budgetSummary}>
-              <div style={styles.summaryItem}><span>Total Allocated</span><strong>PKR 60,000,000</strong></div>
-              <div style={styles.summaryItem}><span>Total Spent</span><strong style={{ color: '#f59e0b' }}>PKR {Math.round(PROJECTS.reduce((a, p) => a + p.budget * 150000, 0)).toLocaleString()}</strong></div>
-              <div style={styles.summaryItem}><span>Remaining</span><strong style={{ color: '#10b981' }}>PKR {(60000000 - Math.round(PROJECTS.reduce((a, p) => a + p.budget * 150000, 0))).toLocaleString()}</strong></div>
-            </div>
-          </div>
-        )}
-      </main>
+    <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 10, padding: '16px 18px', display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div style={{ width: 40, height: 40, borderRadius: 10, background: (color || C.primary) + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>{icon}</div>
+      <div>
+        <div style={{ fontSize: 22, fontWeight: 700, color: C.textPrimary, lineHeight: 1.2 }}>{value}</div>
+        <div style={{ fontSize: 12, color: C.textSecondary, marginTop: 2 }}>{label}</div>
+        {sub && <div style={{ fontSize: 11, color: color || C.primary, marginTop: 1, fontWeight: 500 }}>{sub}</div>}
+      </div>
     </div>
   )
 }
 
-const styles = {
-  layout: { display: 'flex', minHeight: '100vh', background: '#f8fafc', fontFamily: "'Inter', sans-serif" },
-  main: { flex: 1, padding: '32px 36px', overflowY: 'auto' },
-  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 },
-  pageTitle: { fontSize: 26, fontWeight: 800, color: '#1e1b4b', marginBottom: 4 },
-  pageSub: { fontSize: 13, color: '#6b7280' },
-  newProjectBtn: { padding: '10px 20px', background: 'linear-gradient(135deg,#4338ca,#6366f1)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: 'pointer' },
-  tabs: { display: 'flex', gap: 4, background: '#f3f4f6', borderRadius: 12, padding: 4, marginBottom: 28, width: 'fit-content' },
-  tab: { padding: '8px 18px', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 500, background: 'transparent', color: '#6b7280' },
-  tabActive: { background: '#fff', color: '#f59e0b', fontWeight: 600, boxShadow: '0 1px 4px rgba(0,0,0,0.08)' },
-  statsRow: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 },
-  statCard: { background: '#fff', borderRadius: 14, padding: '20px', textAlign: 'center', boxShadow: '0 1px 6px rgba(0,0,0,0.05)' },
-  statLabel: { fontSize: 12, color: '#6b7280', marginTop: 4, fontWeight: 500 },
-  projectGrid: { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 },
-  projectCard: { background: '#fff', borderRadius: 14, padding: 24, boxShadow: '0 1px 6px rgba(0,0,0,0.05)' },
-  projectTop: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 },
-  projectName: { fontSize: 15, fontWeight: 700, color: '#111827', marginBottom: 4 },
-  projectMeta: { fontSize: 12, color: '#6b7280' },
-  healthBadge: { padding: '4px 10px', borderRadius: 8, fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' },
-  progressHeader: { display: 'flex', justifyContent: 'space-between', marginBottom: 6 },
-  progressBg: { background: '#e5e7eb', borderRadius: 99, height: 8, overflow: 'hidden' },
-  progressFill: { background: 'linear-gradient(90deg,#4338ca,#6366f1)', height: '100%', borderRadius: 99 },
-  viewBtn: { flex: 1, padding: '8px', background: '#eef2ff', color: '#4338ca', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer' },
-  editBtn: { padding: '8px 16px', background: '#fff', color: '#6b7280', border: '1.5px solid #e5e7eb', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer' },
-  card: { background: '#fff', borderRadius: 14, padding: 24, boxShadow: '0 1px 6px rgba(0,0,0,0.05)' },
-  sectionTitle: { fontSize: 15, fontWeight: 700, color: '#111827', marginBottom: 16 },
-  table: { width: '100%', borderCollapse: 'collapse' },
-  th: { textAlign: 'left', fontSize: 12, fontWeight: 600, color: '#6b7280', padding: '8px 12px', borderBottom: '2px solid #f3f4f6', textTransform: 'uppercase', letterSpacing: 0.5 },
-  tr: { borderBottom: '1px solid #f9fafb' },
-  td: { padding: '12px 12px', fontSize: 13, color: '#374151' },
-  statusBadge: { padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600, textTransform: 'capitalize' },
-  milestoneList: { display: 'flex', flexDirection: 'column', gap: 16 },
-  milestoneRow: { display: 'flex', alignItems: 'center', gap: 14, position: 'relative' },
-  milestoneDot: { width: 14, height: 14, borderRadius: '50%', flexShrink: 0 },
-  milestoneConnector: { position: 'absolute', left: 6, top: 20, width: 2, height: 32, background: '#e5e7eb' },
-  milestoneContent: { flex: 1 },
-  milestoneTitle: { fontSize: 14, fontWeight: 600, color: '#111827' },
-  milestoneMeta: { fontSize: 12, color: '#6b7280', marginTop: 2 },
-  milestoneBadge: { padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600 },
-  budgetHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  budgetSummary: { background: '#f9fafb', borderRadius: 12, padding: 18, marginTop: 8, display: 'flex', justifyContent: 'space-between' },
-  summaryItem: { display: 'flex', flexDirection: 'column', gap: 4, fontSize: 13, color: '#6b7280' },
+function Card({ children, style }) {
+  const C = useThemeColors()
+  return <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 10, padding: 20, ...style }}>{children}</div>
+}
+
+function Bar({ pct, color, h = 7 }) {
+  const C = useThemeColors()
+  return (
+    <div style={{ height: h, background: C.border, borderRadius: h / 2 }}>
+      <div style={{ height: '100%', width: `${Math.min(100, Math.max(0, pct))}%`, background: color, borderRadius: h / 2, transition: 'width 0.4s' }} />
+    </div>
+  )
+}
+
+function Badge({ label, color, bg }) {
+  return <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600, background: bg, color, whiteSpace: 'nowrap' }}>{label}</span>
+}
+
+function parseCost(costStr) {
+  if (!costStr) return 0
+  const n = parseFloat(String(costStr).replace(/[^0-9.]/g, ''))
+  return isNaN(n) ? 0 : n
+}
+
+export default function AdminPortal() {
+  const C = useThemeColors()
+  const { projects, loading } = useProjects()
+  const { sprints, scrumLoading } = useScrum()
+  const [tab, setTab] = useState('overview')
+
+  const allTasks    = projects.flatMap(p => (p.tasks || []).map(t => ({ ...t, projectName: p.name })))
+  const allRisks    = projects.flatMap(p => (p.risks || []).map(r => ({ ...r, projectName: p.name })))
+  const allFeatures = projects.flatMap(p => (p.features || []).map(f => ({ ...f, projectName: p.name })))
+
+  const totalAllocated = useMemo(() =>
+    projects.reduce((sum, p) => sum + (p.budget || 0), 0),
+  [projects])
+  const totalEstimated = useMemo(() =>
+    projects.flatMap(p => p.estimations || []).reduce((sum, e) => sum + parseCost(e.cost), 0),
+  [projects])
+
+  const milestones = useMemo(() => {
+    const list = []
+    projects.forEach(p => {
+      if (p.deadline) list.push({ label: `${p.name} — Deadline`, date: p.deadline, type: 'deadline', project: p.name })
+      if (p.startDate) list.push({ label: `${p.name} — Start`, date: p.startDate, type: 'start', project: p.name })
+    })
+    sprints.forEach(s => {
+      if (s.endDate) list.push({ label: `Sprint: ${s.name}`, date: s.endDate, type: 'sprint', project: 'Scrum' })
+    })
+    return list.sort((a, b) => a.date.localeCompare(b.date))
+  }, [projects, sprints])
+
+  const active    = projects.filter(p => p.status === 'Active').length
+  const completed = projects.filter(p => p.status === 'Completed').length
+  const onHold    = projects.filter(p => p.status === 'On Hold').length
+  const openRisks = allRisks.filter(r => r.status !== 'Resolved').length
+
+  const TABS = [
+    { id: 'overview',   label: 'Overview' },
+    { id: 'portfolio',  label: `Portfolio (${projects.length})` },
+    { id: 'milestones', label: `Milestones (${milestones.length})` },
+    { id: 'budget',     label: 'Budget' },
+  ]
+
+  if (loading || scrumLoading) return <div style={{ padding: 28, color: C.textSecondary, fontSize: 14 }}>Loading…</div>
+
+  return (
+    <div style={{ padding: 28, background: C.mainBg, minHeight: '100%' }}>
+      <div style={{ marginBottom: 24 }}>
+        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: C.textPrimary }}>Admin Dashboard</h1>
+        <p style={{ margin: '4px 0 0', fontSize: 13, color: C.textSecondary }}>
+          Portfolio overview · {projects.length} project{projects.length !== 1 ? 's' : ''} · {active} active
+        </p>
+      </div>
+
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: 2, borderBottom: `2px solid ${C.border}`, marginBottom: 24 }}>
+        {TABS.map(t => (
+          <button key={t.id} onClick={() => setTab(t.id)}
+            style={{ padding: '10px 16px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 13, fontWeight: tab === t.id ? 600 : 400, fontFamily: 'inherit', color: tab === t.id ? C.primary : C.textSecondary, borderBottom: tab === t.id ? `2px solid ${C.primary}` : '2px solid transparent', marginBottom: -2, whiteSpace: 'nowrap' }}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Overview */}
+      {tab === 'overview' && (
+        <>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 20 }}>
+            <MetricCard label="Total Projects"  value={projects.length}           icon="📂" color={C.primary}  sub={`${active} active`}         />
+            <MetricCard label="Completed"       value={completed}                 icon="✓"  color={C.success}  sub={`${onHold} on hold`}        />
+            <MetricCard label="Open Risks"      value={openRisks}                 icon="⚠" color={C.danger}   sub="across all projects"         />
+            <MetricCard label="Allocated Budget" value={totalAllocated > 0 ? `$${(totalAllocated/1000).toFixed(0)}k` : '—'} icon="💰" color={C.warning} sub="across all projects" />
+          </div>
+
+          {/* Domain distribution */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+            <Card>
+              <h3 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 600, color: C.textPrimary }}>Status Distribution</h3>
+              {[
+                { label: 'Active',    count: active,    color: C.primary },
+                { label: 'Completed', count: completed, color: C.success },
+                { label: 'On Hold',   count: onHold,    color: C.warning },
+              ].map(s => (
+                <div key={s.label} style={{ marginBottom: 10 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: C.textSecondary, marginBottom: 4 }}>
+                    <span>{s.label}</span><span style={{ fontWeight: 600, color: C.textPrimary }}>{s.count}</span>
+                  </div>
+                  <Bar pct={projects.length > 0 ? (s.count / projects.length) * 100 : 0} color={s.color} h={7} />
+                </div>
+              ))}
+            </Card>
+
+            <Card>
+              <h3 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 600, color: C.textPrimary }}>Feature Progress</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {[
+                  { label: 'Done',        count: allFeatures.filter(f => f.status === 'Done').length,        color: C.success },
+                  { label: 'In Progress', count: allFeatures.filter(f => f.status === 'In Progress').length, color: C.primary },
+                  { label: 'To Do',       count: allFeatures.filter(f => f.status === 'To Do').length,       color: C.textSecondary },
+                ].map(s => (
+                  <div key={s.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: C.mainBg, borderRadius: 6, fontSize: 13 }}>
+                    <span style={{ color: C.textPrimary }}>{s.label}</span>
+                    <span style={{ fontWeight: 700, color: s.color }}>{s.count}</span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+
+          {/* Sprint summary */}
+          <Card>
+            <h3 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 600, color: C.textPrimary }}>Sprint Overview</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+              {[
+                { label: 'Total Sprints',     value: sprints.length,                                   color: C.primary },
+                { label: 'Active Sprints',    value: sprints.filter(s => s.status === 'active').length, color: C.success },
+                { label: 'Completed Sprints', value: sprints.filter(s => s.status === 'completed').length, color: C.warning },
+              ].map(m => (
+                <div key={m.label} style={{ textAlign: 'center', padding: '14px', background: m.color + '0D', border: `1px solid ${m.color}25`, borderRadius: 8 }}>
+                  <div style={{ fontSize: 24, fontWeight: 700, color: m.color }}>{m.value}</div>
+                  <div style={{ fontSize: 11, color: C.textSecondary, marginTop: 4 }}>{m.label}</div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </>
+      )}
+
+      {/* Portfolio Tab */}
+      {tab === 'portfolio' && (
+        <Card>
+          <h3 style={{ margin: '0 0 16px', fontSize: 14, fontWeight: 600, color: C.textPrimary }}>Project Portfolio</h3>
+          {projects.length === 0 ? (
+            <p style={{ margin: 0, fontSize: 13, color: C.textSecondary }}>No projects in the system yet.</p>
+          ) : (
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <thead>
+                <tr style={{ borderBottom: `2px solid ${C.border}` }}>
+                  {['Project', 'Domain', 'Status', 'Team', 'Progress', 'Risks', 'Estimations', 'Deadline'].map(h => (
+                    <th key={h} style={{ padding: '8px 10px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: C.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {projects.map((p, i) => {
+                  const stColor   = p.status === 'Active' ? C.primary : p.status === 'Completed' ? C.success : C.warning
+                  const feats     = (p.features || []).length
+                  const done      = (p.features || []).filter(f => f.status === 'Done').length
+                  const pct       = feats > 0 ? Math.round((done / feats) * 100) : 0
+                  const openR     = (p.risks || []).filter(r => r.status !== 'Resolved').length
+                  const estCount  = (p.estimations || []).length
+                  return (
+                    <tr key={p.id} style={{ borderBottom: `1px solid ${C.border}`, background: i % 2 === 0 ? C.cardBg : C.mainBg }}>
+                      <td style={{ padding: '10px 10px', fontWeight: 600, color: C.textPrimary, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</td>
+                      <td style={{ padding: '10px 10px' }}><Badge label={p.domain || '—'} color={C.primary} bg={C.primary + '12'} /></td>
+                      <td style={{ padding: '10px 10px' }}><Badge label={p.status}        color={stColor}   bg={stColor + '15'}    /></td>
+                      <td style={{ padding: '10px 10px', color: C.textSecondary }}>{p.teamSize || '—'}</td>
+                      <td style={{ padding: '10px 10px', minWidth: 80 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <div style={{ flex: 1 }}><Bar pct={pct} color={pct >= 70 ? C.success : pct >= 40 ? C.warning : C.primary} h={5} /></div>
+                          <span style={{ fontSize: 11, color: C.textSecondary, flexShrink: 0 }}>{pct}%</span>
+                        </div>
+                      </td>
+                      <td style={{ padding: '10px 10px' }}>
+                        {openR > 0
+                          ? <Badge label={`${openR} open`} color={C.danger}  bg={C.danger + '12'}  />
+                          : <Badge label="clear"           color={C.success} bg={C.success + '12'} />
+                        }
+                      </td>
+                      <td style={{ padding: '10px 10px', color: C.textSecondary }}>{estCount}</td>
+                      <td style={{ padding: '10px 10px', color: C.textSecondary, fontSize: 12 }}>{p.deadline || '—'}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          )}
+        </Card>
+      )}
+
+      {/* Milestones Tab */}
+      {tab === 'milestones' && (
+        <Card>
+          <h3 style={{ margin: '0 0 6px', fontSize: 14, fontWeight: 600, color: C.textPrimary }}>Milestones</h3>
+          <p style={{ margin: '0 0 20px', fontSize: 12, color: C.textSecondary }}>Project start dates, deadlines, and sprint end dates — sorted chronologically</p>
+          {milestones.length === 0 ? (
+            <p style={{ margin: 0, fontSize: 13, color: C.textSecondary }}>No milestones yet. Create projects with start dates and deadlines to see them here.</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {milestones.map((m, i) => {
+                const today   = new Date().toISOString().split('T')[0]
+                const isPast  = m.date < today
+                const isToday = m.date === today
+                const typeColor = m.type === 'deadline' ? C.danger : m.type === 'sprint' ? C.primary : C.success
+                return (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 14px', background: isToday ? C.warning + '0D' : C.mainBg, border: `1px solid ${isToday ? C.warning + '50' : C.border}`, borderRadius: 8, opacity: isPast && !isToday ? 0.6 : 1 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 8, background: typeColor + '15', color: typeColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>
+                      {m.type === 'deadline' ? '🏁' : m.type === 'sprint' ? '🔄' : '🚀'}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: C.textPrimary }}>{m.label}</div>
+                      <div style={{ fontSize: 11, color: C.textSecondary, marginTop: 2 }}>{m.project}</div>
+                    </div>
+                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: C.textPrimary }}>{m.date}</div>
+                      {isToday && <div style={{ fontSize: 10, color: C.warning, fontWeight: 600, marginTop: 2 }}>TODAY</div>}
+                      {isPast && !isToday && <div style={{ fontSize: 10, color: C.textSecondary, marginTop: 2 }}>Past</div>}
+                      {!isPast && !isToday && (
+                        <div style={{ fontSize: 10, color: typeColor, marginTop: 2 }}>
+                          {Math.ceil((new Date(m.date) - new Date()) / 86400000)}d away
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </Card>
+      )}
+
+      {/* Budget Tab */}
+      {tab === 'budget' && (
+        <>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 20 }}>
+            <MetricCard label="Total Allocated"    value={totalAllocated > 0 ? `$${totalAllocated.toLocaleString()}` : '—'} icon="💰" color={C.primary} sub="from project budgets"  />
+            <MetricCard label="Est. Total Cost"    value={totalEstimated > 0 ? `$${totalEstimated.toLocaleString()}` : '—'} icon="📊" color={C.warning} sub="from estimations"       />
+            <MetricCard label="Projects w/ Budget" value={projects.filter(p => (p.budget || 0) > 0).length}                 icon="✓"  color={C.success} sub="have allocated budget"  />
+          </div>
+
+          <Card>
+            <h3 style={{ margin: '0 0 16px', fontSize: 14, fontWeight: 600, color: C.textPrimary }}>Budget Breakdown by Project</h3>
+            {projects.length === 0 ? (
+              <p style={{ margin: 0, fontSize: 13, color: C.textSecondary }}>No projects yet.</p>
+            ) : (
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                <thead>
+                  <tr style={{ borderBottom: `2px solid ${C.border}` }}>
+                    {['Project', 'Allocated Budget', 'Est. Runs', 'Latest Technique', 'Latest Cost', 'Variance'].map(h => (
+                      <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: C.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {projects.map((p, i) => {
+                    const ests      = p.estimations || []
+                    const latest    = ests[ests.length - 1]
+                    const estCost   = parseCost(latest?.cost)
+                    const allocated = p.budget || 0
+                    const variance  = allocated > 0 && estCost > 0 ? ((estCost - allocated) / allocated * 100) : null
+                    const varColor  = variance === null ? C.textSecondary : Math.abs(variance) < 15 ? C.success : Math.abs(variance) < 30 ? C.warning : C.danger
+                    return (
+                      <tr key={p.id} style={{ borderBottom: `1px solid ${C.border}`, background: i % 2 === 0 ? C.cardBg : C.mainBg }}>
+                        <td style={{ padding: '11px 12px', fontWeight: 600, color: C.textPrimary }}>{p.name}</td>
+                        <td style={{ padding: '11px 12px', fontWeight: allocated > 0 ? 600 : 400, color: allocated > 0 ? C.primary : C.textSecondary }}>
+                          {allocated > 0 ? `$${allocated.toLocaleString()}` : '—'}
+                        </td>
+                        <td style={{ padding: '11px 12px', color: C.textSecondary }}>{ests.length}</td>
+                        <td style={{ padding: '11px 12px' }}>
+                          {latest ? <Badge label={latest.technique} color={C.primary} bg={C.primary + '12'} /> : <span style={{ color: C.textSecondary }}>—</span>}
+                        </td>
+                        <td style={{ padding: '11px 12px', fontWeight: estCost > 0 ? 600 : 400, color: estCost > 0 ? C.warning : C.textSecondary }}>
+                          {estCost > 0 ? `$${estCost.toLocaleString()}` : '—'}
+                        </td>
+                        <td style={{ padding: '11px 12px', fontWeight: 600, color: varColor }}>
+                          {variance === null ? '—' : `${variance > 0 ? '+' : ''}${variance.toFixed(1)}%`}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            )}
+          </Card>
+        </>
+      )}
+    </div>
+  )
 }

@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useProjects } from '../../context/ProjectContext'
-
-const C = { primary: '#3B5998', mainBg: '#F4F6FB', cardBg: '#FFFFFF', border: '#E0E4ED', textPrimary: '#1A1A2E', textSecondary: '#6B7280', success: '#639922' }
+import { useThemeColors } from '../../context/ThemeContext'
 const CATEGORIES = ['verySmall', 'small', 'medium', 'large', 'veryLarge']
 const CAT_LABELS = { verySmall: 'Very Small', small: 'Small', medium: 'Medium', large: 'Large', veryLarge: 'Very Large' }
 const CAT_DEFAULT = { verySmall: 100, small: 300, medium: 600, large: 1200, veryLarge: 2400 }
 
 export default function FuzzyLogic() {
+  const C = useThemeColors()
   const { id } = useParams()
   const navigate = useNavigate()
   const { getProject, addEstimation } = useProjects()
@@ -91,10 +91,10 @@ export default function FuzzyLogic() {
               </thead>
               <tbody>
                 {project.features.map((f, i) => (
-                  <tr key={f.id} style={{ borderBottom: `1px solid ${C.border}`, background: i % 2 === 0 ? '#fff' : C.mainBg }}>
+                  <tr key={f.id} style={{ borderBottom: `1px solid ${C.border}`, background: i % 2 === 0 ? C.cardBg : C.mainBg }}>
                     <td style={{ padding: '10px', fontWeight: 500, color: C.textPrimary }}>{f.name}</td>
                     <td style={{ padding: '10px' }}>
-                      <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 7px', borderRadius: 4, background: f.priority === 'High' ? '#fef2f2' : f.priority === 'Medium' ? '#fffbeb' : '#f0fdf4', color: f.priority === 'High' ? '#dc2626' : f.priority === 'Medium' ? '#d97706' : '#15803d' }}>{f.priority}</span>
+                      <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 7px', borderRadius: 4, background: f.priority === 'High' ? C.danger + '15' : f.priority === 'Medium' ? C.warning + '15' : C.success + '15', color: f.priority === 'High' ? C.danger : f.priority === 'Medium' ? C.warning : C.success }}>{f.priority}</span>
                     </td>
                     <td style={{ padding: '10px' }}>
                       <select value={classifications[f.id] || 'medium'} onChange={e => setClassifications(c => ({ ...c, [f.id]: e.target.value }))}
@@ -148,7 +148,7 @@ export default function FuzzyLogic() {
           </div>
 
           {saved ? (
-            <div style={{ padding: 14, background: '#f0fdf4', border: `1px solid #bbf7d0`, borderRadius: 8, textAlign: 'center', fontSize: 13, color: C.success, fontWeight: 600 }}>✓ Estimation Saved!</div>
+            <div style={{ padding: 14, background: C.success + '12', border: `1px solid ${C.success}30`, borderRadius: 8, textAlign: 'center', fontSize: 13, color: C.success, fontWeight: 600 }}>✓ Estimation Saved!</div>
           ) : (
             <button onClick={handleSave} style={{ padding: '12px', background: C.primary, color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
               Save Estimation

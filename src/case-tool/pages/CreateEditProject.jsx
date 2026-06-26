@@ -1,16 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useProjects } from '../context/ProjectContext'
-
-const C = {
-  primary: '#3B5998', mainBg: '#F4F6FB', cardBg: '#FFFFFF', border: '#E0E4ED',
-  textPrimary: '#1A1A2E', textSecondary: '#6B7280', danger: '#E24B4A',
-}
+import { useThemeColors } from '../context/ThemeContext'
 
 const DOMAINS = ['Web', 'Mobile', 'Desktop', 'Embedded', 'Other']
 const PRIORITIES = ['High', 'Medium', 'Low']
 
 function Field({ label, children }) {
+  const C = useThemeColors()
   return (
     <div style={{ marginBottom: 18 }}>
       <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: C.textPrimary, marginBottom: 6 }}>{label}</label>
@@ -19,12 +16,12 @@ function Field({ label, children }) {
   )
 }
 
-const inputStyle = {
-  width: '100%', padding: '9px 12px', border: `1.5px solid ${C.border}`, borderRadius: 8,
-  fontSize: 13, outline: 'none', boxSizing: 'border-box', color: C.textPrimary, background: '#fff',
-}
-
 export default function CreateEditProject() {
+  const C = useThemeColors()
+  const inputStyle = {
+    width: '100%', padding: '9px 12px', border: `1.5px solid ${C.border}`, borderRadius: 8,
+    fontSize: 13, outline: 'none', boxSizing: 'border-box', color: C.textPrimary, background: C.cardBg,
+  }
   const { id } = useParams()
   const navigate = useNavigate()
   const { getProject, addProject, updateProject } = useProjects()
@@ -39,6 +36,7 @@ export default function CreateEditProject() {
     deadline: existing?.deadline || '',
     teamSize: existing?.teamSize || 3,
     status: existing?.status || 'Active',
+    budget: existing?.budget || 0,
   })
 
   const [features, setFeatures] = useState(
@@ -73,7 +71,8 @@ export default function CreateEditProject() {
       navigate(`/dashboard/projects/${id}`)
     } else {
       const newId = await addProject({ ...form, features: validFeatures })
-      navigate(`/dashboard/projects/${newId}`)
+      if (newId) navigate(`/dashboard/projects/${newId}`)
+      else navigate('/dashboard')
     }
   }
 
@@ -121,9 +120,14 @@ export default function CreateEditProject() {
             </Field>
           </div>
 
-          <Field label="Team Size">
-            <input style={{ ...inputStyle, width: 120 }} type="number" min={1} max={50} value={form.teamSize} onChange={e => setField('teamSize', parseInt(e.target.value) || 1)} />
-          </Field>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <Field label="Team Size">
+              <input style={inputStyle} type="number" min={1} max={50} value={form.teamSize} onChange={e => setField('teamSize', parseInt(e.target.value) || 1)} />
+            </Field>
+            <Field label="Budget (USD, optional)">
+              <input style={inputStyle} type="number" min={0} step={1000} value={form.budget} onChange={e => setField('budget', parseFloat(e.target.value) || 0)} placeholder="0" />
+            </Field>
+          </div>
         </div>
 
         {/* Features card */}
@@ -161,7 +165,7 @@ export default function CreateEditProject() {
           ))}
         </div>
 
-        {error && <div style={{ padding: '10px 14px', background: '#fef2f2', border: `1px solid #fecaca`, color: C.danger, borderRadius: 8, marginBottom: 16, fontSize: 13 }}>{error}</div>}
+        {error && <div style={{ padding: '10px 14px', background: C.danger + '12', border: `1px solid ${C.danger}30`, color: C.danger, borderRadius: 8, marginBottom: 16, fontSize: 13 }}>{error}</div>}
 
         <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
           <button type="button" onClick={() => navigate(isEdit ? `/dashboard/projects/${id}` : '/dashboard')}

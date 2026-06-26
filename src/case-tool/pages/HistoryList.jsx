@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useProjects } from '../context/ProjectContext'
+import { useThemeColors } from '../context/ThemeContext'
 
-const C = { primary: '#3B5998', mainBg: '#F4F6FB', cardBg: '#FFFFFF', border: '#E0E4ED', textPrimary: '#1A1A2E', textSecondary: '#6B7280', danger: '#E24B4A', warning: '#EF9F27', success: '#639922' }
 
 export default function HistoryList() {
+  const C = useThemeColors()
   const { projects } = useProjects()
   const navigate = useNavigate()
   const [statusFilter, setStatusFilter] = useState('All')
@@ -61,13 +62,13 @@ export default function HistoryList() {
               <tr><td colSpan={8} style={{ padding: 32, textAlign: 'center', color: C.textSecondary }}>No projects match the current filters.</td></tr>
             ) : (
               filtered.map((p, i) => {
-                const statusCfg = { Active: { bg: '#dbeafe', color: '#1d4ed8' }, Completed: { bg: '#dcfce7', color: '#15803d' } }[p.status] || { bg: '#f3f4f6', color: '#374151' }
+                const statusCfg = { Active: { bg: C.primary + '15', color: C.primary }, Completed: { bg: C.success + '15', color: C.success } }[p.status] || { bg: C.border, color: C.textSecondary }
                 const highRisks = p.risks.filter(r => r.priority === 'High').length
                 return (
                   <tr key={p.id} onClick={() => navigate(`/dashboard/history/${p.id}`)}
-                    style={{ borderBottom: `1px solid ${C.border}`, cursor: 'pointer', background: i % 2 === 0 ? '#fff' : C.mainBg }}
-                    onMouseEnter={e => e.currentTarget.style.background = '#f0f4ff'}
-                    onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? '#fff' : C.mainBg}>
+                    style={{ borderBottom: `1px solid ${C.border}`, cursor: 'pointer', background: i % 2 === 0 ? C.cardBg : C.mainBg }}
+                    onMouseEnter={e => e.currentTarget.style.background = C.primary + '0D'}
+                    onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? C.cardBg : C.mainBg}>
                     <td style={{ padding: '12px 14px', fontWeight: 600, color: C.primary }}>{p.name}</td>
                     <td style={{ padding: '12px 14px' }}>
                       <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600, background: C.primary + '18', color: C.primary }}>{p.domain}</span>

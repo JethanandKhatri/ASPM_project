@@ -1,14 +1,15 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useProjects } from '../../context/ProjectContext'
+import { useThemeColors } from '../../context/ThemeContext'
 
-const C = { primary: '#3B5998', mainBg: '#F4F6FB', cardBg: '#FFFFFF', border: '#E0E4ED', textPrimary: '#1A1A2E', textSecondary: '#6B7280', success: '#639922' }
 
 function calcExpected(b, m, w) {
   return Math.round(((parseFloat(b) || 0) + 4 * (parseFloat(m) || 0) + (parseFloat(w) || 0)) / 6 * 10) / 10
 }
 
 export default function ExpertJudgment() {
+  const C = useThemeColors()
   const { id } = useParams()
   const navigate = useNavigate()
   const { getProject, addEstimation } = useProjects()
@@ -130,7 +131,7 @@ export default function ExpertJudgment() {
             { label: 'Cost', value: `$${costUSD.toLocaleString()}` },
             { label: 'Duration', value: `${durationMonths} months` },
           ].map(m => (
-            <div key={m.label} style={{ background: '#f0fdf4', borderRadius: 8, padding: '12px 14px' }}>
+            <div key={m.label} style={{ background: C.success + '12', borderRadius: 8, padding: '12px 14px' }}>
               <div style={{ fontSize: 18, fontWeight: 700, color: C.success }}>{m.value}</div>
               <div style={{ fontSize: 11, color: C.textSecondary, marginTop: 3 }}>{m.label}</div>
             </div>
@@ -138,7 +139,7 @@ export default function ExpertJudgment() {
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           {saved ? (
-            <div style={{ padding: '10px 20px', background: '#f0fdf4', border: `1px solid #bbf7d0`, borderRadius: 8, fontSize: 13, color: C.success, fontWeight: 600 }}>✓ Estimation Saved!</div>
+            <div style={{ padding: '10px 20px', background: C.success + '12', border: `1px solid ${C.success}30`, borderRadius: 8, fontSize: 13, color: C.success, fontWeight: 600 }}>✓ Estimation Saved!</div>
           ) : (
             <button onClick={handleSave} style={{ padding: '10px 24px', background: C.primary, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Save Estimation</button>
           )}

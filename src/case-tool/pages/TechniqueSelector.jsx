@@ -1,10 +1,7 @@
 import { useNavigate, useParams } from 'react-router-dom'
 import { useProjects } from '../context/ProjectContext'
+import { useThemeColors } from '../context/ThemeContext'
 
-const C = {
-  primary: '#3B5998', mainBg: '#F4F6FB', cardBg: '#FFFFFF', border: '#E0E4ED',
-  textPrimary: '#1A1A2E', textSecondary: '#6B7280',
-}
 
 const TECHNIQUES = [
   { id: 'fuzzy', label: 'Fuzzy Logic', icon: '🔮', path: 'fuzzy', desc: 'Classify features by size (XS–XL) and estimate LOC from historical averages. Best when features vary widely in complexity.' },
@@ -16,12 +13,13 @@ const TECHNIQUES = [
 ]
 
 export default function TechniqueSelector() {
+  const C = useThemeColors()
   const { id } = useParams()
   const navigate = useNavigate()
   const { getProject } = useProjects()
   const project = getProject(id)
 
-  if (!project) return <div style={{ padding: 32, color: '#6b7280', textAlign: 'center' }}>Project not found.</div>
+  if (!project) return <div style={{ padding: 32, color: C.textSecondary, textAlign: 'center' }}>Project not found.</div>
 
   return (
     <div style={{ padding: 28 }}>

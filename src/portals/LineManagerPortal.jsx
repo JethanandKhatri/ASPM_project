@@ -1,229 +1,310 @@
-import { useState } from 'react'
-import Sidebar from '../components/Sidebar'
+import { useState, useMemo } from 'react'
+import { useProjects } from '../case-tool/context/ProjectContext'
+import { useThemeColors } from '../case-tool/context/ThemeContext'
+import { useScrum } from '../case-tool/context/ScrumContext'
 
-const NAV = [
-  { icon: '🏠', label: 'Dashboard', path: '/dashboard' },
-  { icon: '👥', label: 'My Team', path: '/dashboard/team' },
-  { icon: '📈', label: 'Performance', path: '/dashboard/performance' },
-  { icon: '🔁', label: 'Sprint Review', path: '/dashboard/review' },
-  { icon: '🗓️', label: 'Leave Requests', path: '/dashboard/leave' },
-]
-
-const TEAM = [
-  { name: 'Sara Ahmed', role: 'Frontend Dev', avatar: 'S', velocity: 24, tasks: 8, status: 'active' },
-  { name: 'Bilal Khan', role: 'Backend Dev', avatar: 'B', velocity: 31, tasks: 11, status: 'active' },
-  { name: 'Fatima Noor', role: 'QA Engineer', avatar: 'F', velocity: 18, tasks: 6, status: 'leave' },
-  { name: 'Hassan Raza', role: 'Full Stack', avatar: 'H', velocity: 27, tasks: 9, status: 'active' },
-  { name: 'Zara Malik', role: 'UI/UX Dev', avatar: 'Z', velocity: 20, tasks: 7, status: 'active' },
-]
-
-const SPRINTS = [
-  { id: 'S3', name: 'Sprint 3', velocity: 82, planned: 90, completed: 82, bugs: 3 },
-  { id: 'S2', name: 'Sprint 2', velocity: 75, planned: 80, completed: 75, bugs: 5 },
-  { id: 'S1', name: 'Sprint 1', velocity: 60, planned: 70, completed: 60, bugs: 8 },
-]
-
-export default function LineManagerPortal() {
-  const [activeTab, setActiveTab] = useState('dashboard')
-
-  const activeCount = TEAM.filter((m) => m.status === 'active').length
-  const totalVelocity = TEAM.reduce((a, m) => a + m.velocity, 0)
-  const totalTasks = TEAM.reduce((a, m) => a + m.tasks, 0)
-
+function MetricCard({ label, value, sub, icon, color }) {
+  const C = useThemeColors()
   return (
-    <div style={styles.layout}>
-      <Sidebar navItems={NAV} />
-      <main style={styles.main}>
-        <div style={styles.header}>
-          <div>
-            <h1 style={styles.pageTitle}>Line Manager Portal</h1>
-            <p style={styles.pageSub}>Team Overview · Sprint 4 Active</p>
-          </div>
-          <div style={styles.heroBadge}>👥 5 Team Members</div>
-        </div>
-
-        <div style={styles.tabs}>
-          {[
-            { id: 'dashboard', label: '📊 Overview' },
-            { id: 'team', label: '👥 Team' },
-            { id: 'velocity', label: '📈 Velocity' },
-          ].map((t) => (
-            <button
-              key={t.id}
-              style={{ ...styles.tab, ...(activeTab === t.id ? styles.tabActive : {}) }}
-              onClick={() => setActiveTab(t.id)}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-
-        {activeTab === 'dashboard' && (
-          <>
-            <div style={styles.statsRow}>
-              {[
-                { label: 'Active Members', value: activeCount, color: '#0ea5e9', icon: '👥' },
-                { label: 'On Leave', value: TEAM.length - activeCount, color: '#f59e0b', icon: '🌴' },
-                { label: 'Team Velocity', value: totalVelocity, color: '#10b981', icon: '⚡' },
-                { label: 'Open Tasks', value: totalTasks, color: '#6366f1', icon: '📋' },
-              ].map((s) => (
-                <div key={s.label} style={{ ...styles.statCard, borderTop: `3px solid ${s.color}` }}>
-                  <div style={{ fontSize: 26 }}>{s.icon}</div>
-                  <div style={{ fontSize: 28, fontWeight: 700, color: s.color }}>{s.value}</div>
-                  <div style={styles.statLabel}>{s.label}</div>
-                </div>
-              ))}
-            </div>
-
-            <div style={styles.twoCol}>
-              {/* Team list */}
-              <div style={styles.card}>
-                <h3 style={styles.sectionTitle}>Team Members</h3>
-                {TEAM.map((m) => (
-                  <div key={m.name} style={styles.memberRow}>
-                    <div style={{ ...styles.avatar, background: m.status === 'leave' ? '#9ca3af' : '#0ea5e9' }}>{m.avatar}</div>
-                    <div style={{ flex: 1 }}>
-                      <div style={styles.memberName}>{m.name}</div>
-                      <div style={styles.memberRole}>{m.role}</div>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: '#0ea5e9' }}>{m.velocity} pts</div>
-                      <span style={{ ...styles.statusBadge, background: m.status === 'active' ? '#d1fae5' : '#fef3c7', color: m.status === 'active' ? '#16a34a' : '#92400e' }}>
-                        {m.status === 'active' ? 'Active' : 'On Leave'}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Sprint health */}
-              <div style={styles.card}>
-                <h3 style={styles.sectionTitle}>Sprint Health</h3>
-                {SPRINTS.map((s) => {
-                  const pct = Math.round((s.completed / s.planned) * 100)
-                  return (
-                    <div key={s.id} style={{ marginBottom: 20 }}>
-                      <div style={styles.sprintRow}>
-                        <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>{s.name}</span>
-                        <span style={{ fontSize: 12, color: '#6b7280' }}>{s.completed}/{s.planned} pts · {s.bugs} bugs</span>
-                        <span style={{ fontSize: 13, fontWeight: 700, color: pct >= 90 ? '#10b981' : pct >= 75 ? '#f59e0b' : '#dc2626' }}>{pct}%</span>
-                      </div>
-                      <div style={styles.progressBg}>
-                        <div style={{ ...styles.progressFill, width: `${pct}%`, background: pct >= 90 ? '#10b981' : pct >= 75 ? '#f59e0b' : '#dc2626' }} />
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          </>
-        )}
-
-        {activeTab === 'team' && (
-          <div style={styles.card}>
-            <h3 style={styles.sectionTitle}>Team Roster</h3>
-            <table style={styles.table}>
-              <thead>
-                <tr>
-                  {['Member', 'Role', 'Velocity', 'Tasks', 'Status', 'Action'].map((h) => (
-                    <th key={h} style={styles.th}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {TEAM.map((m) => (
-                  <tr key={m.name} style={styles.tr}>
-                    <td style={styles.td}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <div style={{ ...styles.avatarSm, background: '#0ea5e9' }}>{m.avatar}</div>
-                        {m.name}
-                      </div>
-                    </td>
-                    <td style={styles.td}>{m.role}</td>
-                    <td style={{ ...styles.td, color: '#0ea5e9', fontWeight: 600 }}>{m.velocity} pts</td>
-                    <td style={styles.td}>{m.tasks}</td>
-                    <td style={styles.td}>
-                      <span style={{ ...styles.statusBadge, background: m.status === 'active' ? '#d1fae5' : '#fef3c7', color: m.status === 'active' ? '#16a34a' : '#92400e' }}>
-                        {m.status === 'active' ? 'Active' : 'On Leave'}
-                      </span>
-                    </td>
-                    <td style={styles.td}>
-                      <button style={styles.actionBtn}>View →</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {activeTab === 'velocity' && (
-          <div style={styles.card}>
-            <h3 style={styles.sectionTitle}>Team Velocity Trend</h3>
-            <div style={styles.chartArea}>
-              {SPRINTS.slice().reverse().map((s, i) => {
-                const maxV = 100
-                const h = Math.round((s.velocity / maxV) * 180)
-                const hp = Math.round((s.planned / maxV) * 180)
-                return (
-                  <div key={s.id} style={styles.barGroup}>
-                    <div style={styles.barPair}>
-                      <div style={{ ...styles.bar, height: hp, background: '#e5e7eb' }} title={`Planned: ${s.planned}`} />
-                      <div style={{ ...styles.bar, height: h, background: '#0ea5e9' }} title={`Velocity: ${s.velocity}`} />
-                    </div>
-                    <div style={styles.barLabel}>{s.name}</div>
-                    <div style={{ fontSize: 12, color: '#0ea5e9', fontWeight: 600 }}>{s.velocity}</div>
-                  </div>
-                )
-              })}
-            </div>
-            <div style={styles.legend}>
-              <span style={styles.legendItem}><span style={{ ...styles.dot, background: '#e5e7eb' }} /> Planned</span>
-              <span style={styles.legendItem}><span style={{ ...styles.dot, background: '#0ea5e9' }} /> Achieved</span>
-            </div>
-          </div>
-        )}
-      </main>
+    <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 10, padding: '16px 18px', display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div style={{ width: 40, height: 40, borderRadius: 10, background: (color || C.primary) + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>{icon}</div>
+      <div>
+        <div style={{ fontSize: 22, fontWeight: 700, color: C.textPrimary, lineHeight: 1.2 }}>{value}</div>
+        <div style={{ fontSize: 12, color: C.textSecondary, marginTop: 2 }}>{label}</div>
+        {sub && <div style={{ fontSize: 11, color: color || C.primary, marginTop: 1, fontWeight: 500 }}>{sub}</div>}
+      </div>
     </div>
   )
 }
 
-const styles = {
-  layout: { display: 'flex', minHeight: '100vh', background: '#f8fafc', fontFamily: "'Inter', sans-serif" },
-  main: { flex: 1, padding: '32px 36px', overflowY: 'auto' },
-  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 },
-  pageTitle: { fontSize: 26, fontWeight: 800, color: '#1e1b4b', marginBottom: 4 },
-  pageSub: { fontSize: 13, color: '#6b7280' },
-  heroBadge: { background: '#e0f2fe', color: '#0369a1', padding: '6px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600 },
-  tabs: { display: 'flex', gap: 4, background: '#f3f4f6', borderRadius: 12, padding: 4, marginBottom: 28, width: 'fit-content' },
-  tab: { padding: '8px 18px', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 500, background: 'transparent', color: '#6b7280' },
-  tabActive: { background: '#fff', color: '#0ea5e9', fontWeight: 600, boxShadow: '0 1px 4px rgba(0,0,0,0.08)' },
-  statsRow: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 },
-  statCard: { background: '#fff', borderRadius: 14, padding: '20px', textAlign: 'center', boxShadow: '0 1px 6px rgba(0,0,0,0.05)' },
-  statLabel: { fontSize: 12, color: '#6b7280', marginTop: 4, fontWeight: 500 },
-  twoCol: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 },
-  card: { background: '#fff', borderRadius: 14, padding: 24, boxShadow: '0 1px 6px rgba(0,0,0,0.05)' },
-  sectionTitle: { fontSize: 15, fontWeight: 700, color: '#111827', marginBottom: 16 },
-  memberRow: { display: 'flex', alignItems: 'center', gap: 12, paddingBottom: 14, marginBottom: 14, borderBottom: '1px solid #f3f4f6' },
-  avatar: { width: 38, height: 38, borderRadius: 10, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 15, flexShrink: 0 },
-  avatarSm: { width: 28, height: 28, borderRadius: 8, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 12, flexShrink: 0 },
-  memberName: { fontSize: 13, fontWeight: 600, color: '#111827' },
-  memberRole: { fontSize: 11, color: '#6b7280', marginTop: 2 },
-  statusBadge: { padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 600 },
-  sprintRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  progressBg: { background: '#e5e7eb', borderRadius: 99, height: 8, overflow: 'hidden' },
-  progressFill: { height: '100%', borderRadius: 99, transition: 'width 0.5s' },
-  table: { width: '100%', borderCollapse: 'collapse' },
-  th: { textAlign: 'left', fontSize: 12, fontWeight: 600, color: '#6b7280', padding: '8px 12px', borderBottom: '2px solid #f3f4f6', textTransform: 'uppercase', letterSpacing: 0.5 },
-  tr: { borderBottom: '1px solid #f9fafb' },
-  td: { padding: '12px 12px', fontSize: 13, color: '#374151' },
-  actionBtn: { padding: '4px 12px', border: '1.5px solid #e5e7eb', borderRadius: 8, background: '#fff', cursor: 'pointer', fontSize: 12, fontWeight: 500, color: '#4b5563' },
-  chartArea: { display: 'flex', gap: 36, alignItems: 'flex-end', padding: '20px 0', justifyContent: 'center', minHeight: 220 },
-  barGroup: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 },
-  barPair: { display: 'flex', gap: 8, alignItems: 'flex-end' },
-  bar: { width: 36, borderRadius: '6px 6px 0 0', transition: 'height 0.5s' },
-  barLabel: { fontSize: 12, fontWeight: 600, color: '#374151' },
-  legend: { display: 'flex', gap: 20, marginTop: 16, justifyContent: 'center' },
-  legendItem: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#6b7280' },
-  dot: { width: 12, height: 12, borderRadius: '50%', display: 'inline-block' },
+function Card({ children, style }) {
+  const C = useThemeColors()
+  return <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 10, padding: 20, ...style }}>{children}</div>
+}
+
+function Bar({ pct, color, h = 7 }) {
+  const C = useThemeColors()
+  return (
+    <div style={{ height: h, background: C.border, borderRadius: h / 2 }}>
+      <div style={{ height: '100%', width: `${Math.min(100, Math.max(0, pct))}%`, background: color, borderRadius: h / 2, transition: 'width 0.4s' }} />
+    </div>
+  )
+}
+
+function Badge({ label, color, bg }) {
+  return <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600, background: bg, color }}>{label}</span>
+}
+
+export default function LineManagerPortal() {
+  const C = useThemeColors()
+  const { projects, loading } = useProjects()
+  const { sprints, standupNotes: standups, scrumLoading } = useScrum()
+  const [tab, setTab] = useState('overview')
+
+  const allTasks = projects.flatMap(p => (p.tasks || []).map(t => ({ ...t, projectName: p.name })))
+  const allRisks = projects.flatMap(p => (p.risks || []).map(r => ({ ...r, projectName: p.name })))
+
+  // Build team roster from standup names + task assignees
+  const memberMap = useMemo(() => {
+    const map = new Map()
+    standups.forEach(s => {
+      if (!s.memberName) return
+      if (!map.has(s.memberName)) map.set(s.memberName, { name: s.memberName, standupCount: 0, blockers: 0 })
+      const m = map.get(s.memberName)
+      m.standupCount += 1
+      if (s.blockers && s.blockers.toLowerCase() !== 'none' && s.blockers.trim() !== '') m.blockers += 1
+    })
+    allTasks.forEach(t => {
+      if (t.assignee && !map.has(t.assignee)) map.set(t.assignee, { name: t.assignee, standupCount: 0, blockers: 0 })
+    })
+    return map
+  }, [standups, allTasks])
+  const teamMembers = Array.from(memberMap.values())
+
+  const velocityData = useMemo(() => {
+    return sprints
+      .filter(s => s.status === 'completed' || s.completedTaskCount !== undefined)
+      .map(s => ({ name: s.name, completed: s.completedTaskCount || 0, capacity: s.capacity || 0 }))
+      .slice(-6)
+  }, [sprints])
+
+  const activeSprint   = sprints.find(s => s.status === 'active')
+  const activeProjects = projects.filter(p => p.status === 'Active')
+  const highRisks      = allRisks.filter(r => r.priority === 'High' && r.status !== 'Resolved')
+  const avgVelocity    = velocityData.length
+    ? Math.round(velocityData.reduce((a, b) => a + b.completed, 0) / velocityData.length)
+    : 0
+
+  const TABS = [
+    { id: 'overview', label: 'Overview' },
+    { id: 'team',     label: `Team (${teamMembers.length})` },
+    { id: 'projects', label: `Projects (${projects.length})` },
+    { id: 'velocity', label: 'Velocity' },
+  ]
+
+  if (loading || scrumLoading) return <div style={{ padding: 28, color: C.textSecondary, fontSize: 14 }}>Loading…</div>
+
+  return (
+    <div style={{ padding: 28, background: C.mainBg, minHeight: '100%' }}>
+      <div style={{ marginBottom: 24 }}>
+        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: C.textPrimary }}>Team Management</h1>
+        <p style={{ margin: '4px 0 0', fontSize: 13, color: C.textSecondary }}>
+          Line Manager view · {activeProjects.length} active project{activeProjects.length !== 1 ? 's' : ''} · {teamMembers.length} team member{teamMembers.length !== 1 ? 's' : ''}
+        </p>
+      </div>
+
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: 2, borderBottom: `2px solid ${C.border}`, marginBottom: 24 }}>
+        {TABS.map(t => (
+          <button key={t.id} onClick={() => setTab(t.id)}
+            style={{ padding: '10px 16px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 13, fontWeight: tab === t.id ? 600 : 400, fontFamily: 'inherit', color: tab === t.id ? C.primary : C.textSecondary, borderBottom: tab === t.id ? `2px solid ${C.primary}` : '2px solid transparent', marginBottom: -2, whiteSpace: 'nowrap' }}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Overview */}
+      {tab === 'overview' && (
+        <>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 20 }}>
+            <MetricCard label="Active Projects" value={activeProjects.length} icon="📂" color={C.primary}  sub={`${projects.length} total`}     />
+            <MetricCard label="Team Members"    value={teamMembers.length}    icon="👥" color={C.success}  sub="across all projects"             />
+            <MetricCard label="Avg Velocity"    value={avgVelocity}           icon="⚡" color={C.warning}  sub={`${velocityData.length} sprints`} />
+            <MetricCard label="High Risks"      value={highRisks.length}      icon="⚠" color={C.danger}   sub="unresolved"                      />
+          </div>
+
+          {activeSprint && (
+            <Card style={{ marginBottom: 16, borderLeft: `4px solid ${C.primary}` }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: C.primary, textTransform: 'uppercase', letterSpacing: 0.5 }}>Active Sprint</span>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: C.textPrimary }}>{activeSprint.name}</span>
+                </div>
+                <span style={{ fontSize: 12, color: C.textSecondary }}>{activeSprint.startDate} → {activeSprint.endDate}</span>
+              </div>
+              {activeSprint.goal && <p style={{ margin: '0 0 10px', fontSize: 13, color: C.textSecondary }}>Goal: {activeSprint.goal}</p>}
+              {activeSprint.capacity > 0 && (
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: C.textSecondary, marginBottom: 4 }}>
+                    <span>Capacity utilisation</span>
+                    <span style={{ fontWeight: 600 }}>{activeSprint.completedTaskCount || 0}/{activeSprint.capacity}</span>
+                  </div>
+                  <Bar pct={((activeSprint.completedTaskCount || 0) / activeSprint.capacity) * 100} color={C.primary} h={8} />
+                </div>
+              )}
+            </Card>
+          )}
+
+          <Card>
+            <h3 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 600, color: C.textPrimary }}>Project Health</h3>
+            {projects.length === 0 ? (
+              <p style={{ margin: 0, fontSize: 13, color: C.textSecondary }}>No projects yet.</p>
+            ) : projects.map(p => {
+              const tasks   = p.tasks || []
+              const done    = tasks.filter(t => t.status === 'Done').length
+              const pct     = tasks.length > 0 ? Math.round((done / tasks.length) * 100) : 0
+              const risks   = (p.risks || []).filter(r => r.priority === 'High' && r.status !== 'Resolved').length
+              const stColor = p.status === 'Active' ? C.primary : p.status === 'Completed' ? C.success : C.warning
+              return (
+                <div key={p.id} style={{ padding: '12px 0', borderBottom: `1px solid ${C.border}` }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: C.textPrimary }}>{p.name}</span>
+                      <Badge label={p.status} color={stColor} bg={stColor + '15'} />
+                      {risks > 0 && <Badge label={`${risks} risk${risks > 1 ? 's' : ''}`} color={C.danger} bg={C.danger + '12'} />}
+                    </div>
+                    <span style={{ fontSize: 12, color: C.textSecondary }}>{done}/{tasks.length} tasks · {pct}%</span>
+                  </div>
+                  <Bar pct={pct} color={pct >= 70 ? C.success : pct >= 40 ? C.warning : C.primary} h={6} />
+                </div>
+              )
+            })}
+          </Card>
+        </>
+      )}
+
+      {/* Team Tab */}
+      {tab === 'team' && (
+        <Card>
+          <h3 style={{ margin: '0 0 16px', fontSize: 14, fontWeight: 600, color: C.textPrimary }}>Team Roster</h3>
+          {teamMembers.length === 0 ? (
+            <p style={{ margin: 0, fontSize: 13, color: C.textSecondary }}>
+              No team data available yet. Members appear here when tasks are assigned to them or they submit standup notes.
+            </p>
+          ) : (
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <thead>
+                <tr style={{ borderBottom: `2px solid ${C.border}` }}>
+                  {['Member', 'Tasks Assigned', 'Done', 'In Progress', 'Standups', 'Blockers'].map(h => (
+                    <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: C.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {teamMembers.map((m, i) => {
+                  const assigned = allTasks.filter(t => (t.assignee || '').toLowerCase() === m.name.toLowerCase())
+                  const done     = assigned.filter(t => t.status === 'Done').length
+                  const inProg   = assigned.filter(t => t.status === 'In Progress').length
+                  const initial  = m.name.trim()[0]?.toUpperCase() || '?'
+                  return (
+                    <tr key={m.name} style={{ borderBottom: `1px solid ${C.border}`, background: i % 2 === 0 ? C.cardBg : C.mainBg }}>
+                      <td style={{ padding: '11px 12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <div style={{ width: 28, height: 28, borderRadius: '50%', background: C.primary + '20', color: C.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>{initial}</div>
+                          <span style={{ fontWeight: 500, color: C.textPrimary }}>{m.name}</span>
+                        </div>
+                      </td>
+                      <td style={{ padding: '11px 12px', color: C.textPrimary }}>{assigned.length}</td>
+                      <td style={{ padding: '11px 12px' }}><Badge label={String(done)}   color={C.success} bg={C.success + '15'} /></td>
+                      <td style={{ padding: '11px 12px' }}><Badge label={String(inProg)} color={C.primary} bg={C.primary + '15'} /></td>
+                      <td style={{ padding: '11px 12px', color: C.textSecondary }}>{m.standupCount}</td>
+                      <td style={{ padding: '11px 12px' }}>
+                        {m.blockers > 0
+                          ? <Badge label={`${m.blockers} blocker${m.blockers > 1 ? 's' : ''}`} color={C.danger} bg={C.danger + '12'} />
+                          : <span style={{ color: C.textSecondary, fontSize: 12 }}>None</span>
+                        }
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          )}
+        </Card>
+      )}
+
+      {/* Projects Tab */}
+      {tab === 'projects' && (
+        <Card>
+          <h3 style={{ margin: '0 0 16px', fontSize: 14, fontWeight: 600, color: C.textPrimary }}>All Projects</h3>
+          {projects.length === 0 ? (
+            <p style={{ margin: 0, fontSize: 13, color: C.textSecondary }}>No projects in the system yet.</p>
+          ) : (
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <thead>
+                <tr style={{ borderBottom: `2px solid ${C.border}` }}>
+                  {['Project', 'Domain', 'Status', 'Team Size', 'Features', 'Deadline', 'Risks'].map(h => (
+                    <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: C.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {projects.map((p, i) => {
+                  const stColor = p.status === 'Active' ? C.primary : p.status === 'Completed' ? C.success : C.warning
+                  const feats   = (p.features || []).length
+                  const done    = (p.features || []).filter(f => f.status === 'Done').length
+                  const risks   = (p.risks || []).filter(r => r.status !== 'Resolved').length
+                  return (
+                    <tr key={p.id} style={{ borderBottom: `1px solid ${C.border}`, background: i % 2 === 0 ? C.cardBg : C.mainBg }}>
+                      <td style={{ padding: '11px 12px', fontWeight: 600, color: C.textPrimary }}>{p.name}</td>
+                      <td style={{ padding: '11px 12px' }}><Badge label={p.domain || '—'} color={C.primary} bg={C.primary + '12'} /></td>
+                      <td style={{ padding: '11px 12px' }}><Badge label={p.status}        color={stColor}   bg={stColor + '15'}    /></td>
+                      <td style={{ padding: '11px 12px', color: C.textSecondary }}>{p.teamSize || '—'}</td>
+                      <td style={{ padding: '11px 12px', color: C.textSecondary }}>{done}/{feats} done</td>
+                      <td style={{ padding: '11px 12px', color: C.textSecondary, fontSize: 12 }}>{p.deadline || '—'}</td>
+                      <td style={{ padding: '11px 12px' }}>
+                        {risks > 0
+                          ? <Badge label={`${risks} open`} color={C.danger}  bg={C.danger + '12'}  />
+                          : <Badge label="clear"           color={C.success} bg={C.success + '12'} />
+                        }
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          )}
+        </Card>
+      )}
+
+      {/* Velocity Tab */}
+      {tab === 'velocity' && (
+        <Card>
+          <h3 style={{ margin: '0 0 6px', fontSize: 14, fontWeight: 600, color: C.textPrimary }}>Sprint Velocity</h3>
+          <p style={{ margin: '0 0 20px', fontSize: 12, color: C.textSecondary }}>Completed tasks vs capacity per sprint</p>
+          {velocityData.length === 0 ? (
+            <p style={{ margin: 0, fontSize: 13, color: C.textSecondary }}>No completed sprints yet. Velocity data appears here once sprints are finished.</p>
+          ) : (
+            <>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 24 }}>
+                {[
+                  { label: 'Avg Velocity',   value: avgVelocity,                                               color: C.primary },
+                  { label: 'Best Sprint',     value: Math.max(...velocityData.map(s => s.completed)),           color: C.success },
+                  { label: 'Total Completed', value: velocityData.reduce((a, b) => a + b.completed, 0),         color: C.warning },
+                ].map(m => (
+                  <div key={m.label} style={{ textAlign: 'center', padding: '14px', background: m.color + '0D', border: `1px solid ${m.color}25`, borderRadius: 8 }}>
+                    <div style={{ fontSize: 24, fontWeight: 700, color: m.color }}>{m.value}</div>
+                    <div style={{ fontSize: 11, color: C.textSecondary, marginTop: 4 }}>{m.label}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12, height: 160, padding: '0 0 8px' }}>
+                {velocityData.map(s => {
+                  const maxVal      = Math.max(...velocityData.map(x => Math.max(x.completed, x.capacity)), 1)
+                  const completedH  = Math.max(4, (s.completed / maxVal) * 130)
+                  const capacityH   = Math.max(4, (s.capacity  / maxVal) * 130)
+                  return (
+                    <div key={s.name} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                      <div style={{ width: '100%', display: 'flex', alignItems: 'flex-end', gap: 2, height: 140 }}>
+                        {s.capacity > 0 && (
+                          <div style={{ flex: 1, height: capacityH, background: C.border, borderRadius: '3px 3px 0 0' }} title={`Capacity: ${s.capacity}`} />
+                        )}
+                        <div style={{ flex: 1, height: completedH, background: C.primary, borderRadius: '3px 3px 0 0' }} title={`Completed: ${s.completed}`} />
+                      </div>
+                      <div style={{ fontSize: 10, color: C.textSecondary, textAlign: 'center', maxWidth: 60, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</div>
+                      <div style={{ fontSize: 10, color: C.primary, fontWeight: 600 }}>{s.completed}</div>
+                    </div>
+                  )
+                })}
+              </div>
+              <div style={{ display: 'flex', gap: 16, marginTop: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: C.textSecondary }}><div style={{ width: 12, height: 12, borderRadius: 2, background: C.primary }} /> Completed</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: C.textSecondary }}><div style={{ width: 12, height: 12, borderRadius: 2, background: C.border  }} /> Capacity</div>
+              </div>
+            </>
+          )}
+        </Card>
+      )}
+    </div>
+  )
 }

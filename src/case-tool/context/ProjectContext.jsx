@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { supabase, supabaseAdmin } from '../../lib/supabase'
 import { SAMPLE_PROJECTS, SAMPLE_NOTIFICATIONS } from '../data/sampleData'
+import { useAuth } from '../../context/AuthContext'
 
 // db is admin client so RLS never blocks data reads in this shared workspace
 const db = supabaseAdmin
@@ -20,6 +21,7 @@ function shapeProject(p, rel = {}) {
     id: p.id, name: p.name, domain: p.domain,
     description: p.description, teamSize: p.team_size,
     startDate: p.start_date, deadline: p.deadline, status: p.status,
+    budget: parseFloat(p.budget) || 0,
     features: features.map(f => ({
       id: f.id, name: f.name, description: f.description,
       priority: f.priority, status: f.status,
@@ -142,6 +144,8 @@ export function ProjectProvider({ children }) {
   const [projects, setProjects] = useState([])
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
+  const { profile } = useAuth()
+  const isPM = ['pm', 'project_manager', 'admin'].includes(profile?.role)
 
   const loadAll = useCallback(async () => {
     const { data: projectRows, error } = await db
@@ -202,17 +206,27 @@ export function ProjectProvider({ children }) {
 
   useEffect(() => { loadAll() }, [loadAll])
 
+  async function createNotification(type, message, projectId = null) {
+    const notifId = 'n' + Date.now()
+    const timestamp = new Date().toISOString()
+    const notif = { id: notifId, type, message, projectId, read: false, timestamp }
+    setNotifications(prev => [notif, ...prev])
+    await db.from('notifications').insert({ id: notifId, type, message, project_id: projectId, read: false, timestamp })
+  }
+
   function getProject(id) {
     return projects.find(p => p.id === id) || null
   }
 
   async function addProject(projectData) {
+    if (!isPM) return null
     const id = 'p' + Date.now()
     await db.from('projects').insert({
       id, name: projectData.name, domain: projectData.domain,
       description: projectData.description, team_size: projectData.teamSize,
       start_date: projectData.startDate, deadline: projectData.deadline,
       status: projectData.status || 'Active',
+      budget: parseFloat(projectData.budget) || 0,
     })
     if (projectData.features?.length) {
       await db.from('features').insert(
@@ -223,11 +237,13 @@ export function ProjectProvider({ children }) {
         }))
       )
     }
+    await createNotification('project', `New project "${projectData.name}" created`, id)
     await loadAll()
     return id
   }
 
   async function updateProject(projectId, updates) {
+    if (!isPM) return
     const dbUpdates = {}
     if (updates.name !== undefined) dbUpdates.name = updates.name
     if (updates.domain !== undefined) dbUpdates.domain = updates.domain
@@ -236,6 +252,7 @@ export function ProjectProvider({ children }) {
     if (updates.startDate !== undefined) dbUpdates.start_date = updates.startDate
     if (updates.deadline !== undefined) dbUpdates.deadline = updates.deadline
     if (updates.status !== undefined) dbUpdates.status = updates.status
+    if (updates.budget !== undefined) dbUpdates.budget = parseFloat(updates.budget) || 0
 
     if (Object.keys(dbUpdates).length) {
       await db.from('projects').update(dbUpdates).eq('id', projectId)
@@ -257,11 +274,13 @@ export function ProjectProvider({ children }) {
   }
 
   async function deleteProject(projectId) {
+    if (!isPM) return
     await db.from('projects').delete().eq('id', projectId)
     setProjects(prev => prev.filter(p => p.id !== projectId))
   }
 
   async function addEstimation(projectId, estimation) {
+    if (!isPM) return
     const project = getProject(projectId)
     const version = 'v' + ((project?.estimations?.length || 0) + 1)
     await db.from('estimations').insert({
@@ -276,19 +295,26 @@ export function ProjectProvider({ children }) {
   }
 
   async function addRisk(projectId, risk) {
+    if (!isPM) return
     const riskExposure = Math.round((risk.probability / 100) * risk.costImpact)
+    const priority = getRiskPriority(riskExposure)
     await db.from('risks').insert({
       id: 'r' + Date.now(), project_id: projectId,
       description: risk.description, category: risk.category,
       probability: risk.probability, impact: risk.impact,
       cost_impact: risk.costImpact, risk_exposure: riskExposure,
-      priority: getRiskPriority(riskExposure),
+      priority,
       status: 'Open', mitigation: '', monitoring: '', management: '',
     })
+    if (priority === 'High') {
+      const p = getProject(projectId)
+      await createNotification('risk', `High priority risk added to "${p?.name || 'project'}"`, projectId)
+    }
     await loadAll()
   }
 
   async function updateRisk(projectId, riskId, updates) {
+    if (!isPM) return
     const existing = getProject(projectId)?.risks?.find(r => r.id === riskId)
     const prob = updates.probability ?? existing?.probability ?? 0
     const cost = updates.costImpact ?? existing?.costImpact ?? 0
@@ -311,6 +337,7 @@ export function ProjectProvider({ children }) {
   }
 
   async function deleteRisk(projectId, riskId) {
+    if (!isPM) return
     await db.from('risks').delete().eq('id', riskId)
     setProjects(prev => prev.map(p =>
       p.id !== projectId ? p : { ...p, risks: p.risks.filter(r => r.id !== riskId) }
@@ -355,6 +382,17 @@ export function ProjectProvider({ children }) {
 
   const unreadCount = notifications.filter(n => !n.read).length
 
+  function getActuals(projectId) {
+    try {
+      const stored = localStorage.getItem(`aspm_actuals_${projectId}`)
+      return stored ? JSON.parse(stored) : null
+    } catch { return null }
+  }
+
+  function saveActuals(projectId, data) {
+    localStorage.setItem(`aspm_actuals_${projectId}`, JSON.stringify(data))
+  }
+
   return (
     <ProjectContext.Provider value={{
       projects, notifications, unreadCount, loading,
@@ -362,6 +400,9 @@ export function ProjectProvider({ children }) {
       addEstimation, addRisk, updateRisk, deleteRisk,
       addComment, addTask, updateTaskStatus,
       markNotificationRead, markAllRead,
+      getActuals, saveActuals,
+      createNotification,
+      userRole: profile?.role,
     }}>
       {children}
     </ProjectContext.Provider>

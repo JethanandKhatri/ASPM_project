@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useProjects } from '../../context/ProjectContext'
+import { useThemeColors } from '../../context/ThemeContext'
 
-const C = { primary: '#3B5998', mainBg: '#F4F6FB', cardBg: '#FFFFFF', border: '#E0E4ED', textPrimary: '#1A1A2E', textSecondary: '#6B7280', success: '#639922', warning: '#EF9F27' }
 
 export default function Decomposition() {
+  const C = useThemeColors()
   const { id } = useParams()
   const navigate = useNavigate()
   const { getProject, addEstimation } = useProjects()
@@ -84,7 +85,7 @@ export default function Decomposition() {
       </div>
 
       {/* Formula info */}
-      <div style={{ background: '#fffbeb', border: `1px solid #fef08a`, borderRadius: 8, padding: '10px 14px', marginBottom: 18, fontSize: 12, color: '#92400e', display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+      <div style={{ background: C.warning + '12', border: `1px solid ${C.warning}30`, borderRadius: 8, padding: '10px 14px', marginBottom: 18, fontSize: 12, color: C.warning, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
         <span style={{ fontSize: 16 }}>ℹ</span>
         <div>
           <strong>Formula in use: </strong>
@@ -111,7 +112,7 @@ export default function Decomposition() {
             {tasks.map((t, i) => {
               const indSD = t.best && t.worst ? Math.round((parseFloat(t.worst) - parseFloat(t.best)) / 6 * 10) / 10 : '-'
               return (
-                <tr key={t.id} style={{ borderBottom: `1px solid ${C.border}`, background: i % 2 === 0 ? '#fff' : C.mainBg }}>
+                <tr key={t.id} style={{ borderBottom: `1px solid ${C.border}`, background: i % 2 === 0 ? C.cardBg : C.mainBg }}>
                   <td style={{ padding: '8px 10px' }}>
                     <input style={{ ...inp, textAlign: 'left' }} placeholder="Task name" value={t.name} onChange={e => updateTask(i, 'name', e.target.value)} />
                   </td>
@@ -123,7 +124,7 @@ export default function Decomposition() {
                   </td>
                   <td style={{ padding: '8px 10px', textAlign: 'center', fontWeight: 600, color: C.warning }}>{indSD}</td>
                   <td style={{ padding: '8px 10px', textAlign: 'center' }}>
-                    <button onClick={() => removeTask(i)} style={{ background: 'none', border: 'none', color: tasks.length <= 1 ? '#d1d5db' : '#dc2626', cursor: 'pointer', fontSize: 16, padding: 0 }}>✕</button>
+                    <button onClick={() => removeTask(i)} style={{ background: 'none', border: 'none', color: tasks.length <= 1 ? C.border : C.danger, cursor: 'pointer', fontSize: 16, padding: 0 }}>✕</button>
                   </td>
                 </tr>
               )
@@ -154,7 +155,7 @@ export default function Decomposition() {
             { label: 'Cost', value: `$${costUSD.toLocaleString()}` },
             { label: 'Duration', value: `${Math.max(1, Math.round(effortMonths / 3 * 10) / 10)} months` },
           ].map(m => (
-            <div key={m.label} style={{ background: '#f0fdf4', borderRadius: 8, padding: '12px 14px' }}>
+            <div key={m.label} style={{ background: C.success + '12', borderRadius: 8, padding: '12px 14px' }}>
               <div style={{ fontSize: 18, fontWeight: 700, color: C.success }}>{m.value}</div>
               <div style={{ fontSize: 11, color: C.textSecondary, marginTop: 3 }}>{m.label}</div>
             </div>
@@ -162,7 +163,7 @@ export default function Decomposition() {
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           {saved ? (
-            <div style={{ padding: '10px 20px', background: '#f0fdf4', border: `1px solid #bbf7d0`, borderRadius: 8, fontSize: 13, color: C.success, fontWeight: 600 }}>✓ Saved!</div>
+            <div style={{ padding: '10px 20px', background: C.success + '12', border: `1px solid ${C.success}30`, borderRadius: 8, fontSize: 13, color: C.success, fontWeight: 600 }}>✓ Saved!</div>
           ) : (
             <button onClick={handleSave} style={{ padding: '10px 24px', background: C.primary, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Save Estimation</button>
           )}
