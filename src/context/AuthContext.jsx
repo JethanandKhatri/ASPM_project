@@ -42,8 +42,7 @@ export function AuthProvider({ children }) {
     setLoading(false)
   }
 
-  async function signUp(email, password, role, fullName) {
-    // Admin createUser bypasses email confirmation completely
+  async function adminCreateUser(email, password, role, fullName) {
     const { data, error } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
@@ -52,7 +51,6 @@ export function AuthProvider({ children }) {
     })
     if (error) throw error
 
-    // Insert profile with service role (bypasses RLS)
     const { error: profileError } = await supabaseAdmin.from('profiles').upsert({
       id: data.user.id,
       email,
@@ -60,10 +58,19 @@ export function AuthProvider({ children }) {
       role,
     })
     if (profileError) throw profileError
+    return data.user
+  }
 
-    // Immediately sign in — no email verification needed
-    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
-    if (signInError) throw signInError
+  async function listUsers() {
+    const { data, error } = await supabaseAdmin.from('profiles').select('*').order('full_name')
+    if (error) throw error
+    return data || []
+  }
+
+  async function adminDeleteUser(userId) {
+    const { error } = await supabaseAdmin.auth.admin.deleteUser(userId)
+    if (error) throw error
+    await supabaseAdmin.from('profiles').delete().eq('id', userId)
   }
 
   async function signIn(email, password) {
@@ -78,7 +85,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, profile, loading, signIn, signOut, adminCreateUser, listUsers, adminDeleteUser }}>
       {children}
     </AuthContext.Provider>
   )

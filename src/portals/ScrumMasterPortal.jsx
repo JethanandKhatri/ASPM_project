@@ -383,7 +383,7 @@ function BacklogTab({ allTasks, sprints, projects, teamMembers }) {
           <span style={{ fontSize: 12, color: C.textSecondary }}>{sprint.startDate} → {sprint.endDate}</span>
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 10, alignItems: 'center' }}>
             <span style={{ fontSize: 12, color: C.textSecondary }}>{done}/{spTasks.length} done</span>
-            {sprint.reviewNotes && <span style={{ fontSize: 11, color: C.primary, fontWeight: 600 }}>📝 Review notes</span>}
+            {sprint.reviewNotes && <span style={{ fontSize: 11, color: C.primary, fontWeight: 600 }}>◎ Review notes</span>}
             <span style={{ fontSize: 12, color: C.textSecondary }}>{isExp?'▲':'▼'}</span>
           </div>
         </div>
@@ -497,9 +497,25 @@ function BacklogTab({ allTasks, sprints, projects, teamMembers }) {
 }
 
 // ── SPRINTS TAB ───────────────────────────────────────────────────────────────
-function SprintsTab({ sprints, allTasks }) {
+function SprintsTab({ sprints, allTasks, projects }) {
   const C = useThemeColors()
   const { addSprint, updateSprint, deleteSprint } = useScrum()
+
+  // Build Sprint Planning data for active sprint
+  const activeSprint = sprints.find(s => s.status === 'active')
+  const allStories   = projects ? projects.flatMap(p => (p.features || []).map(f => ({ ...f, projectName: p.name }))) : []
+  const sprintTasks  = activeSprint ? allTasks.filter(t => activeSprint.taskIds?.includes(t.id)) : []
+
+  // Group sprint tasks by storyId (or feature name as fallback)
+  const storyMap = {}
+  sprintTasks.forEach(t => {
+    const key = t.storyId || t.feature || '(no story)'
+    if (!storyMap[key]) storyMap[key] = { tasks: [], story: allStories.find(s => s.id === t.storyId) || null, storyName: t.feature || '(no story)' }
+    storyMap[key].tasks.push(t)
+  })
+  const committedStories = Object.values(storyMap)
+  const totalCommittedSP = committedStories.reduce((sum, s) => sum + (s.story?.storyPoints || 0), 0)
+  const totalCapacity    = activeSprint ? (activeSprint.capacity || []).reduce((s, m) => s + (m.availableDays || 0), 0) : 0
   const [showCreate,   setShowCreate]   = useState(false)
   const [reviewModal,  setReviewModal]  = useState(null)
   const [reviewNotes,  setReviewNotes]  = useState('')
@@ -528,7 +544,7 @@ function SprintsTab({ sprints, allTasks }) {
   return (
     <>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:18 }}>
-        <p style={{ margin:0, fontSize:13, color:C.textSecondary }}>{sprints.length} sprint{sprints.length!==1?'s':''} · Assign tasks in the Backlog tab</p>
+        <p style={{ margin:0, fontSize:13, color:C.textSecondary }}>{sprints.length} sprint{sprints.length!==1?'s':''}</p>
         <button onClick={() => setShowCreate(true)} style={{ padding:'8px 18px', background:C.primary, color:'#fff', border:'none', borderRadius:8, fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit' }}>+ New Sprint</button>
       </div>
 
@@ -536,6 +552,66 @@ function SprintsTab({ sprints, allTasks }) {
         <Card C={C} style={{ textAlign:'center', padding:'40px 20px' }}>
           <p style={{ margin:'0 0 6px', fontSize:15, fontWeight:600, color:C.textPrimary }}>No sprints yet</p>
           <p style={{ margin:0, fontSize:13, color:C.textSecondary }}>Create a sprint, then assign tasks in the Backlog tab.</p>
+        </Card>
+      )}
+
+      {/* Sprint Planning Artifact — only shown for active sprint */}
+      {activeSprint && committedStories.length > 0 && (
+        <Card C={C} style={{ marginBottom:18, border:`2px solid ${C.primary}30` }}>
+          <SecTitle C={C}>Sprint Planning Artifact — {activeSprint.name}</SecTitle>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10, marginBottom:16 }}>
+            <div style={{ padding:'10px 14px', background:C.primary+'10', borderRadius:8, textAlign:'center' }}>
+              <div style={{ fontSize:11, color:C.textSecondary, marginBottom:3 }}>Committed Stories</div>
+              <div style={{ fontSize:20, fontWeight:700, color:C.primary }}>{committedStories.length}</div>
+            </div>
+            <div style={{ padding:'10px 14px', background:C.primary+'10', borderRadius:8, textAlign:'center' }}>
+              <div style={{ fontSize:11, color:C.textSecondary, marginBottom:3 }}>Committed SP</div>
+              <div style={{ fontSize:20, fontWeight:700, color:C.primary }}>{totalCommittedSP}</div>
+            </div>
+            <div style={{ padding:'10px 14px', background:C.success+'10', borderRadius:8, textAlign:'center' }}>
+              <div style={{ fontSize:11, color:C.textSecondary, marginBottom:3 }}>Team Capacity (days)</div>
+              <div style={{ fontSize:20, fontWeight:700, color:C.success }}>{totalCapacity || '—'}</div>
+            </div>
+            <div style={{ padding:'10px 14px', background:C.warning+'10', borderRadius:8, textAlign:'center' }}>
+              <div style={{ fontSize:11, color:C.textSecondary, marginBottom:3 }}>Sprint Tasks</div>
+              <div style={{ fontSize:20, fontWeight:700, color:C.warning }}>{sprintTasks.length}</div>
+            </div>
+          </div>
+          {activeSprint.goal && (
+            <div style={{ padding:'8px 12px', background:C.primary+'08', borderRadius:8, marginBottom:14, borderLeft:`3px solid ${C.primary}` }}>
+              <span style={{ fontSize:12, fontWeight:600, color:C.primary }}>Sprint Goal: </span>
+              <span style={{ fontSize:12, color:C.textPrimary }}>{activeSprint.goal}</span>
+            </div>
+          )}
+          <table style={{ width:'100%', borderCollapse:'collapse', fontSize:13 }}>
+            <thead>
+              <tr style={{ borderBottom:`2px solid ${C.border}` }}>
+                {['Story','SP','Tasks','Done','Status'].map(h => (
+                  <th key={h} style={{ padding:'6px 10px', textAlign:'left', fontSize:11, fontWeight:600, color:C.textSecondary, textTransform:'uppercase', letterSpacing:.5 }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {committedStories.map((s, i) => {
+                const doneT = s.tasks.filter(t => t.status==='Done').length
+                const pct   = s.tasks.length > 0 ? Math.round(doneT/s.tasks.length*100) : 0
+                return (
+                  <tr key={i} style={{ borderBottom:`1px solid ${C.border}` }}>
+                    <td style={{ padding:'9px 10px', color:C.textPrimary, fontWeight:500 }}>{s.story?.name || s.storyName}</td>
+                    <td style={{ padding:'9px 10px', color:C.primary, fontWeight:700 }}>{s.story?.storyPoints || '?'}</td>
+                    <td style={{ padding:'9px 10px', color:C.textSecondary }}>{s.tasks.length}</td>
+                    <td style={{ padding:'9px 10px', color:C.success }}>{doneT}</td>
+                    <td style={{ padding:'9px 10px', minWidth:100 }}>
+                      <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                        <Bar pct={pct} color={pct===100?C.success:C.primary} C={C}/>
+                        <span style={{ fontSize:11, fontWeight:600, color:C.textSecondary }}>{pct}%</span>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
         </Card>
       )}
 
@@ -628,7 +704,7 @@ function SprintsTab({ sprints, allTasks }) {
           </div>
           <div style={{ marginBottom:18 }}>
             <label style={{ display:'block', fontSize:12, fontWeight:600, color:C.textPrimary, marginBottom:5 }}>Sprint Review Notes <span style={{ fontWeight:400, color:C.textSecondary }}>(optional)</span></label>
-            <textarea value={reviewNotes} onChange={e=>setReviewNotes(e.target.value)} placeholder="What was demoed? What was accepted/rejected? Stakeholder feedback…"
+            <textarea value={reviewNotes} onChange={e=>setReviewNotes(e.target.value)} placeholder="Demoed, accepted, rejected, feedback…"
               style={{ ...inp, resize:'vertical', minHeight:80 }} />
           </div>
           <div style={{ display:'flex', justifyContent:'flex-end', gap:10 }}>
@@ -645,10 +721,11 @@ function SprintsTab({ sprints, allTasks }) {
 const DAY_LABELS = ['D1','D2','D3','D4','D5','D6','D7','D8','D9','D10']
 const IDEAL_PTS  = [100,88,77,66,55,44,33,22,11,0]
 
-function ReportsTab({ sprints, allTasks, allTeamMembers }) {
+function ReportsTab({ sprints, allTasks, allTeamMembers, burndownSnapshots, recordBurndownSnapshot, loadBurndownSnapshots }) {
   const C = useThemeColors()
   const { updateSprint } = useScrum()
   const [subTab, setSubTab] = useState('velocity')
+  const [recordingBD, setRecordingBD] = useState(false)
 
   const completed = sprints.filter(s => s.status==='completed')
   const active    = sprints.find(s => s.status==='active')
@@ -658,11 +735,40 @@ function ReportsTab({ sprints, allTasks, allTeamMembers }) {
   const avgVel = vels.length>0?Math.round(vels.reduce((a,v)=>a+v.count,0)/vels.length):0
   const maxV   = Math.max(...vels.map(v=>v.count),1)
 
-  // Burndown (projected — not real daily tracking)
-  const spTasks = active?allTasks.filter(t=>active.taskIds?.includes(t.id)):[]
-  const doneCnt = spTasks.filter(t=>t.status==='Done').length
-  const total   = spTasks.length
-  const velPct  = total>0?doneCnt/total:0
+  // Burndown — real snapshot data
+  const spTasks    = active ? allTasks.filter(t => active.taskIds?.includes(t.id)) : []
+  const doneCnt    = spTasks.filter(t => t.status==='Done').length
+  const total      = spTasks.length
+  const remaining  = total - doneCnt
+  const velPct     = total>0 ? doneCnt/total : 0
+  const realSnaps  = active ? (burndownSnapshots[active.id] || []) : []
+  const hasRealData = realSnaps.length > 0
+
+  // Build ideal burndown line (task count over sprint days)
+  function buildIdealLine(sprint, totalTasks) {
+    if (!sprint?.startDate || !sprint?.endDate || totalTasks === 0) return []
+    const start = new Date(sprint.startDate)
+    const end   = new Date(sprint.endDate)
+    const days  = Math.max(1, Math.round((end - start) / 86400000))
+    const pts   = []
+    for (let i = 0; i <= days; i++) {
+      const d = new Date(start); d.setDate(d.getDate() + i)
+      pts.push({ date: d.toISOString().split('T')[0], ideal: Math.max(0, Math.round(totalTasks * (1 - i/days))) })
+    }
+    return pts
+  }
+
+  const idealLine = buildIdealLine(active, total)
+
+  async function handleRecordSnapshot() {
+    if (!active) return
+    setRecordingBD(true)
+    await recordBurndownSnapshot(active.id, remaining, doneCnt)
+    await loadBurndownSnapshots(active.id)
+    setRecordingBD(false)
+  }
+
+  // Projected fallback (for when no real snapshots)
   const actualPts = DAY_LABELS.map((_,i)=>Math.max(0,Math.round(100-velPct*100*(i/(DAY_LABELS.length-1))*1.1)))
 
   // Capacity
@@ -753,37 +859,98 @@ function ReportsTab({ sprints, allTasks, allTeamMembers }) {
 
       {subTab==='burndown' && (
         <Card C={C}>
-          <SecTitle C={C}>{active?`${active.name} — Burndown (Projected)`:'Sprint Burndown'}</SecTitle>
-          <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:14, padding:'8px 12px', background:C.warning+'10', border:`1px solid ${C.warning}25`, borderRadius:8 }}>
-            <span style={{ fontSize:14, color:C.warning }}>⚠</span>
-            <span style={{ fontSize:12, color:C.warning, fontWeight:500 }}>This is a projected burndown based on current completion rate — not real daily tracking data.</span>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
+            <h3 style={{ margin:0, fontSize:14, fontWeight:600, color:C.textPrimary }}>{active ? `${active.name} — Burndown` : 'Sprint Burndown'}</h3>
+            {active && (
+              <button onClick={handleRecordSnapshot} disabled={recordingBD}
+                style={{ padding:'7px 14px', background:C.primary, color:'#fff', border:'none', borderRadius:8, fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'inherit', opacity:recordingBD?0.6:1 }}>
+                {recordingBD ? 'Recording…' : "Record Today's Progress"}
+              </button>
+            )}
           </div>
-          <p style={{ margin:'0 0 18px', fontSize:13, color:C.textSecondary }}>
-            {active?`${doneCnt}/${total} tasks done (${Math.round(velPct*100)}%) at current rate`:'Start a sprint to see burndown.'}
-          </p>
-          <div style={{ display:'flex', gap:6, alignItems:'flex-end', height:180, marginBottom:10 }}>
-            {DAY_LABELS.map((label,i)=>{
-              const idealH=Math.round(IDEAL_PTS[i]/100*160)
-              const actH  =Math.round(actualPts[i]/100*160)
-              const behind=actualPts[i]>IDEAL_PTS[i]
-              return (
-                <div key={label} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:3 }}>
-                  <div style={{ display:'flex', gap:2, alignItems:'flex-end', height:160 }}>
-                    <div style={{ width:12, height:idealH, background:C.border, borderRadius:'2px 2px 0 0' }}/>
-                    <div style={{ width:12, height:actH,   background:behind?C.danger:C.success, borderRadius:'2px 2px 0 0' }}/>
-                  </div>
-                  <div style={{ fontSize:9, color:C.textSecondary }}>{label}</div>
+
+          {!active ? (
+            <p style={{ margin:0, fontSize:13, color:C.textSecondary }}>Start a sprint to see burndown.</p>
+          ) : hasRealData ? (
+            <>
+              {/* Real burndown chart using snapshots */}
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10, marginBottom:18 }}>
+                <div style={{ padding:'10px 14px', background:C.primary+'10', borderRadius:8, border:`1px solid ${C.primary}20` }}>
+                  <div style={{ fontSize:10, color:C.textSecondary, textTransform:'uppercase', letterSpacing:.5, marginBottom:2 }}>Total Tasks</div>
+                  <div style={{ fontSize:20, fontWeight:700, color:C.primary }}>{total}</div>
                 </div>
-              )
-            })}
-          </div>
-          <div style={{ display:'flex', gap:14, justifyContent:'center' }}>
-            {[{color:C.border,label:'Ideal'},{color:C.success,label:'On track'},{color:C.danger,label:'Behind'}].map(l=>(
-              <span key={l.label} style={{ display:'flex', alignItems:'center', gap:5, fontSize:11, color:C.textSecondary }}>
-                <span style={{ width:10, height:10, borderRadius:'50%', background:l.color, display:'inline-block' }}/>{l.label}
-              </span>
-            ))}
-          </div>
+                <div style={{ padding:'10px 14px', background:C.success+'10', borderRadius:8, border:`1px solid ${C.success}20` }}>
+                  <div style={{ fontSize:10, color:C.textSecondary, textTransform:'uppercase', letterSpacing:.5, marginBottom:2 }}>Done</div>
+                  <div style={{ fontSize:20, fontWeight:700, color:C.success }}>{doneCnt}</div>
+                </div>
+                <div style={{ padding:'10px 14px', background:remaining>0?C.warning+'10':C.success+'10', borderRadius:8, border:`1px solid ${remaining>0?C.warning:C.success}20` }}>
+                  <div style={{ fontSize:10, color:C.textSecondary, textTransform:'uppercase', letterSpacing:.5, marginBottom:2 }}>Remaining</div>
+                  <div style={{ fontSize:20, fontWeight:700, color:remaining>0?C.warning:C.success }}>{remaining}</div>
+                </div>
+              </div>
+              <div style={{ overflowX:'auto', marginBottom:12 }}>
+                <div style={{ display:'flex', gap:4, alignItems:'flex-end', height:180, minWidth:Math.max(realSnaps.length*40,280) }}>
+                  {idealLine.map((pt, i) => {
+                    const snap = realSnaps.find(s => s.date === pt.date)
+                    const maxT = total || 1
+                    const idealH = Math.round(pt.ideal/maxT*160)
+                    const actH   = snap ? Math.round(snap.remainingPoints/maxT*160) : null
+                    const behind = snap && snap.remainingPoints > pt.ideal
+                    return (
+                      <div key={pt.date} style={{ flex:1, minWidth:30, display:'flex', flexDirection:'column', alignItems:'center', gap:3 }}>
+                        <div style={{ display:'flex', gap:2, alignItems:'flex-end', height:160 }}>
+                          <div style={{ width:10, height:Math.max(2,idealH), background:C.border, borderRadius:'2px 2px 0 0' }} title={`Ideal: ${pt.ideal}`}/>
+                          {actH !== null && <div style={{ width:10, height:Math.max(2,actH), background:behind?C.danger:C.success, borderRadius:'2px 2px 0 0' }} title={`Actual: ${snap.remainingPoints}`}/>}
+                        </div>
+                        <div style={{ fontSize:8, color:C.textSecondary, transform:'rotate(-45deg)', transformOrigin:'top left', whiteSpace:'nowrap', marginTop:4 }}>{pt.date.slice(5)}</div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+              <div style={{ display:'flex', gap:14, justifyContent:'center' }}>
+                {[{color:C.border,label:'Ideal'},{color:C.success,label:'On track'},{color:C.danger,label:'Behind'}].map(l=>(
+                  <span key={l.label} style={{ display:'flex', alignItems:'center', gap:5, fontSize:11, color:C.textSecondary }}>
+                    <span style={{ width:10, height:10, borderRadius:'50%', background:l.color, display:'inline-block' }}/>{l.label}
+                  </span>
+                ))}
+              </div>
+              <p style={{ margin:'12px 0 0', fontSize:11, color:C.textSecondary, textAlign:'center' }}>{realSnaps.length} snapshot{realSnaps.length!==1?'s':''} recorded.</p>
+            </>
+          ) : (
+            <>
+              <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:14, padding:'8px 12px', background:C.warning+'10', border:`1px solid ${C.warning}25`, borderRadius:8 }}>
+                <span style={{ fontSize:14, color:C.warning }}>⚠</span>
+                <span style={{ fontSize:12, color:C.warning, fontWeight:500 }}>No snapshots yet — showing projected burndown.</span>
+              </div>
+              <p style={{ margin:'0 0 18px', fontSize:13, color:C.textSecondary }}>
+                {`${doneCnt}/${total} tasks done (${Math.round(velPct*100)}%) at current rate`}
+              </p>
+              <div style={{ display:'flex', gap:6, alignItems:'flex-end', height:180, marginBottom:10 }}>
+                {DAY_LABELS.map((label,i)=>{
+                  const idealH=Math.round(IDEAL_PTS[i]/100*160)
+                  const actH  =Math.round(actualPts[i]/100*160)
+                  const behind=actualPts[i]>IDEAL_PTS[i]
+                  return (
+                    <div key={label} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:3 }}>
+                      <div style={{ display:'flex', gap:2, alignItems:'flex-end', height:160 }}>
+                        <div style={{ width:12, height:idealH, background:C.border, borderRadius:'2px 2px 0 0' }}/>
+                        <div style={{ width:12, height:actH,   background:behind?C.danger:C.success, borderRadius:'2px 2px 0 0' }}/>
+                      </div>
+                      <div style={{ fontSize:9, color:C.textSecondary }}>{label}</div>
+                    </div>
+                  )
+                })}
+              </div>
+              <div style={{ display:'flex', gap:14, justifyContent:'center' }}>
+                {[{color:C.border,label:'Ideal'},{color:C.success,label:'On track'},{color:C.danger,label:'Behind'}].map(l=>(
+                  <span key={l.label} style={{ display:'flex', alignItems:'center', gap:5, fontSize:11, color:C.textSecondary }}>
+                    <span style={{ width:10, height:10, borderRadius:'50%', background:l.color, display:'inline-block' }}/>{l.label}
+                  </span>
+                ))}
+              </div>
+            </>
+          )}
         </Card>
       )}
 
@@ -800,8 +967,8 @@ function ReportsTab({ sprints, allTasks, allTeamMembers }) {
             ? <Card C={C} style={{ textAlign:'center', padding:'40px 20px' }}><p style={{ margin:0, fontSize:13, color:C.textSecondary }}>Select a sprint to plan capacity.</p></Card>
             : <>
                 <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, marginBottom:18 }}>
-                  <MetricCard C={C} label="Team Members"   value={capacity.length}                      icon="👥" color={C.primary} />
-                  <MetricCard C={C} label="Available Days" value={totAvail} sub={`${utilPct}% of total`} icon="📅" color={C.success} />
+                  <MetricCard C={C} label="Team Members"   value={capacity.length}                      icon="◉" color={C.primary} />
+                  <MetricCard C={C} label="Available Days" value={totAvail} sub={`${utilPct}% of total`} icon="◎" color={C.success} />
                   <MetricCard C={C} label="Sprint Tasks"   value={(capSprint.taskIds||[]).length}         icon="◎" color={C.warning} />
                 </div>
                 <Card C={C} style={{ marginBottom:14 }}>
@@ -809,7 +976,7 @@ function ReportsTab({ sprints, allTasks, allTeamMembers }) {
                     allTeamMembers.length>0&&<button onClick={importTeam} style={{ padding:'5px 12px', background:C.primary+'15', color:C.primary, border:`1px solid ${C.primary}30`, borderRadius:7, fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'inherit' }}>Import Team</button>
                   }>Team Capacity — {capSprint.name}</SecTitle>
                   {capacity.length===0
-                    ? <p style={{ margin:0, fontSize:13, color:C.textSecondary }}>No members added. Use "Import Team" to pull from project teams, or add manually below.</p>
+                    ? <p style={{ margin:0, fontSize:13, color:C.textSecondary }}>No members added.</p>
                     : <table style={{ width:'100%', borderCollapse:'collapse', fontSize:13 }}>
                         <thead><tr style={{ borderBottom:`2px solid ${C.border}` }}>
                           {['Member','Sprint Days','Available','Availability',''].map(h=>(
@@ -1152,7 +1319,7 @@ function TeamTab({ allTeamMembers, allRisks, profile, sprints }) {
             {allImps.length===0
               ? <div style={{ padding:'40px', textAlign:'center' }}>
                   <p style={{ margin:'0 0 4px', fontSize:14, fontWeight:600, color:C.textPrimary }}>No impediments</p>
-                  <p style={{ margin:0, fontSize:12, color:C.textSecondary }}>All clear — no open risks or blockers.</p>
+                  <p style={{ margin:0, fontSize:12, color:C.textSecondary }}>No impediments.</p>
                 </div>
               : <table style={{ width:'100%', borderCollapse:'collapse', fontSize:13 }}>
                   <thead><tr style={{ borderBottom:`2px solid ${C.border}` }}>
@@ -1302,7 +1469,7 @@ export default function ScrumMasterPortal() {
   const C = useThemeColors()
   const { profile } = useAuth()
   const { projects, loading } = useProjects()
-  const { sprints, standupNotes, scrumLoading } = useScrum()
+  const { sprints, standupNotes, scrumLoading, burndownSnapshots, recordBurndownSnapshot, loadBurndownSnapshots } = useScrum()
   const [tab, setTab] = useState('board')
 
   const allTasks       = projects.flatMap(p => (p.tasks||[]).map(t=>({...t,projectName:p.name,projectId:p.id})))
@@ -1313,12 +1480,12 @@ export default function ScrumMasterPortal() {
   const activeProjects = projects.filter(p=>p.status==='Active')
 
   const TABS = [
-    { id:'board',   label:'Board',   icon:'⬛' },
-    { id:'backlog', label:'Backlog', icon:'☰'  },
-    { id:'sprints', label:'Sprints', icon:'▶'  },
-    { id:'reports', label:'Reports', icon:'📊' },
-    { id:'team',    label:`Team${openImpCnt>0?` (${openImpCnt})`:''}`, icon:'👥' },
-    { id:'dod',     label:'Def of Done', icon:'✓' },
+    { id:'board',   label:'Board',       icon:'⬛' },
+    { id:'backlog', label:'Backlog',     icon:'☰'  },
+    { id:'sprints', label:'Sprints',     icon:'▶'  },
+    { id:'reports', label:'Reports',     icon:'◈'  },
+    { id:'team',    label:`Team${openImpCnt>0?` (${openImpCnt})`:''}`, icon:'◉' },
+    { id:'dod',     label:'Def of Done', icon:'✓'  },
   ]
 
   if (loading||scrumLoading) return (
@@ -1360,8 +1527,8 @@ export default function ScrumMasterPortal() {
 
       {tab==='board'   && <BoardTab   allTasks={allTasks} sprints={sprints} projects={projects} standupNotes={standupNotes} teamMembers={allTeamMembers}/>}
       {tab==='backlog' && <BacklogTab allTasks={allTasks} sprints={sprints} projects={projects} teamMembers={allTeamMembers}/>}
-      {tab==='sprints' && <SprintsTab sprints={sprints} allTasks={allTasks}/>}
-      {tab==='reports' && <ReportsTab sprints={sprints} allTasks={allTasks} allTeamMembers={allTeamMembers}/>}
+      {tab==='sprints' && <SprintsTab sprints={sprints} allTasks={allTasks} projects={projects}/>}
+      {tab==='reports' && <ReportsTab sprints={sprints} allTasks={allTasks} allTeamMembers={allTeamMembers} burndownSnapshots={burndownSnapshots} recordBurndownSnapshot={recordBurndownSnapshot} loadBurndownSnapshots={loadBurndownSnapshots}/>}
       {tab==='team'    && <TeamTab    allTeamMembers={allTeamMembers} allRisks={allRisks} profile={profile} sprints={sprints}/>}
       {tab==='dod'     && <DoDTab     projects={projects}/>}
     </div>

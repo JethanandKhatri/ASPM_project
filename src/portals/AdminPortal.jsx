@@ -1,7 +1,8 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { useProjects } from '../case-tool/context/ProjectContext'
 import { useThemeColors } from '../case-tool/context/ThemeContext'
 import { useScrum } from '../case-tool/context/ScrumContext'
+import { useAuth } from '../context/AuthContext'
 
 function MetricCard({ label, value, sub, icon, color }) {
   const C = useThemeColors()
@@ -80,6 +81,7 @@ export default function AdminPortal() {
     { id: 'portfolio',  label: `Portfolio (${projects.length})` },
     { id: 'milestones', label: `Milestones (${milestones.length})` },
     { id: 'budget',     label: 'Budget' },
+    { id: 'users',      label: 'Users' },
   ]
 
   if (loading || scrumLoading) return <div style={{ padding: 28, color: C.textSecondary, fontSize: 14 }}>Loading…</div>
@@ -107,10 +109,10 @@ export default function AdminPortal() {
       {tab === 'overview' && (
         <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 20 }}>
-            <MetricCard label="Total Projects"  value={projects.length}           icon="📂" color={C.primary}  sub={`${active} active`}         />
+            <MetricCard label="Total Projects"  value={projects.length}           icon="◈" color={C.primary}  sub={`${active} active`}         />
             <MetricCard label="Completed"       value={completed}                 icon="✓"  color={C.success}  sub={`${onHold} on hold`}        />
             <MetricCard label="Open Risks"      value={openRisks}                 icon="⚠" color={C.danger}   sub="across all projects"         />
-            <MetricCard label="Allocated Budget" value={totalAllocated > 0 ? `$${(totalAllocated/1000).toFixed(0)}k` : '—'} icon="💰" color={C.warning} sub="across all projects" />
+            <MetricCard label="Allocated Budget" value={totalAllocated > 0 ? `$${(totalAllocated/1000).toFixed(0)}k` : '—'} icon="◎" color={C.warning} sub="across all projects" />
           </div>
 
           {/* Domain distribution */}
@@ -223,9 +225,8 @@ export default function AdminPortal() {
       {tab === 'milestones' && (
         <Card>
           <h3 style={{ margin: '0 0 6px', fontSize: 14, fontWeight: 600, color: C.textPrimary }}>Milestones</h3>
-          <p style={{ margin: '0 0 20px', fontSize: 12, color: C.textSecondary }}>Project start dates, deadlines, and sprint end dates — sorted chronologically</p>
           {milestones.length === 0 ? (
-            <p style={{ margin: 0, fontSize: 13, color: C.textSecondary }}>No milestones yet. Create projects with start dates and deadlines to see them here.</p>
+            <p style={{ margin: 0, fontSize: 13, color: C.textSecondary }}>No milestones yet.</p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {milestones.map((m, i) => {
@@ -236,7 +237,7 @@ export default function AdminPortal() {
                 return (
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 14px', background: isToday ? C.warning + '0D' : C.mainBg, border: `1px solid ${isToday ? C.warning + '50' : C.border}`, borderRadius: 8, opacity: isPast && !isToday ? 0.6 : 1 }}>
                     <div style={{ width: 36, height: 36, borderRadius: 8, background: typeColor + '15', color: typeColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>
-                      {m.type === 'deadline' ? '🏁' : m.type === 'sprint' ? '🔄' : '🚀'}
+                      {m.type === 'deadline' ? '▣' : m.type === 'sprint' ? '▶' : '◎'}
                     </div>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 13, fontWeight: 600, color: C.textPrimary }}>{m.label}</div>
@@ -264,8 +265,8 @@ export default function AdminPortal() {
       {tab === 'budget' && (
         <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 20 }}>
-            <MetricCard label="Total Allocated"    value={totalAllocated > 0 ? `$${totalAllocated.toLocaleString()}` : '—'} icon="💰" color={C.primary} sub="from project budgets"  />
-            <MetricCard label="Est. Total Cost"    value={totalEstimated > 0 ? `$${totalEstimated.toLocaleString()}` : '—'} icon="📊" color={C.warning} sub="from estimations"       />
+            <MetricCard label="Total Allocated"    value={totalAllocated > 0 ? `$${totalAllocated.toLocaleString()}` : '—'} icon="◎" color={C.primary} sub="from project budgets"  />
+            <MetricCard label="Est. Total Cost"    value={totalEstimated > 0 ? `$${totalEstimated.toLocaleString()}` : '—'} icon="◈" color={C.warning} sub="from estimations"       />
             <MetricCard label="Projects w/ Budget" value={projects.filter(p => (p.budget || 0) > 0).length}                 icon="✓"  color={C.success} sub="have allocated budget"  />
           </div>
 
@@ -315,6 +316,172 @@ export default function AdminPortal() {
           </Card>
         </>
       )}
+
+      {tab === 'users' && <UsersTab C={C} />}
     </div>
+  )
+}
+
+const ROLE_OPTIONS = [
+  { id: 'pm',            label: 'Project Manager', icon: '◈' },
+  { id: 'scrum_master',  label: 'Scrum Master',    icon: '▶' },
+  { id: 'product_owner', label: 'Product Owner',   icon: '◉' },
+  { id: 'developer',     label: 'Developer',       icon: '◻' },
+  { id: 'line_manager',  label: 'Line Manager',    icon: '◎' },
+  { id: 'admin',         label: 'Admin',           icon: '⚙' },
+]
+
+const ROLE_COLORS = {
+  pm: '#003A6B', scrum_master: '#1B5886', product_owner: '#1A6B5A',
+  developer: '#3776A1', line_manager: '#5A4A8B', admin: '#7A3B3B',
+}
+
+function UsersTab({ C }) {
+  const { adminCreateUser, listUsers, adminDeleteUser } = useAuth()
+  const [users,        setUsers]        = useState([])
+  const [usersLoading, setUsersLoading] = useState(true)
+  const [showModal,    setShowModal]    = useState(false)
+  const [deleting,     setDeleting]     = useState(null)
+  const [form,         setForm]         = useState({ fullName: '', email: '', password: '', role: '' })
+  const [saving,       setSaving]       = useState(false)
+  const [err,          setErr]          = useState('')
+  const [success,      setSuccess]      = useState('')
+
+  const load = useCallback(async () => {
+    setUsersLoading(true)
+    try { setUsers(await listUsers()) } catch(e) { console.error(e) }
+    setUsersLoading(false)
+  }, [listUsers])
+
+  useEffect(() => { load() }, [load])
+
+  async function handleCreate(e) {
+    e.preventDefault()
+    if (!form.role) { setErr('Select a role.'); return }
+    setSaving(true); setErr('')
+    try {
+      await adminCreateUser(form.email, form.password, form.role, form.fullName)
+      setSuccess(`${form.fullName} created.`)
+      setShowModal(false)
+      setForm({ fullName: '', email: '', password: '', role: '' })
+      await load()
+    } catch(e) { setErr(e.message || 'Failed to create user.') }
+    setSaving(false)
+  }
+
+  async function handleDelete(u) {
+    if (!window.confirm(`Delete ${u.full_name}? This cannot be undone.`)) return
+    setDeleting(u.id)
+    try { await adminDeleteUser(u.id); await load() } catch(e) { alert(e.message) }
+    setDeleting(null)
+  }
+
+  const inp = { width: '100%', height: 40, padding: '0 12px', borderRadius: 8, border: `1px solid ${C.border}`, background: C.mainBg, color: C.textPrimary, fontSize: 13, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }
+
+  return (
+    <>
+      {success && (
+        <div style={{ marginBottom: 12, padding: '10px 14px', background: C.success + '18', border: `1px solid ${C.success}`, borderRadius: 8, fontSize: 13, color: C.success }}>
+          {success}
+        </div>
+      )}
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <div>
+          <h3 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: C.textPrimary }}>Users</h3>
+          <p style={{ margin: '2px 0 0', fontSize: 12, color: C.textSecondary }}>{users.length} account{users.length !== 1 ? 's' : ''}</p>
+        </div>
+        <button onClick={() => { setShowModal(true); setErr(''); setSuccess('') }}
+          style={{ padding: '8px 16px', background: C.primary, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+          + Create User
+        </button>
+      </div>
+
+      <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 10, overflow: 'hidden' }}>
+        {usersLoading ? (
+          <p style={{ padding: 20, margin: 0, fontSize: 13, color: C.textSecondary }}>Loading…</p>
+        ) : users.length === 0 ? (
+          <p style={{ padding: 20, margin: 0, fontSize: 13, color: C.textSecondary }}>No users yet.</p>
+        ) : (
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ borderBottom: `1px solid ${C.border}` }}>
+                {['Name', 'Email', 'Role', ''].map(h => (
+                  <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: C.textSecondary, letterSpacing: .5, textTransform: 'uppercase' }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((u, i) => {
+                const roleOpt  = ROLE_OPTIONS.find(r => r.id === u.role)
+                const roleColor = ROLE_COLORS[u.role] || C.primary
+                return (
+                  <tr key={u.id} style={{ borderBottom: i < users.length - 1 ? `1px solid ${C.border}` : 'none' }}>
+                    <td style={{ padding: '11px 14px', fontSize: 13, fontWeight: 600, color: C.textPrimary }}>{u.full_name || '—'}</td>
+                    <td style={{ padding: '11px 14px', fontSize: 13, color: C.textSecondary }}>{u.email}</td>
+                    <td style={{ padding: '11px 14px' }}>
+                      {roleOpt
+                        ? <span style={{ padding: '3px 10px', borderRadius: 5, fontSize: 12, fontWeight: 600, background: roleColor + '14', color: roleColor }}>{roleOpt.icon} {roleOpt.label}</span>
+                        : <span style={{ color: C.textSecondary, fontSize: 12 }}>{u.role || '—'}</span>}
+                    </td>
+                    <td style={{ padding: '11px 14px', textAlign: 'right' }}>
+                      <button onClick={() => handleDelete(u)} disabled={deleting === u.id}
+                        style={{ padding: '4px 10px', background: 'none', border: `1px solid ${C.danger || '#EF4444'}`, borderRadius: 6, color: C.danger || '#EF4444', fontSize: 12, cursor: 'pointer', opacity: deleting === u.id ? 0.5 : 1 }}>
+                        {deleting === u.id ? '…' : 'Remove'}
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {showModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          onClick={e => { if (e.target === e.currentTarget) setShowModal(false) }}>
+          <div style={{ background: C.cardBg, borderRadius: 14, padding: 28, width: '100%', maxWidth: 460, boxShadow: '0 20px 50px rgba(0,0,0,0.2)' }}>
+            <h3 style={{ margin: '0 0 20px', fontSize: 16, fontWeight: 700, color: C.textPrimary }}>Create User</h3>
+            <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textSecondary, marginBottom: 5 }}>Full Name</label>
+                <input style={inp} value={form.fullName} onChange={e => setForm(f => ({ ...f, fullName: e.target.value }))} placeholder="Full name" required />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textSecondary, marginBottom: 5 }}>Email</label>
+                <input style={inp} type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="user@company.com" required />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textSecondary, marginBottom: 5 }}>Password</label>
+                <input style={inp} type="password" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} placeholder="Min 6 characters" required minLength={6} />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textSecondary, marginBottom: 8 }}>Role</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  {ROLE_OPTIONS.map(r => (
+                    <button key={r.id} type="button" onClick={() => setForm(f => ({ ...f, role: r.id }))}
+                      style={{ padding: '9px 12px', borderRadius: 8, border: `1px solid ${form.role === r.id ? ROLE_COLORS[r.id] : C.border}`, background: form.role === r.id ? ROLE_COLORS[r.id] + '12' : C.mainBg, color: form.role === r.id ? ROLE_COLORS[r.id] : C.textPrimary, fontSize: 13, fontWeight: form.role === r.id ? 700 : 400, cursor: 'pointer', textAlign: 'left' }}>
+                      {r.icon} {r.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {err && <div style={{ padding: '9px 12px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, fontSize: 13, color: '#B91C1C' }}>{err}</div>}
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 4 }}>
+                <button type="button" onClick={() => setShowModal(false)}
+                  style={{ padding: '9px 18px', border: `1px solid ${C.border}`, background: 'none', borderRadius: 8, fontSize: 13, cursor: 'pointer', color: C.textSecondary }}>
+                  Cancel
+                </button>
+                <button type="submit" disabled={saving}
+                  style={{ padding: '9px 20px', background: C.primary, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>
+                  {saving ? 'Creating…' : 'Create User'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </>
   )
 }

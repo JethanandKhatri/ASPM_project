@@ -26,6 +26,9 @@ function shapeSprint(s) {
     capacity: s.capacity || [],
     completedTaskCount: s.completed_task_count || 0,
     completedAt: s.completed_at || null,
+    reviewNotes:    s.review_notes    || '',
+    releaseId:      s.release_id      || null,
+    committedPoints: s.committed_points || 0,
   }
 }
 
@@ -38,12 +41,13 @@ function shapeDodItem(d) {
 }
 
 export function ScrumProvider({ children }) {
-  const [sprints, setSprints]           = useState([])
-  const [standupNotes, setStandupNotes] = useState([])
-  const [dodItems, setDodItems]         = useState([])
-  const [dodChecks, setDodChecks]       = useState({})
-  const [scrumLoading, setScrumLoading] = useState(true)
-  const [useLS, setUseLS]               = useState(false)  // localStorage fallback mode
+  const [sprints,            setSprints]            = useState([])
+  const [standupNotes,       setStandupNotes]       = useState([])
+  const [dodItems,           setDodItems]           = useState([])
+  const [dodChecks,          setDodChecks]          = useState({})
+  const [burndownSnapshots,  setBurndownSnapshots]  = useState({})
+  const [scrumLoading,       setScrumLoading]       = useState(true)
+  const [useLS,              setUseLS]              = useState(false)
 
   const loadAll = useCallback(async () => {
     const [sprintRes, standupRes, dodRes, checksRes] = await Promise.all([
@@ -163,11 +167,18 @@ export function ScrumProvider({ children }) {
     setSprints(prev => prev.map(s => s.id === id ? { ...s, ...patches } : s))
     if (!useLS) {
       const dbp = {}
-      if (patches.status !== undefined)             dbp.status = patches.status
-      if (patches.taskIds !== undefined)            dbp.task_ids = patches.taskIds
-      if (patches.capacity !== undefined)           dbp.capacity = patches.capacity
+      if (patches.status !== undefined)             dbp.status               = patches.status
+      if (patches.taskIds !== undefined)            dbp.task_ids             = patches.taskIds
+      if (patches.capacity !== undefined)           dbp.capacity             = patches.capacity
       if (patches.completedTaskCount !== undefined) dbp.completed_task_count = patches.completedTaskCount
-      if (patches.completedAt !== undefined)        dbp.completed_at = patches.completedAt
+      if (patches.completedAt !== undefined)        dbp.completed_at         = patches.completedAt
+      if (patches.reviewNotes !== undefined)        dbp.review_notes         = patches.reviewNotes
+      if (patches.releaseId !== undefined)          dbp.release_id           = patches.releaseId
+      if (patches.committedPoints !== undefined)    dbp.committed_points     = patches.committedPoints
+      if (patches.name !== undefined)               dbp.name                 = patches.name
+      if (patches.goal !== undefined)               dbp.goal                 = patches.goal
+      if (patches.startDate !== undefined)          dbp.start_date           = patches.startDate
+      if (patches.endDate !== undefined)            dbp.end_date             = patches.endDate
       if (Object.keys(dbp).length) await db.from('sprints').update(dbp).eq('id', id)
       if (patches.status === 'active' || patches.status === 'completed') {
         const sprint = sprints.find(s => s.id === id)
@@ -240,6 +251,39 @@ export function ScrumProvider({ children }) {
     }
   }
 
+  // ── Burndown Snapshots ─────────────────────────────────────────────────────
+
+  async function recordBurndownSnapshot(sprintId, remainingPoints, completedPoints) {
+    const today = todayStr()
+    const id = 'bd' + Date.now()
+    const snap = { id, sprintId, date: today, remainingPoints, completedPoints }
+    setBurndownSnapshots(prev => {
+      const existing = (prev[sprintId] || []).filter(s => s.date !== today)
+      return { ...prev, [sprintId]: [...existing, snap] }
+    })
+    if (!useLS) {
+      await db.from('burndown_snapshots').upsert(
+        { id, sprint_id: sprintId, snapshot_date: today, remaining_points: remainingPoints, completed_points: completedPoints },
+        { onConflict: 'sprint_id,snapshot_date' }
+      )
+    }
+  }
+
+  async function loadBurndownSnapshots(sprintId) {
+    if (useLS) return
+    const { data, error } = await db
+      .from('burndown_snapshots')
+      .select('*')
+      .eq('sprint_id', sprintId)
+      .order('snapshot_date', { ascending: true })
+    if (error) return
+    const snaps = (data || []).map(s => ({
+      id: s.id, sprintId: s.sprint_id, date: s.snapshot_date,
+      remainingPoints: s.remaining_points, completedPoints: s.completed_points,
+    }))
+    setBurndownSnapshots(prev => ({ ...prev, [sprintId]: snaps }))
+  }
+
   async function setDodCheck(featureId, itemId, checked) {
     setDodChecks(prev => ({ ...prev, [featureId]: { ...(prev[featureId] || {}), [itemId]: checked } }))
     if (!useLS) {
@@ -252,10 +296,11 @@ export function ScrumProvider({ children }) {
 
   return (
     <ScrumContext.Provider value={{
-      sprints, standupNotes, dodItems, dodChecks, scrumLoading,
+      sprints, standupNotes, dodItems, dodChecks, burndownSnapshots, scrumLoading,
       addSprint, updateSprint, deleteSprint,
       addStandupNote, deleteStandupNote,
       addDodItem, toggleDodItem, deleteDodItem, setDodCheck,
+      recordBurndownSnapshot, loadBurndownSnapshots,
     }}>
       {children}
     </ScrumContext.Provider>

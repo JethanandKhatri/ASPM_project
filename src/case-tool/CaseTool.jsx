@@ -26,6 +26,7 @@ import DeveloperPortal from '../portals/DeveloperPortal'
 import { ScrumProvider } from './context/ScrumContext'
 import LineManagerPortal from '../portals/LineManagerPortal'
 import AdminPortal from '../portals/AdminPortal'
+import ProductOwnerPortal from '../portals/ProductOwnerPortal'
 
 const NAV_ITEMS = [
   { path: '/dashboard', label: 'Dashboard', icon: '▣', exact: true },
@@ -56,13 +57,19 @@ const ADMIN_NAV_ITEMS = [
   { path: '/dashboard/settings', label: 'Settings', icon: '⚙' },
 ]
 
+const PO_NAV_ITEMS = [
+  { path: '/dashboard', label: 'Product Backlog', icon: '▣', exact: true },
+  { path: '/dashboard/settings', label: 'Settings', icon: '⚙' },
+]
+
 function getRoleLabel(role) {
   switch (role) {
     case 'pm': case 'admin': case 'project_manager': return 'Project Manager'
-    case 'scrum_master': return 'Scrum Master'
-    case 'line_manager': return 'Line Manager'
-    case 'developer': return 'Developer'
-    case 'team_member': return 'Team Member'
+    case 'scrum_master':   return 'Scrum Master'
+    case 'line_manager':   return 'Line Manager'
+    case 'developer':      return 'Developer'
+    case 'team_member':    return 'Team Member'
+    case 'product_owner':  return 'Product Owner'
     default: return 'User'
   }
 }
@@ -215,6 +222,18 @@ function CaseToolInner() {
   const [showOnboarding, setShowOnboarding] = useState(() => {
     return !localStorage.getItem('aspm_onboarded')
   })
+
+  if (profile?.role === 'product_owner') {
+    return (
+      <Layout navItems={PO_NAV_ITEMS}>
+        <Routes>
+          <Route index element={<ProductOwnerPortal />} />
+          <Route path="settings" element={<Settings />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+      </Layout>
+    )
+  }
 
   if (profile?.role === 'scrum_master') {
     return (

@@ -121,8 +121,8 @@ export default function DeveloperPortal() {
       {tab === 'overview' && (
         <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 20 }}>
-            <MetricCard label="Assigned Tasks"  value={myTasks.length} icon="📋" color={C.primary}        />
-            <MetricCard label="In Progress"     value={inProg}         icon="⚡" color={C.warning}        />
+            <MetricCard label="Assigned Tasks"  value={myTasks.length} icon="◎" color={C.primary}        />
+            <MetricCard label="In Progress"     value={inProg}         icon="◈" color={C.warning}        />
             <MetricCard label="Completed"       value={done}           icon="✓"  color={C.success}        />
             <MetricCard label="To Do"           value={todo}           icon="◎"  color={C.textSecondary}  />
           </div>
@@ -149,7 +149,7 @@ export default function DeveloperPortal() {
           <Card>
             <h3 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 600, color: C.textPrimary }}>Recent Tasks</h3>
             {myTasks.length === 0 ? (
-              <p style={{ margin: 0, fontSize: 13, color: C.textSecondary }}>No tasks assigned to you yet. Ask your Scrum Master to assign tasks.</p>
+              <p style={{ margin: 0, fontSize: 13, color: C.textSecondary }}>No tasks assigned.</p>
             ) : myTasks.slice(0, 5).map(t => {
               const stColor = t.status === 'Done' ? C.success : t.status === 'In Progress' ? C.primary : C.textSecondary
               return (
@@ -173,7 +173,7 @@ export default function DeveloperPortal() {
         <Card>
           <h3 style={{ margin: '0 0 16px', fontSize: 14, fontWeight: 600, color: C.textPrimary }}>All My Tasks</h3>
           {myTasks.length === 0 ? (
-            <p style={{ margin: 0, fontSize: 13, color: C.textSecondary }}>No tasks assigned to you. Tasks assigned to "{displayName}" across all projects will appear here.</p>
+            <p style={{ margin: 0, fontSize: 13, color: C.textSecondary }}>No tasks assigned.</p>
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
@@ -265,9 +265,9 @@ export default function DeveloperPortal() {
             ) : (
               <>
                 {[
-                  { key: 'did',      label: 'What did you do yesterday?',  ph: 'Completed login API, reviewed PR #42…' },
-                  { key: 'will',     label: 'What will you do today?',     ph: 'Work on dashboard feature, write tests…' },
-                  { key: 'blockers', label: 'Any blockers or impediments?', ph: 'None / Waiting for API spec from PM…'    },
+                  { key: 'did',      label: 'What did you do yesterday?',  ph: 'e.g. Fixed login bug' },
+                  { key: 'will',     label: 'What will you do today?',     ph: 'e.g. Write unit tests' },
+                  { key: 'blockers', label: 'Any blockers?',               ph: 'e.g. Blocked on API spec' },
                 ].map(f => (
                   <div key={f.key} style={{ marginBottom: 16 }}>
                     <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textPrimary, marginBottom: 6 }}>{f.label}</label>

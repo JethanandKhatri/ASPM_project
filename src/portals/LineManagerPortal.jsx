@@ -107,9 +107,9 @@ export default function LineManagerPortal() {
       {tab === 'overview' && (
         <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 20 }}>
-            <MetricCard label="Active Projects" value={activeProjects.length} icon="📂" color={C.primary}  sub={`${projects.length} total`}     />
-            <MetricCard label="Team Members"    value={teamMembers.length}    icon="👥" color={C.success}  sub="across all projects"             />
-            <MetricCard label="Avg Velocity"    value={avgVelocity}           icon="⚡" color={C.warning}  sub={`${velocityData.length} sprints`} />
+            <MetricCard label="Active Projects" value={activeProjects.length} icon="◈" color={C.primary}  sub={`${projects.length} total`}     />
+            <MetricCard label="Team Members"    value={teamMembers.length}    icon="◉" color={C.success}  sub="across all projects"             />
+            <MetricCard label="Avg Velocity"    value={avgVelocity}           icon="◈" color={C.warning}  sub={`${velocityData.length} sprints`} />
             <MetricCard label="High Risks"      value={highRisks.length}      icon="⚠" color={C.danger}   sub="unresolved"                      />
           </div>
 
@@ -263,7 +263,7 @@ export default function LineManagerPortal() {
           <h3 style={{ margin: '0 0 6px', fontSize: 14, fontWeight: 600, color: C.textPrimary }}>Sprint Velocity</h3>
           <p style={{ margin: '0 0 20px', fontSize: 12, color: C.textSecondary }}>Completed tasks vs capacity per sprint</p>
           {velocityData.length === 0 ? (
-            <p style={{ margin: 0, fontSize: 13, color: C.textSecondary }}>No completed sprints yet. Velocity data appears here once sprints are finished.</p>
+            <p style={{ margin: 0, fontSize: 13, color: C.textSecondary }}>No completed sprints yet.</p>
           ) : (
             <>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 24 }}>
