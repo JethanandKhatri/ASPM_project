@@ -201,7 +201,7 @@ function Layout({ children, navItems = NAV_ITEMS }) {
         </div>
 
         {/* Page content */}
-        <div style={{ flex: 1, overflow: 'auto' }}>
+        <div style={{ flex: 1 }}>
           {children}
         </div>
       </div>
