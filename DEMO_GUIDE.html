@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ASPM CASE Tool — Demo Presentation Guide</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --blue:    #1B4F8C;
+    --blue-lt: #E8F0FB;
+    --green:   #166534;
+    --green-lt:#DCFCE7;
+    --orange:  #92400E;
+    --orange-lt:#FEF3C7;
+    --purple:  #5B21B6;
+    --purple-lt:#EDE9FE;
+    --red:     #991B1B;
+    --red-lt:  #FEE2E2;
+    --gray:    #374151;
+    --gray-lt: #F9FAFB;
+    --border:  #E5E7EB;
+    --text:    #111827;
+    --sub:     #6B7280;
+  }
+
+  body {
+    font-family: 'Inter', Arial, sans-serif;
+    font-size: 11pt;
+    line-height: 1.6;
+    color: var(--text);
+    background: #fff;
+  }
+
+  /* ── COVER PAGE ── */
+  .cover {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background: linear-gradient(135deg, #0F2A56 0%, #1B4F8C 55%, #2563EB 100%);
+    color: #fff;
+    padding: 60px 40px;
+    page-break-after: always;
+  }
+  .cover-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 999px;
+    padding: 6px 20px;
+    font-size: 10pt;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 28px;
+  }
+  .cover h1 {
+    font-size: 38pt;
+    font-weight: 800;
+    letter-spacing: -1px;
+    line-height: 1.1;
+    margin-bottom: 16px;
+  }
+  .cover h1 span { color: #93C5FD; }
+  .cover .subtitle {
+    font-size: 14pt;
+    font-weight: 400;
+    opacity: 0.85;
+    margin-bottom: 40px;
+    max-width: 560px;
+  }
+  .cover-divider {
+    width: 60px; height: 3px;
+    background: rgba(255,255,255,0.4);
+    border-radius: 2px;
+    margin: 0 auto 40px;
+  }
+  .cover-meta {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    max-width: 700px;
+    margin: 0 auto 48px;
+  }
+  .cover-meta-item {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 12px;
+    padding: 16px 12px;
+  }
+  .cover-meta-item .num {
+    font-size: 22pt;
+    font-weight: 800;
+    color: #93C5FD;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .cover-meta-item .lbl {
+    font-size: 9pt;
+    font-weight: 600;
+    opacity: 0.75;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+  .cover-roles {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 48px;
+  }
+  .cover-role-pill {
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 8px;
+    padding: 8px 18px;
+    font-size: 10pt;
+    font-weight: 600;
+  }
+  .cover-footer {
+    font-size: 9.5pt;
+    opacity: 0.55;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── LAYOUT ── */
+  .page { padding: 36px 48px; max-width: 850px; margin: 0 auto; }
+
+  /* ── SECTION HEADERS ── */
+  .part-header {
+    page-break-before: always;
+    padding: 32px 0 20px;
+    border-bottom: 3px solid var(--blue);
+    margin-bottom: 28px;
+  }
+  .part-header .part-label {
+    font-size: 9pt;
+    font-weight: 700;
+    color: var(--blue);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+  }
+  .part-header h2 {
+    font-size: 22pt;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1.1;
+  }
+  .part-header .part-sub {
+    font-size: 11pt;
+    color: var(--sub);
+    margin-top: 6px;
+  }
+
+  /* ── MEMBER BANNER ── */
+  .member-banner {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 16px 22px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+  }
+  .member-banner.m1 { background: var(--blue-lt); border: 2px solid var(--blue); }
+  .member-banner.m2 { background: var(--green-lt); border: 2px solid var(--green); }
+  .member-banner.m3 { background: var(--purple-lt); border: 2px solid var(--purple); }
+  .member-avatar {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20pt; font-weight: 800; color: #fff; flex-shrink: 0;
+  }
+  .m1 .member-avatar { background: var(--blue); }
+  .m2 .member-avatar { background: var(--green); }
+  .m3 .member-avatar { background: var(--purple); }
+  .member-info .name { font-size: 13pt; font-weight: 700; }
+  .member-info .covers { font-size: 10pt; color: var(--sub); margin-top: 2px; }
+  .member-info .time-pill {
+    display: inline-block;
+    margin-top: 5px;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 9pt;
+    font-weight: 600;
+    background: rgba(0,0,0,0.08);
+  }
+
+  /* ── SECTION TITLE ── */
+  .section-title {
+    font-size: 14pt;
+    font-weight: 700;
+    color: var(--text);
+    margin: 28px 0 12px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-title .icon {
+    width: 28px; height: 28px;
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13pt;
+    flex-shrink: 0;
+  }
+  .section-title.blue .icon { background: var(--blue-lt); }
+  .section-title.green .icon { background: var(--green-lt); }
+  .section-title.purple .icon { background: var(--purple-lt); }
+  .section-title.orange .icon { background: var(--orange-lt); }
+
+  .subsection { font-size: 11.5pt; font-weight: 700; color: var(--blue); margin: 20px 0 8px; }
+
+  /* ── SCRIPT BOX ── */
+  .script-box {
+    background: #FFFBEB;
+    border: 1.5px solid #FDE68A;
+    border-left: 5px solid #F59E0B;
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 14px 0;
+    font-style: italic;
+    font-size: 10.5pt;
+    color: #78350F;
+    line-height: 1.7;
+  }
+  .script-box strong { font-style: normal; font-weight: 700; color: #92400E; }
+
+  /* ── INFO BOX ── */
+  .info-box {
+    background: var(--blue-lt);
+    border: 1px solid #BFDBFE;
+    border-left: 4px solid var(--blue);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 12px 0;
+    font-size: 10.5pt;
+    color: #1E3A5F;
+  }
+  .tip-box {
+    background: var(--green-lt);
+    border: 1px solid #BBF7D0;
+    border-left: 4px solid var(--green);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 12px 0;
+    font-size: 10.5pt;
+    color: #14532D;
+  }
+  .warn-box {
+    background: var(--orange-lt);
+    border: 1px solid #FDE68A;
+    border-left: 4px solid #F59E0B;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 12px 0;
+    font-size: 10.5pt;
+    color: var(--orange);
+  }
+
+  /* ── FEATURE CARD ── */
+  .feature-card {
+    background: var(--gray-lt);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin: 10px 0;
+  }
+  .feature-card .fc-title {
+    font-weight: 700;
+    font-size: 11pt;
+    color: var(--text);
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .feature-card .fc-title .badge {
+    font-size: 8.5pt;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--blue);
+    color: #fff;
+  }
+  .feature-card p { font-size: 10.5pt; color: var(--gray); line-height: 1.55; }
+
+  /* ── TABLES ── */
+  table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 10pt; }
+  thead tr { background: var(--blue); color: #fff; }
+  thead th { padding: 9px 12px; text-align: left; font-weight: 600; font-size: 9.5pt; }
+  tbody tr:nth-child(even) { background: var(--gray-lt); }
+  tbody td { padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: none; }
+
+  .table-blue thead tr { background: var(--blue); }
+  .table-green thead tr { background: var(--green); }
+  .table-purple thead tr { background: var(--purple); }
+  .table-orange thead tr { background: #92400E; }
+
+  /* ── FLOW DIAGRAM ── */
+  .flow {
+    background: #F8FAFF;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin: 16px 0;
+    font-family: 'Courier New', monospace;
+    font-size: 10pt;
+    line-height: 2;
+    color: var(--text);
+  }
+  .flow .role { font-weight: 700; color: var(--blue); }
+  .flow .arrow { color: var(--sub); }
+  .flow .action { color: var(--gray); }
+
+  /* ── TIMELINE ── */
+  .timeline { margin: 16px 0; }
+  .timeline-item {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 10px;
+    align-items: flex-start;
+  }
+  .timeline-time {
+    min-width: 100px;
+    font-size: 9.5pt;
+    font-weight: 700;
+    color: var(--sub);
+    padding-top: 3px;
+    white-space: nowrap;
+  }
+  .timeline-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    margin-top: 5px;
+    flex-shrink: 0;
+  }
+  .timeline-content { flex: 1; }
+  .timeline-content strong { font-weight: 700; font-size: 10.5pt; color: var(--text); }
+  .timeline-content .what { font-size: 10pt; color: var(--sub); margin-top: 2px; }
+
+  /* ── QA TABLE ── */
+  .qa-item {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .qa-q {
+    background: var(--blue-lt);
+    padding: 10px 14px;
+    font-weight: 700;
+    font-size: 10.5pt;
+    color: var(--blue);
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .qa-q .q-label {
+    background: var(--blue);
+    color: #fff;
+    border-radius: 4px;
+    padding: 1px 7px;
+    font-size: 8.5pt;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .qa-a {
+    padding: 10px 14px;
+    font-size: 10.5pt;
+    color: var(--gray);
+    line-height: 1.6;
+    background: #fff;
+  }
+  .qa-who {
+    font-size: 9pt;
+    color: var(--sub);
+    padding: 6px 14px;
+    background: var(--gray-lt);
+    border-top: 1px solid var(--border);
+  }
+
+  /* ── FEATURE REFERENCE TABLE ── */
+  .ref-table thead tr { background: #374151; }
+  .ref-table td:first-child { font-weight: 600; color: var(--blue); white-space: nowrap; }
+
+  /* ── PAGE NUMBERS / HEADER ── */
+  @media print {
+    @page {
+      size: A4;
+      margin: 18mm 15mm 18mm 15mm;
+    }
+    .cover { min-height: auto; padding: 80px 40px 60px; }
+    .cover-meta { grid-template-columns: repeat(4,1fr); }
+    .part-header { page-break-before: always; }
+    .no-break { page-break-inside: avoid; }
+    a { text-decoration: none; color: inherit; }
+    .print-header {
+      display: block;
+      font-size: 8pt;
+      color: var(--sub);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 4px;
+      margin-bottom: 10px;
+    }
+  }
+  @media screen {
+    .print-header { display: none; }
+    body { background: #F3F4F6; }
+    .page { background: #fff; box-shadow: 0 4px 24px rgba(0,0,0,.1); margin: 24px auto; border-radius: 4px; }
+    .cover { border-radius: 4px; margin: 24px auto; max-width: 850px; }
+  }
+
+  ul { padding-left: 20px; margin: 8px 0; }
+  li { margin-bottom: 5px; font-size: 10.5pt; }
+  p { margin: 8px 0; font-size: 10.5pt; }
+  strong { font-weight: 700; }
+  em { color: var(--sub); }
+
+  .chip {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: 9pt;
+    font-weight: 600;
+    margin: 2px 3px;
+  }
+  .chip-blue { background: var(--blue-lt); color: var(--blue); }
+  .chip-green { background: var(--green-lt); color: var(--green); }
+  .chip-orange { background: var(--orange-lt); color: var(--orange); }
+  .chip-red { background: var(--red-lt); color: var(--red); }
+  .chip-purple { background: var(--purple-lt); color: var(--purple); }
+
+  hr.divider { border: none; border-top: 2px solid var(--border); margin: 24px 0; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════ COVER ═══ -->
+<div class="cover">
+  <div class="cover-badge">Course Project Presentation Guide</div>
+  <h1>ASPM <span>CASE</span> Tool</h1>
+  <p class="subtitle">Agile Software Project Management — Computer-Aided Software Engineering Tool</p>
+  <div class="cover-divider"></div>
+  <div class="cover-meta">
+    <div class="cover-meta-item"><div class="num">4</div><div class="lbl">User Roles</div></div>
+    <div class="cover-meta-item"><div class="num">6</div><div class="lbl">Estimation Methods</div></div>
+    <div class="cover-meta-item"><div class="num">3</div><div class="lbl">Demo Presenters</div></div>
+    <div class="cover-meta-item"><div class="num">25+</div><div class="lbl">Features</div></div>
+  </div>
+  <div class="cover-roles">
+    <div class="cover-role-pill">Admin</div>
+    <div class="cover-role-pill">Project Manager</div>
+    <div class="cover-role-pill">Scrum Master</div>
+    <div class="cover-role-pill">Developer</div>
+  </div>
+  <div class="cover-footer">SHARE THIS DOCUMENT WITH ALL GROUP MEMBERS BEFORE THE DEMO</div>
+</div>
+
+<!-- ═══════════════════════════════════════════ PAGE 1 — SYSTEM OVERVIEW ═══ -->
+<div class="page">
+  <div class="part-header" style="page-break-before:avoid">
+    <div class="part-label">Introduction</div>
+    <h2>What Is This System?</h2>
+    <p class="part-sub">Read this section before the demo — all three members must understand this.</p>
+  </div>
+
+  <p><strong>ASPM CASE Tool</strong> is a complete web-based project management system designed for Agile software teams. Instead of using separate tools (Jira for tasks, Confluence for docs, Excel for estimations), our system puts everything in one place — with different views tailored to each team role.</p>
+
+  <div class="info-box">
+    <strong>Core Concept:</strong> Every person in a software team has a different job. A manager needs budgets and risks. A developer needs their tasks. A Scrum Master needs to run sprints. Our tool gives each person exactly what they need — nothing more, nothing less.
+  </div>
+
+  <div class="section-title blue"><div class="icon">⚙</div>Technology Stack</div>
+  <table class="table-blue no-break">
+    <thead><tr><th>Layer</th><th>Technology</th><th>Why We Used It</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Frontend</strong></td><td>React (Vite)</td><td>Component-based UI, fast reloads, industry standard</td></tr>
+      <tr><td><strong>Database</strong></td><td>Supabase (PostgreSQL)</td><td>Real-time, built-in auth, free tier for projects</td></tr>
+      <tr><td><strong>Authentication</strong></td><td>Supabase Auth</td><td>Real user accounts with email/password — not mock data</td></tr>
+      <tr><td><strong>Hosting</strong></td><td>Localhost / Vite dev server</td><td>Run with <code>npm run dev</code></td></tr>
+    </tbody>
+  </table>
+
+  <div class="section-title blue"><div class="icon">👥</div>The Four Roles</div>
+  <table class="table-blue no-break">
+    <thead><tr><th>Role</th><th>Real-World Job</th><th>What They Control</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Admin</strong></td><td>IT Manager / System Owner</td><td>Creates user accounts, views company-wide portfolio and budget</td></tr>
+      <tr><td><strong>Project Manager (PM)</strong></td><td>Project Manager</td><td>Creates projects, runs estimations (6 techniques), manages risks</td></tr>
+      <tr><td><strong>Scrum Master (SM)</strong></td><td>Scrum Master</td><td>Runs sprints, manages Kanban board, tracks standups and impediments</td></tr>
+      <tr><td><strong>Developer</strong></td><td>Software Developer</td><td>Views assigned tasks, updates status, submits daily standup</td></tr>
+    </tbody>
+  </table>
+
+  <div class="section-title blue"><div class="icon">🔗</div>How Roles Connect — The Big Picture</div>
+  <div class="flow">
+<span class="role">ADMIN</span>
+<span class="arrow">  ↓  </span><span class="action">creates real Supabase accounts for PM, SM, and Developers</span>
+
+<span class="role">PROJECT MANAGER</span>
+<span class="arrow">  ↓  </span><span class="action">creates project, runs COCOMO / Fuzzy Logic estimations</span>
+<span class="arrow">  ↓  </span><span class="action">logs risks → these AUTOMATICALLY appear as SM impediments</span>
+<span class="arrow">  ↓  </span><span class="action">estimation results → visible to SM in Capacity Planning</span>
+
+<span class="role">SCRUM MASTER</span>
+<span class="arrow">  ↓  </span><span class="action">creates sprints, assigns tasks to developers</span>
+<span class="arrow">  ↓  </span><span class="action">monitors board, tracks impediments, plans capacity</span>
+
+<span class="role">DEVELOPER</span>
+<span class="arrow">  ↓  </span><span class="action">sees only their assigned tasks, updates status</span>
+<span class="arrow">  ↑  </span><span class="action">submits standup → instantly visible in SM's Team tab</span>
+<span class="arrow">  ↑  </span><span class="action">task status updates → visible to SM board + PM project view</span>
+  </div>
+
+  <div class="tip-box">
+    <strong>Key selling point for Professor:</strong> Every role feeds data to the next role automatically. PM's risks become SM's impediments. PM's estimation becomes SM's capacity reference. Developer's standup appears in SM's view. This is a closed-loop information system — not just isolated screens.
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ MEMBER 1 ═══ -->
+<div class="page">
+  <div class="part-header">
+    <div class="part-label">Demo Section 1 of 3</div>
+    <h2>System Login + Admin + Project Manager</h2>
+  </div>
+
+  <div class="member-banner m1">
+    <div class="member-avatar">1</div>
+    <div class="member-info">
+      <div class="name">Member 1 — Presents This Section</div>
+      <div class="covers">Covers: Login flow · Admin portal · PM dashboard · Project creation · Estimations · Risk management</div>
+      <div class="time-pill">⏱ 8–10 minutes</div>
+    </div>
+  </div>
+
+  <div class="script-box">
+    <strong>Opening Script (say this word-for-word):</strong><br/>
+    "Good [morning/afternoon] Professor. Our project is the ASPM CASE Tool — a web-based system that digitizes the complete Agile Software Project Management lifecycle. It supports four roles: Admin, Project Manager, Scrum Master, and Developer — each with their own portal and role-specific features. Let me start from how a new team gets set up in the system."
+  </div>
+
+  <!-- LOGIN -->
+  <div class="section-title blue"><div class="icon">🔐</div>A — System Login & Authentication</div>
+  <p><strong>Open:</strong> <code>localhost:5173</code> in the browser</p>
+
+  <div class="feature-card no-break">
+    <div class="fc-title">Real Authentication — Not Mock Data <span class="badge">IMPORTANT</span></div>
+    <p>The login uses <strong>Supabase Auth</strong> — real email/password accounts stored in a live PostgreSQL database. When you log in, the system reads your role from the database and routes you to your portal automatically. A PM always lands on the PM dashboard. A Developer always lands on their workspace. Wrong role = wrong portal never loads — it is hard-coded routing by role.</p>
+  </div>
+
+  <div class="script-box">
+    "The first thing to notice is that this is real authentication — not mock data. Every account is stored in Supabase. When you log in as a PM, you get the PM portal. Log in as a Developer, you get the Developer workspace. The routing is completely role-locked."
+  </div>
+
+  <!-- ADMIN -->
+  <div class="section-title blue"><div class="icon">🛡</div>B — Admin Portal</div>
+  <p><strong>Log in as:</strong> Admin account</p>
+
+  <div class="subsection">B1 — Overview Tab</div>
+  <p>Admin sees company-wide summary: total projects, active sprints, team size, total budget. Admin can <em>see</em> everything but <em>cannot edit</em> any project — they are a system administrator, not a PM.</p>
+
+  <div class="subsection">B2 — Users Tab ⭐ Most Important Admin Feature</div>
+  <div class="feature-card no-break">
+    <div class="fc-title">Create User Account</div>
+    <p>Click <strong>"Create User"</strong> → fill in: Full Name, Email, Role (PM / SM / Developer / Team Member), automatic temp password is generated → click Create → a <strong>real Supabase Auth account</strong> is created immediately. A temporary password is displayed on screen — Admin shares it with the new team member. This is <em>not</em> an alert() or fake function — the account is live in the database.</p>
+  </div>
+  <div class="script-box">
+    "This is the Admin's most important function — creating accounts. When a company starts using this tool, the Admin creates accounts for everyone. This is real user creation — not a fake pop-up. The account is immediately active in Supabase. The Admin gives the temporary password to the new member, they log in and change it in Settings."
+  </div>
+
+  <div class="subsection">B3 — Portfolio Tab</div>
+  <p>All projects shown as cards with status, budget, and risk count. Admin monitors organizational health without being able to touch project content.</p>
+
+  <div class="subsection">B4 — Budget Tab</div>
+  <p>Financial breakdown per project — Admin monitors spend without editing budget values (PM sets budgets).</p>
+
+  <div class="script-box">
+    <strong>Transition line:</strong> "Now that the Admin has created the PM account, let me log in as the Project Manager."
+  </div>
+
+  <!-- PM -->
+  <div class="section-title blue"><div class="icon">📊</div>C — Project Manager Portal</div>
+  <p><strong>Log in as:</strong> PM account</p>
+
+  <div class="subsection">C1 — PM Dashboard</div>
+  <div class="feature-card no-break">
+    <div class="fc-title">Project Dashboard</div>
+    <p>Shows all projects as cards with status badges (Active / Planning / Completed). Metric row at top: Total Projects, Active, Completed, Open Risks, Total Budget. The <strong>"+ New Project" button</strong> appears only for PM — Admin and other roles do not see it.</p>
+  </div>
+
+  <div class="subsection">C2 — Create a Project</div>
+  <p>Click "+ New Project" → fill in: Project Name, Domain (e.g., Healthcare / Finance), Description, Team Size, Budget ($), Start Date, Deadline → Save. Data goes to Supabase and immediately appears in Admin's Portfolio.</p>
+  <div class="script-box">
+    "Creating a project captures the fundamental planning information — scope, team, timeline, and budget. All of this is saved to Supabase and immediately visible to the Admin in the portfolio view."
+  </div>
+
+  <div class="subsection">C3 — Features (User Stories)</div>
+  <div class="feature-card no-break">
+    <div class="fc-title">Features = User Stories</div>
+    <p>Open a project → Features tab → add features like "User Login", "Dashboard Analytics" with Priority (High/Medium/Low) and Status. These are the project requirements. The Scrum Master sees these when linking tasks to stories — this is the PM-to-SM requirements handoff.</p>
+  </div>
+
+  <div class="subsection">C4 — Estimation Module ⭐⭐ Star Feature — Spend the Most Time Here</div>
+  <div class="feature-card no-break">
+    <div class="fc-title">6 Estimation Techniques <span class="badge">ACADEMIC HIGHLIGHT</span></div>
+    <p>Click Estimations tab → "Run New Estimation" → choose from 6 techniques. Each produces: Estimated Effort (person-days), Duration (weeks), Cost ($). Results are saved and shown to the SM in their Capacity Planning tab.</p>
+  </div>
+
+  <table class="table-blue no-break">
+    <thead><tr><th>Technique</th><th>How It Works</th><th>Best For</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Story Points</strong></td><td>Relative sizing: 1, 2, 3, 5, 8, 13 (Fibonacci)</td><td>Sprint-level planning</td></tr>
+      <tr><td><strong>COCOMO</strong></td><td>Effort = a × (KLOC)^b — Barry Boehm's mathematical model</td><td>Large projects with known LOC</td></tr>
+      <tr><td><strong>Fuzzy Logic</strong></td><td>Uses linguistic terms (small/medium/large) to handle uncertainty</td><td>Early-stage estimates with vague requirements</td></tr>
+      <tr><td><strong>Analogy</strong></td><td>Compare to similar past projects and scale</td><td>Teams with project history</td></tr>
+      <tr><td><strong>Decomposition</strong></td><td>Break into modules, estimate each separately, sum up</td><td>Well-defined projects</td></tr>
+      <tr><td><strong>Expert Judgment</strong></td><td>Three-point estimate: Optimistic + Most Likely + Pessimistic</td><td>Novel projects with uncertainty</td></tr>
+    </tbody>
+  </table>
+
+  <div class="script-box">
+    "This is our most academically significant feature. We implemented six real software estimation techniques. COCOMO uses a mathematical model from Barry Boehm's research. Fuzzy Logic handles the inherent uncertainty in early-stage projects. Expert Judgment uses three-point estimation — a recognized technique in the PMBOK. The result — effort in person-days and project cost — is saved and becomes a reference for the Scrum Master when they plan sprint capacity. This is real PM-to-SM data flow."
+  </div>
+
+  <div class="subsection">C5 — Risk Management</div>
+  <div class="feature-card no-break">
+    <div class="fc-title">Risk Register with Automatic SM Integration <span class="badge">KEY INTEGRATION</span></div>
+    <p>Click Risks tab → add risk: Description, Probability (High/Medium/Low), Impact (High/Medium/Low), Mitigation strategy. System calculates risk score and color-codes it Red/Yellow/Green. <strong>These risks automatically appear as impediments in the Scrum Master's portal</strong> — no manual communication needed.</p>
+  </div>
+  <div class="script-box">
+    "Risk management is a core ASPM function. The PM logs risks with probability and impact — the system calculates a risk score using a probability-impact matrix. Here is the key integration: these risks automatically flow to the Scrum Master's Impediments section. The SM sees which risks are blocking the team without the PM needing to send an email or message. This is our primary PM-to-SM connection."
+  </div>
+
+  <div class="subsection">C6 — Settings → Team Management</div>
+  <p>Go to Settings → Team Management → Add team member (Name + Email + Role) → Create Account. Creates a real Supabase account with a one-time temporary password shown on screen.</p>
+
+  <div class="subsection">C7 — Scrum Overview (Read-Only for PM)</div>
+  <p>PM can monitor sprint progress, task counts, and team velocity — but cannot edit anything. They observe sprint execution; the Scrum Master owns it.</p>
+
+  <div class="script-box">
+    <strong>Transition line:</strong> "The PM has set up the project, run estimations, logged risks, and built the team. Now I'll hand over to [Member 2] who will show how the Scrum Master takes that foundation and runs the Agile sprint process."
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ MEMBER 2 ═══ -->
+<div class="page">
+  <div class="part-header">
+    <div class="part-label">Demo Section 2 of 3</div>
+    <h2>Scrum Master Portal</h2>
+  </div>
+
+  <div class="member-banner m2">
+    <div class="member-avatar">2</div>
+    <div class="member-info">
+      <div class="name">Member 2 — Presents This Section</div>
+      <div class="covers">Covers: Kanban Board · Backlog · Sprint Lifecycle · Capacity Planning · Standup · Impediments · Retrospective</div>
+      <div class="time-pill">⏱ 9–11 minutes</div>
+    </div>
+  </div>
+
+  <div class="script-box">
+    <strong>Opening Script:</strong><br/>
+    "I'm going to show you the Scrum Master portal — the operational heart of the Agile process. The Scrum Master takes the project the PM created and runs the actual sprint cycle: planning, daily execution, and completion."
+  </div>
+
+  <p><strong>Log in as:</strong> SM account</p>
+
+  <!-- BOARD -->
+  <div class="section-title green"><div class="icon">📋</div>D1 — Board Tab (Sprint Kanban Board)</div>
+
+  <div class="feature-card no-break">
+    <div class="fc-title">Kanban Board — What to Show</div>
+    <ul>
+      <li>Three columns: <strong>To Do | In Progress | Done</strong></li>
+      <li>Task cards color-coded by priority border (Red = High, Yellow = Medium, Green = Low)</li>
+      <li>Assignee avatar on each card, overdue date shown in red</li>
+      <li>Click a card → task detail modal → click "Move to In Progress" or "Move to Done" → card moves column</li>
+      <li><strong>WIP Limit:</strong> "In Progress" column turns red with "⚠ LIMIT EXCEEDED" if too many tasks are in progress simultaneously</li>
+      <li>Filters at top: filter by sprint, project, or assignee</li>
+    </ul>
+  </div>
+
+  <div class="feature-card no-break">
+    <div class="fc-title">Sprint Health Panel — Top of Board <span class="badge">IMPORTANT</span></div>
+    <ul>
+      <li>Sprint name and goal displayed prominently</li>
+      <li>Days remaining counter (turns red when sprint is overdue)</li>
+      <li>Ring chart showing % of tasks complete</li>
+      <li>Today's standup count: how many developers submitted standup today</li>
+      <li>Warning chips: overdue task count, unassigned task count</li>
+    </ul>
+  </div>
+
+  <div class="script-box">
+    "The Kanban board is the SM's daily workspace. Task cards are color-coded by priority. The WIP Limit on the In Progress column is a core Lean principle — if the team takes on too many things simultaneously, the system warns the SM. The WIP limit is saved per sprint and persists across sessions.<br/><br/>
+    The Sprint Health Panel gives the SM a real-time health check at a glance — are we on track? How many tasks are overdue? Did all team members submit standup today? This replaces the physical information radiator you would see on a wall in a real Scrum team."
+  </div>
+
+  <!-- BACKLOG -->
+  <div class="section-title green"><div class="icon">📝</div>D2 — Backlog Tab</div>
+  <div class="feature-card no-break">
+    <div class="fc-title">Backlog Management — What to Show</div>
+    <ul>
+      <li>Unassigned section: tasks not in any sprint yet</li>
+      <li>Click <strong>"+ Add Task"</strong> → modal: Project, Task Name, Priority, Assignee (dropdown from team), Due Date, Feature link, Story Points</li>
+      <li>To add task to sprint: click the <strong>"+ Sprint"</strong> dropdown on any unassigned task → select sprint → task moves in</li>
+      <li>Feature field links task to PM's user story — traceability from requirement to task</li>
+    </ul>
+  </div>
+  <div class="script-box">
+    "The Backlog is where sprint planning happens. The SM creates tasks, assigns them to team members, and pulls them into a sprint. Notice the Feature field — this links a task back to the PM's user story, creating traceability from the PM's requirement all the way down to the developer's task."
+  </div>
+
+  <!-- SPRINTS -->
+  <div class="section-title green"><div class="icon">🏃</div>D3 — Sprints Tab — The Full Sprint Lifecycle</div>
+
+  <div class="warn-box"><strong>Show this flow in order — it demonstrates the complete Scrum cycle.</strong></div>
+
+  <table class="table-green no-break">
+    <thead><tr><th>Step</th><th>Action</th><th>What Happens</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>1. Create</strong></td>
+        <td>Click "+ New Sprint" → enter Name, Goal, Start Date, End Date, Target Release (optional)</td>
+        <td>Sprint appears as "Planned" (grey badge). Only ONE sprint can be Active at a time.</td>
+      </tr>
+      <tr>
+        <td><strong>2. Start</strong></td>
+        <td>Click "Start Sprint"</td>
+        <td>Status → "Active" (green badge). Sprint Planning Artifact appears showing committed stories, story points, capacity, and progress per story.</td>
+      </tr>
+      <tr>
+        <td><strong>3. Execute</strong></td>
+        <td>SM moves tasks on Board. Developers update their own status.</td>
+        <td>Progress bar fills. Sprint Health Panel updates in real time.</td>
+      </tr>
+      <tr>
+        <td><strong>4. Complete</strong></td>
+        <td>Click "Complete Sprint" → Sprint Review modal opens</td>
+        <td>Shows completed tasks (green ✓), warns about incomplete tasks. SM enters review notes. Incomplete tasks automatically return to backlog.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="script-box">
+    "This is the complete sprint lifecycle — Plan, Execute, Review, Close. When we complete a sprint, incomplete tasks don't disappear — they return to the backlog automatically and the sprint record saves which tasks were dropped. The PM can then see exactly what didn't get done. This is the Sprint Review process from the Scrum Guide, implemented digitally."
+  </div>
+
+  <!-- REPORTS -->
+  <div class="section-title green"><div class="icon">📈</div>D4 — Reports Tab → Capacity Planning</div>
+  <div class="feature-card no-break">
+    <div class="fc-title">Capacity Planner — What to Show</div>
+    <ul>
+      <li>Select a sprint from dropdown</li>
+      <li>Add team members with sprint days and available days (e.g., Ali: 10 sprint days, 8 available due to 2 days leave)</li>
+      <li>"Import Team" button auto-fills from project team list</li>
+      <li><strong>Recommended SP box:</strong> System calculates how many story points the team should commit to, based on past velocity and current availability</li>
+      <li><strong>PM Estimation Reference table:</strong> Shows PM's COCOMO/Fuzzy Logic results (effort, duration, cost) per project — right next to capacity planning</li>
+    </ul>
+  </div>
+  <div class="script-box">
+    "Capacity planning answers: how much can this team actually deliver this sprint? We calculate it from two inputs — team availability and velocity from past sprints. The system cross-references the PM's estimation output from COCOMO or Fuzzy Logic right below the capacity table. If the PM estimated 120 person-days of total effort and we only have 40 person-days of capacity this sprint, the SM knows they can only complete about one-third of the project this sprint. This connects the PM's planning phase directly to the SM's execution phase — a real cross-role data link."
+  </div>
+
+  <div class="section-title green"><div class="icon">📊</div>D5 — Reports Tab → Workload</div>
+  <p>Click Workload sub-tab → bar chart per assignee showing To Do / In Progress / Done task breakdown. Red warning badges for overdue tasks per person. SM uses this to rebalance work during the sprint.</p>
+
+  <!-- TEAM - STANDUP -->
+  <div class="section-title green"><div class="icon">🎯</div>D6 — Team Tab → Daily Standup</div>
+  <div class="feature-card no-break">
+    <div class="fc-title">Standup Logger — What to Show</div>
+    <ul>
+      <li>Left: Log Entry form with team member dropdown (from real team list)</li>
+      <li>Three questions: What did they do? What will they do? Any blockers?</li>
+      <li>Date picker (defaults to today, warns if logging for a past date)</li>
+      <li><strong>Duplicate protection:</strong> If you try to log the same member twice for the same day, a warning appears — "Already has entry for this date. Log Anyway?" — prevents silent double entries</li>
+      <li>Right: Today's standup entries shown live</li>
+      <li>"Missing from today's standup" banner showing who hasn't submitted yet</li>
+      <li>If a blocker is entered, it auto-adds to the Impediments tab</li>
+    </ul>
+  </div>
+  <div class="script-box">
+    "The standup logger has duplicate protection — if you accidentally try to log the same person twice for the same day, the system warns you rather than silently creating two entries. Notice the blocker escalation — if a standup entry has a blocker described, the system automatically adds it to the Impediments tab for the SM to track and remove. No manual copy-paste needed."
+  </div>
+
+  <!-- IMPEDIMENTS -->
+  <div class="section-title green"><div class="icon">⚠</div>D7 — Team Tab → Impediments</div>
+  <div class="feature-card no-break">
+    <div class="fc-title">Two Sources of Impediments <span class="badge">KEY INTEGRATION</span></div>
+    <p>The impediments table combines two sources automatically:</p>
+    <ul>
+      <li><strong>From Risks</strong> (labeled "From risks"): PM's open risk register entries appear here automatically</li>
+      <li><strong>Manual</strong>: SM can add their own impediments directly (or they come from standup blockers)</li>
+    </ul>
+    <p>Each has: Description, Owner, Severity (High/Medium/Low), Status (Open/In Progress/Resolved). SM clicks "Resolve" when an impediment is cleared.</p>
+  </div>
+  <div class="script-box">
+    "Impediments are blockers the SM must remove for the team. Our system has a smart integration — risks the PM logged automatically appear here. If the PM identified a third-party API dependency as a High risk, the SM immediately sees it as an impediment to track. This is the PM-to-SM risk communication flow built directly into the system."
+  </div>
+
+  <!-- RETROSPECTIVE -->
+  <div class="section-title green"><div class="icon">🔄</div>D8 — Team Tab → Retrospective</div>
+  <div class="feature-card no-break">
+    <div class="fc-title">Sprint Retrospective Board</div>
+    <ul>
+      <li>Sprint selector — each sprint has its own retrospective</li>
+      <li>Three columns: <strong>What went well? | What to improve? | Action items</strong></li>
+      <li>Add items by typing and clicking +</li>
+      <li>Action items have: Owner field + Due Date — so they are tracked, not forgotten</li>
+    </ul>
+  </div>
+  <div class="script-box">
+    "The Retrospective is the Inspect and Adapt ceremony from Scrum. After every sprint, the team reflects on what worked and what didn't. Our system organizes this into three classic categories. Action items can be assigned to a specific team member with a due date — they are tracked in the system, not written on a whiteboard and forgotten."
+  </div>
+
+  <div class="script-box">
+    <strong>Transition line:</strong> "The Scrum Master has set up sprints, planned capacity, tracked standups, and managed impediments. I'll now hand to [Member 3] who will show how the Developer experiences this system."
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ MEMBER 3 ═══ -->
+<div class="page">
+  <div class="part-header">
+    <div class="part-label">Demo Section 3 of 3</div>
+    <h2>Developer Portal + Summary + Q&A</h2>
+  </div>
+
+  <div class="member-banner m3">
+    <div class="member-avatar">3</div>
+    <div class="member-info">
+      <div class="name">Member 3 — Presents This Section</div>
+      <div class="covers">Covers: Developer workspace · My Tasks · Sprint Board · Daily Standup · System Summary · Q&A lead</div>
+      <div class="time-pill">⏱ 7–9 minutes</div>
+    </div>
+  </div>
+
+  <div class="script-box">
+    <strong>Opening Script:</strong><br/>
+    "I'm going to show you the system from the Developer's perspective — the person actually doing the work. The developer's view is intentionally focused: they only see what is relevant to them."
+  </div>
+
+  <p><strong>Log in as:</strong> Developer account</p>
+
+  <!-- OVERVIEW -->
+  <div class="section-title purple"><div class="icon">🏠</div>E1 — Overview Tab (Developer Home)</div>
+  <div class="feature-card no-break">
+    <div class="fc-title">Developer Dashboard</div>
+    <ul>
+      <li>Four metric cards: Assigned Tasks, In Progress, Completed, To Do</li>
+      <li>Progress bar: overall task completion percentage</li>
+      <li>Active Sprint card: name, goal, days remaining</li>
+      <li>Recent Tasks list: last 5 assigned tasks with status badges</li>
+      <li>If no tasks: message tells developer exactly what name/email the SM should use to assign tasks to them</li>
+    </ul>
+  </div>
+  <div class="script-box">
+    "When a developer logs in, they see only their work — not the whole team's tasks, not the PM's budget, not the sprint board for everyone. Just what they need: what is assigned to me, what am I doing today, what sprint are we in. The system matches tasks to developers by exact full name or email — if the SM assigns a task to 'Ali Hassan', it appears for the developer whose account name is 'Ali Hassan'. This prevents one developer accidentally seeing another developer's tasks."
+  </div>
+
+  <!-- MY TASKS -->
+  <div class="section-title purple"><div class="icon">✅</div>E2 — My Tasks Tab</div>
+  <div class="feature-card no-break">
+    <div class="fc-title">Task List with Self-Update <span class="badge">NEW FIX</span></div>
+    <ul>
+      <li>Full table of all tasks assigned to this developer across all projects</li>
+      <li>Columns: Task Name, Project, Priority (badge), Due Date, Status, <strong>Update button</strong></li>
+      <li>"→ Next Status" button on every row: one click moves task To Do → In Progress → Done → To Do</li>
+      <li>Completed tasks shown with strikethrough</li>
+      <li>Status change immediately appears in SM's Board and PM's project view</li>
+    </ul>
+  </div>
+  <div class="script-box">
+    "Developers can update their own task status directly — they do not need to ask the Scrum Master to move a card for them. The one-click status button makes this instant. The change reflects in the SM's Kanban Board and the PM's project view immediately — everyone sees the update in real time through the shared Supabase database."
+  </div>
+
+  <!-- SPRINT BOARD -->
+  <div class="section-title purple"><div class="icon">🗂</div>E3 — Sprint Board Tab</div>
+  <div class="feature-card no-break">
+    <div class="fc-title">Personal Sprint Board — My Tasks Only <span class="badge">KEY DESIGN</span></div>
+    <ul>
+      <li>Three-column Kanban: To Do | In Progress | Done</li>
+      <li><strong>Shows ONLY tasks assigned to this developer in the active sprint</strong> — not the whole team's work</li>
+      <li>Each card has a "→ Next Status" button — developer moves their own cards</li>
+      <li>If no tasks assigned: clear message tells developer which name/email to give the SM</li>
+    </ul>
+  </div>
+  <div class="script-box">
+    "The Sprint Board shows only this developer's tasks — compare this to the SM's board which shows everyone's tasks. This is a deliberate design decision. If you show a developer 50 tasks from the whole team, they lose focus. Showing only their 5 tasks keeps them focused on their own deliverables. They can move their own cards — this is the 'self-organizing team' principle from the Scrum Guide."
+  </div>
+
+  <!-- STANDUP -->
+  <div class="section-title purple"><div class="icon">🎙</div>E4 — Daily Standup Tab</div>
+  <div class="feature-card no-break">
+    <div class="fc-title">Developer Self-Submit Standup</div>
+    <ul>
+      <li>Three-question form: What did you do yesterday? What will you do today? Any blockers?</li>
+      <li>Submit → saved to Supabase immediately</li>
+      <li><strong>Duplicate protection:</strong> If already submitted today, shows the existing entry instead of blank form — "Today's Standup Already Logged" with content displayed</li>
+      <li>"Submit Another Update" button if they need to add more</li>
+      <li>Entry immediately visible in SM's Team Tab standup section</li>
+    </ul>
+  </div>
+  <div class="script-box">
+    "The developer submits their standup directly — they don't need to wait for the SM to log it. When they hit Submit, the entry goes to Supabase immediately. The SM sees it in real time on the Team tab. Notice the duplicate protection — if you submitted earlier today and come back, it shows your existing entry rather than letting you accidentally submit twice. The system is aware of time and prevents redundant data."
+  </div>
+
+  <div class="info-box">
+    <strong>Live connection demo:</strong> If you can, switch to the SM portal after the developer submits standup — the SM's Team tab shows the entry appear in today's standup list. This is the most impressive live demonstration of real-time data flow.
+  </div>
+
+  <!-- SUMMARY -->
+  <div class="section-title purple"><div class="icon">🎯</div>F — System Summary (Member 3 Closes)</div>
+
+  <div class="flow">
+<span class="role">ADMIN</span>
+<span class="arrow">  ↓  </span><span class="action">creates real Supabase accounts with roles and temp passwords</span>
+
+<span class="role">PROJECT MANAGER</span>
+<span class="arrow">  ↓  </span><span class="action">creates project → sets scope, budget, team, deadline</span>
+<span class="arrow">  ↓  </span><span class="action">runs 6 estimation techniques → effort, duration, cost calculated</span>
+<span class="arrow">  ↓  </span><span class="action">logs risks → AUTOMATICALLY appear as SM impediments</span>
+<span class="arrow">  ↓  </span><span class="action">estimation results → visible to SM in Capacity Planning</span>
+
+<span class="role">SCRUM MASTER</span>
+<span class="arrow">  ↓  </span><span class="action">creates sprint → links to release, sets goal and dates</span>
+<span class="arrow">  ↓  </span><span class="action">assigns tasks to developers in Backlog tab</span>
+<span class="arrow">  ↓  </span><span class="action">plans capacity using PM's estimates as reference</span>
+<span class="arrow">  ↓  </span><span class="action">monitors Kanban board, enforces WIP limits</span>
+<span class="arrow">  ↓  </span><span class="action">runs retrospective, tracks impediments</span>
+
+<span class="role">DEVELOPER</span>
+<span class="arrow">  ↓  </span><span class="action">sees only their assigned tasks</span>
+<span class="arrow">  ↓  </span><span class="action">updates task status with one click</span>
+<span class="arrow">  ↑  </span><span class="action">submits standup → instantly visible in SM's Team tab</span>
+<span class="arrow">  ↑  </span><span class="action">status updates → visible to SM Board + PM project view in real time</span>
+  </div>
+
+  <div class="script-box">
+    <strong>Closing Statement (say this to end the demo):</strong><br/>
+    "To summarize: we built a complete ASPM CASE Tool covering project initialization, six estimation techniques based on industry research, risk management with automatic impediment integration, full sprint lifecycle management, velocity-based capacity planning, daily standups with real-time cross-role visibility, retrospectives, and role-based access control — all persisted through a live Supabase database with real authentication. Every role feeds data to the next role automatically — this is what ASPM CASE tools are designed to do. Thank you."
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ Q&A PREP ═══ -->
+<div class="page">
+  <div class="part-header">
+    <div class="part-label">All Members</div>
+    <h2>Professor Q&A — Expected Questions & Answers</h2>
+  </div>
+
+  <p style="margin-bottom:18px">Study these before the demo. The question column notes which member should answer each one.</p>
+
+  <div class="qa-item no-break">
+    <div class="qa-q"><span class="q-label">Q</span> Why did you use Supabase instead of Firebase or a custom backend?</div>
+    <div class="qa-a">Supabase provides built-in authentication with role-based user creation via an admin API. This is essential for our Admin-creates-accounts flow — we can create real Supabase Auth users programmatically from the frontend. Firebase Auth doesn't expose the same admin-level user creation in the client SDK. Supabase also gives us a real PostgreSQL database instead of a NoSQL store, which suits our relational data model (projects → tasks → sprints).</div>
+    <div class="qa-who">📌 Member 1 answers</div>
+  </div>
+
+  <div class="qa-item no-break">
+    <div class="qa-q"><span class="q-label">Q</span> Explain COCOMO. How did you implement it?</div>
+    <div class="qa-a">COCOMO stands for Constructive Cost Model, developed by Barry Boehm. The formula is: <strong>Effort = a × (KLOC)^b</strong>, where KLOC is thousands of lines of code. The constants a and b vary by project type — Organic projects use a=2.4, b=1.05; Semi-detached use a=3.0, b=1.12; Embedded use a=3.6, b=1.20. Duration is then calculated as: <strong>Duration = 2.5 × (Effort)^0.38</strong>. We implemented this formula directly in the TechniqueSelector component with the PM entering KLOC and selecting project type.</div>
+    <div class="qa-who">📌 Member 1 answers</div>
+  </div>
+
+  <div class="qa-item no-break">
+    <div class="qa-q"><span class="q-label">Q</span> What is WIP Limit and why does it matter in Scrum?</div>
+    <div class="qa-a">WIP stands for Work In Progress. The WIP Limit is a Lean/Kanban principle that restricts how many tasks can be in the "In Progress" column simultaneously. The research behind it — from the Theory of Constraints — shows that excessive multitasking reduces productivity due to context-switching overhead. Limiting WIP forces the team to finish tasks before starting new ones, improving flow and reducing lead time. In our system, when the WIP limit is exceeded, the In Progress column turns red and shows a warning, alerting the SM to intervene.</div>
+    <div class="qa-who">📌 Member 2 answers</div>
+  </div>
+
+  <div class="qa-item no-break">
+    <div class="qa-q"><span class="q-label">Q</span> How does the PM's risk register connect to the Scrum Master?</div>
+    <div class="qa-a">Both the PM's Risk Register and the SM's Impediments tab read from the same Supabase risks table. When the PM adds a risk with status "Open" or "In Progress", it automatically appears in the SM's Impediments list labeled as "From risks". The SM does not need to be told about the risk manually — the system surfaces it. When the PM resolves the risk (marks it as "Resolved"), it disappears from the SM's impediments list. This is real-time cross-role integration through a shared database.</div>
+    <div class="qa-who">📌 Member 2 answers</div>
+  </div>
+
+  <div class="qa-item no-break">
+    <div class="qa-q"><span class="q-label">Q</span> Why can't the developer see all sprint tasks? Is that a missing feature?</div>
+    <div class="qa-a">This is an intentional design decision based on Scrum principles. In professional Scrum, each team member is responsible for their own tasks. Showing a developer all 50 tasks from the entire team creates unnecessary cognitive load and distracts from their focus work. The Scrum Master has full visibility because it is their responsibility to monitor the whole team. The developer has filtered visibility because it is their responsibility to deliver their specific tasks. This is the "focus" principle from the Scrum Values.</div>
+    <div class="qa-who">📌 Member 3 answers</div>
+  </div>
+
+  <div class="qa-item no-break">
+    <div class="qa-q"><span class="q-label">Q</span> What happens to tasks that are not finished when a sprint ends?</div>
+    <div class="qa-a">When the SM completes a sprint, the system separates completed tasks (status = Done) from incomplete ones. Completed tasks remain in the sprint record. Incomplete tasks are removed from the sprint's task list and return to the backlog automatically — they appear as unassigned tasks available for re-prioritization in the next sprint planning session. The sprint record also saves the names of dropped tasks as a log, which is visible on the sprint card so the PM can see exactly what was incomplete when reviewing sprint history.</div>
+    <div class="qa-who">📌 Member 2 answers</div>
+  </div>
+
+  <div class="qa-item no-break">
+    <div class="qa-q"><span class="q-label">Q</span> How does Fuzzy Logic estimation work in your system?</div>
+    <div class="qa-a">Fuzzy Logic handles uncertainty in estimation by using linguistic variables instead of precise numbers. Instead of saying "this will take exactly 120 hours," the team says "the project size is Medium and the complexity is High." Our system maps these linguistic inputs to fuzzy membership functions, applies fuzzy inference rules (e.g., IF size is Medium AND complexity is High THEN effort is High), and uses defuzzification to produce a crisp number output — effort in person-days. This is particularly useful in early project stages when precise requirements are not yet known.</div>
+    <div class="qa-who">📌 Member 1 answers</div>
+  </div>
+
+  <div class="qa-item no-break">
+    <div class="qa-q"><span class="q-label">Q</span> How is the capacity recommendation calculated?</div>
+    <div class="qa-a">The system calculates recommended story points using two inputs: (1) team velocity from completed sprints — the average story points or tasks completed per sprint, (2) total available person-days for the upcoming sprint from the capacity table. It then calculates velocity per person-day from historical data and multiplies it by the available person-days to produce a recommended commitment. For example: if past sprints averaged 40 SP with 20 available person-days each, velocity is 2 SP/person-day. If this sprint has 15 available person-days, the recommendation is 30 SP.</div>
+    <div class="qa-who">📌 Member 2 answers</div>
+  </div>
+
+  <div class="qa-item no-break">
+    <div class="qa-q"><span class="q-label">Q</span> What is a Sprint Planning Artifact and where is it in your system?</div>
+    <div class="qa-a">A Sprint Planning Artifact is a formal document that captures the sprint commitment — what stories are being delivered, how many story points are committed, team capacity, and progress tracking. In our system, it appears automatically in the Sprints tab when a sprint is active. It shows: committed user stories, story points per story, number of tasks per story, tasks completed, and a progress bar per story. This is generated dynamically from the actual sprint data — no manual document creation needed.</div>
+    <div class="qa-who">📌 Member 2 answers</div>
+  </div>
+
+  <div class="qa-item no-break">
+    <div class="qa-q"><span class="q-label">Q</span> What are the limitations of your system?</div>
+    <div class="qa-a">Three main limitations: (1) <strong>Database-level security:</strong> We use the Supabase admin client for all queries, which bypasses Row Level Security policies. In production, we would add per-user RLS policies. For an academic shared workspace this is acceptable. (2) <strong>Retrospective persistence:</strong> The retrospective is stored in browser localStorage, meaning it is device-specific. In a production system, retrospective data would be stored in Supabase. (3) <strong>Velocity chart:</strong> We removed the velocity chart to simplify the SM portal — a production ASPM tool would include this as a standard Scrum metric for sprint-over-sprint improvement tracking.</div>
+    <div class="qa-who">📌 Any member — good to show self-awareness</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ TIMELINE + REFERENCE ═══ -->
+<div class="page">
+  <div class="part-header">
+    <div class="part-label">Quick Reference</div>
+    <h2>Demo Timeline & Feature Glossary</h2>
+  </div>
+
+  <div class="section-title blue"><div class="icon">⏱</div>Demo Timeline — 25 Minutes Total</div>
+
+  <div class="timeline">
+    <div class="timeline-item no-break">
+      <div class="timeline-time">0:00 – 0:45</div>
+      <div class="timeline-dot" style="background:#1B4F8C"></div>
+      <div class="timeline-content">
+        <strong>Member 1 — System Introduction</strong>
+        <div class="what">Open login page, explain the 4 roles, describe the tech stack, show the big-picture flow diagram</div>
+      </div>
+    </div>
+    <div class="timeline-item no-break">
+      <div class="timeline-time">0:45 – 3:30</div>
+      <div class="timeline-dot" style="background:#1B4F8C"></div>
+      <div class="timeline-content">
+        <strong>Member 1 — Admin Portal</strong>
+        <div class="what">Log in as Admin → Create User (live demo) → show portfolio, budget overview</div>
+      </div>
+    </div>
+    <div class="timeline-item no-break">
+      <div class="timeline-time">3:30 – 8:00</div>
+      <div class="timeline-dot" style="background:#1B4F8C"></div>
+      <div class="timeline-content">
+        <strong>Member 1 — PM Portal</strong>
+        <div class="what">Log in as PM → Create project → Add features → Run COCOMO or Fuzzy Logic estimation → Add risk → Show Scrum Overview</div>
+      </div>
+    </div>
+    <div class="timeline-item no-break">
+      <div class="timeline-time">8:00 – 10:30</div>
+      <div class="timeline-dot" style="background:#166534"></div>
+      <div class="timeline-content">
+        <strong>Member 2 — SM Board Tab</strong>
+        <div class="what">Log in as SM → Show Kanban board, move a task, show WIP limit warning, Sprint Health Panel</div>
+      </div>
+    </div>
+    <div class="timeline-item no-break">
+      <div class="timeline-time">10:30 – 12:00</div>
+      <div class="timeline-dot" style="background:#166534"></div>
+      <div class="timeline-content">
+        <strong>Member 2 — Backlog Tab</strong>
+        <div class="what">Add a task, show feature link, pull task into sprint using dropdown</div>
+      </div>
+    </div>
+    <div class="timeline-item no-break">
+      <div class="timeline-time">12:00 – 14:30</div>
+      <div class="timeline-dot" style="background:#166534"></div>
+      <div class="timeline-content">
+        <strong>Member 2 — Sprints Tab</strong>
+        <div class="what">Create sprint with release link, start sprint, show planning artifact, show complete sprint modal</div>
+      </div>
+    </div>
+    <div class="timeline-item no-break">
+      <div class="timeline-time">14:30 – 16:30</div>
+      <div class="timeline-dot" style="background:#166534"></div>
+      <div class="timeline-content">
+        <strong>Member 2 — Reports Tab</strong>
+        <div class="what">Capacity planning table, recommended SP box, PM estimation reference, Workload chart</div>
+      </div>
+    </div>
+    <div class="timeline-item no-break">
+      <div class="timeline-time">16:30 – 18:00</div>
+      <div class="timeline-dot" style="background:#166534"></div>
+      <div class="timeline-content">
+        <strong>Member 2 — Team Tab</strong>
+        <div class="what">Log standup with duplicate protection demo, show impediments (from PM risks), retrospective board</div>
+      </div>
+    </div>
+    <div class="timeline-item no-break">
+      <div class="timeline-time">18:00 – 20:00</div>
+      <div class="timeline-dot" style="background:#5B21B6"></div>
+      <div class="timeline-content">
+        <strong>Member 3 — Developer Overview + My Tasks</strong>
+        <div class="what">Log in as Developer → show overview metrics → My Tasks table → click "→ Next Status" button</div>
+      </div>
+    </div>
+    <div class="timeline-item no-break">
+      <div class="timeline-time">20:00 – 22:00</div>
+      <div class="timeline-dot" style="background:#5B21B6"></div>
+      <div class="timeline-content">
+        <strong>Member 3 — Sprint Board + Standup</strong>
+        <div class="what">Sprint Board showing only developer's tasks → submit standup → switch to SM to show it appeared</div>
+      </div>
+    </div>
+    <div class="timeline-item no-break">
+      <div class="timeline-time">22:00 – 25:00</div>
+      <div class="timeline-dot" style="background:#5B21B6"></div>
+      <div class="timeline-content">
+        <strong>Member 3 — Summary + Closing</strong>
+        <div class="what">Draw/show the data flow diagram, deliver closing statement</div>
+      </div>
+    </div>
+    <div class="timeline-item no-break">
+      <div class="timeline-time">25:00 – 30:00</div>
+      <div class="timeline-dot" style="background:#374151"></div>
+      <div class="timeline-content">
+        <strong>All Three — Q&A</strong>
+        <div class="what">Use the Q&A section — each member answers questions in their domain</div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider"/>
+
+  <div class="section-title blue"><div class="icon">📖</div>Complete Feature Reference — One-Line Descriptions</div>
+  <p style="margin-bottom:10px">Use this table to quickly recall what any feature does during Q&A.</p>
+
+  <table class="ref-table" style="font-size:9.5pt">
+    <thead><tr><th>Feature</th><th>What It Does in One Sentence</th></tr></thead>
+    <tbody>
+      <tr><td>Role-based login</td><td>Reads your role from Supabase at login and routes you to the correct portal — wrong role means wrong portal never loads</td></tr>
+      <tr><td>Admin user creation</td><td>Creates real Supabase Auth accounts with name, email, role, and an auto-generated temp password — not a mock alert</td></tr>
+      <tr><td>PM project creation</td><td>Defines project scope: name, domain, team size, budget, deadline — all saved to PostgreSQL</td></tr>
+      <tr><td>User Stories (Features)</td><td>PM's list of what the system must do — these are the requirements that flow down to the SM's task backlog</td></tr>
+      <tr><td>COCOMO estimation</td><td>Barry Boehm's formula: Effort = a × (KLOC)^b — converts lines of code into person-months mathematically</td></tr>
+      <tr><td>Fuzzy Logic estimation</td><td>Uses linguistic inputs (small/medium/large) and fuzzy inference to handle uncertainty in early estimates</td></tr>
+      <tr><td>Expert Judgment</td><td>Three-point estimate (optimistic + most-likely + pessimistic) from the PERT formula — recognized PMBOK technique</td></tr>
+      <tr><td>Risk Register</td><td>PM logs risks with probability and impact — system calculates risk score and color-codes Red/Yellow/Green severity</td></tr>
+      <tr><td>Risk → Impediment flow</td><td>PM's open risks automatically appear in SM's Impediments list — zero manual communication between roles needed</td></tr>
+      <tr><td>Sprint creation</td><td>SM creates named sprint with goal, start/end dates, and optional link to a product release version</td></tr>
+      <tr><td>Sprint Planning Artifact</td><td>Auto-generated table showing committed stories, story points, team capacity, and per-story progress — formal Scrum document</td></tr>
+      <tr><td>WIP Limit</td><td>Maximum tasks allowed in "In Progress" at once — column turns red if exceeded, alerting SM to a bottleneck</td></tr>
+      <tr><td>Sprint Health Panel</td><td>Real-time board header showing sprint progress ring, days left, standup completion rate, overdue and unassigned counts</td></tr>
+      <tr><td>Sprint completion</td><td>SM runs sprint review, incomplete tasks auto-return to backlog, and dropped task names are saved to the sprint record</td></tr>
+      <tr><td>Capacity Planning</td><td>SM enters team availability, system calculates recommended story point commitment using historical velocity</td></tr>
+      <tr><td>PM Estimation Reference</td><td>PM's COCOMO/Fuzzy results (effort, duration, cost) appear in SM's Capacity tab — connects planning to execution</td></tr>
+      <tr><td>Workload View</td><td>Bar chart of tasks per team member — SM identifies overloaded or blocked developers at a glance</td></tr>
+      <tr><td>SM Standup Logger</td><td>SM logs standup for any team member with duplicate protection per person per day and retroactive date warning</td></tr>
+      <tr><td>Blocker auto-escalation</td><td>If a standup entry has a blocker, the system automatically adds it to the Impediments tab for SM to track</td></tr>
+      <tr><td>Impediments tracker</td><td>Combined view of PM's risks (auto-imported) plus SM's manual impediments — severity, status, resolve button</td></tr>
+      <tr><td>Retrospective</td><td>Three-column board (went well / improve / actions) per sprint — action items have owner and due date so they are tracked</td></tr>
+      <tr><td>Developer task matching</td><td>Tasks matched to developer by exact full name or email — prevents cross-team task leakage</td></tr>
+      <tr><td>Developer sprint board</td><td>Shows only this developer's tasks in the active sprint — not the whole team's Kanban board</td></tr>
+      <tr><td>Developer status update</td><td>One-click button moves task To Do → In Progress → Done — updates immediately visible to SM and PM</td></tr>
+      <tr><td>Developer standup</td><td>Developer self-submits three-question standup that persists to Supabase and appears in SM's Team tab in real time</td></tr>
+      <tr><td>Standup duplicate check</td><td>If developer already submitted today (from DB), their existing entry is shown instead of a blank form</td></tr>
+      <tr><td>Scrum Overview (PM)</td><td>PM's read-only view of sprint status — they can monitor without interfering in the SM's execution</td></tr>
+      <tr><td>Dark mode</td><td>Toggle in the sidebar that switches between light and dark theme — persists across page navigation</td></tr>
+    </tbody>
+  </table>
+
+  <hr class="divider"/>
+
+  <div class="tip-box" style="margin-top:0">
+    <strong>Final Tip — The Most Impressive Moments:</strong><br/>
+    1. Live user creation in Admin — show the temp password appearing<br/>
+    2. Run COCOMO and show actual numbers (effort in person-days, cost in $)<br/>
+    3. Add a PM risk → immediately switch to SM impediments and show it appeared automatically<br/>
+    4. Developer submits standup → switch to SM team tab and show it there in real time<br/><br/>
+    These four moments demonstrate real-time cross-role data flow — that is the academic proof that this is a connected system, not isolated screens.
+  </div>
+
+  <div style="text-align:center; margin-top:32px; padding:24px; background:var(--blue); border-radius:12px; color:#fff;">
+    <div style="font-size:11pt; font-weight:800; letter-spacing:1px; margin-bottom:6px;">GOOD LUCK WITH YOUR PRESENTATION</div>
+    <div style="font-size:9.5pt; opacity:0.75">ASPM CASE Tool &nbsp;·&nbsp; Agile Software Project Management &nbsp;·&nbsp; React + Supabase</div>
+  </div>
+</div>
+
+</body>
+</html>
