@@ -529,7 +529,8 @@ export function ProjectProvider({ children }) {
   async function addRisk(projectId, risk) {
     if (!isPM) return
     const riskExposure = Math.round((risk.probability / 100) * risk.costImpact)
-    const priority = getRiskPriority(riskExposure)
+    const budget = getProject(projectId)?.budget || 0
+    const priority = getRiskPriority(riskExposure, budget)
     await db.from('risks').insert({
       id: 'r' + Date.now(), project_id: projectId,
       description: risk.description, category: risk.category,
@@ -562,7 +563,7 @@ export function ProjectProvider({ children }) {
       ...(updates.monitoring  !== undefined && { monitoring:  updates.monitoring  }),
       ...(updates.management  !== undefined && { management:  updates.management  }),
       risk_exposure: riskExposure,
-      priority: getRiskPriority(riskExposure),
+      priority: getRiskPriority(riskExposure, getProject(projectId)?.budget || 0),
     }).eq('id', riskId)
     await loadAll()
   }
@@ -671,7 +672,15 @@ export function ProjectProvider({ children }) {
   )
 }
 
-function getRiskPriority(exposure) {
+function getRiskPriority(exposure, budget = 0) {
+  // Budget-relative: ≥5% of project budget = High, ≥2% = Medium
+  if (budget > 0) {
+    const pct = (exposure / budget) * 100
+    if (pct >= 5) return 'High'
+    if (pct >= 2) return 'Medium'
+    return 'Low'
+  }
+  // Absolute fallback when no budget is set
   if (exposure >= 10000) return 'High'
   if (exposure >= 3000) return 'Medium'
   return 'Low'

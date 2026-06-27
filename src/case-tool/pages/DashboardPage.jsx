@@ -102,7 +102,7 @@ export default function DashboardPage() {
   const C = useThemeColors()
   const { projects } = useProjects()
   const { profile } = useAuth()
-  const isPM = ['pm', 'project_manager', 'admin'].includes(profile?.role)
+  const isPM = ['pm', 'project_manager'].includes(profile?.role)
   const navigate = useNavigate()
   const [filter, setFilter] = useState('All')
   const [sort, setSort] = useState('Date')

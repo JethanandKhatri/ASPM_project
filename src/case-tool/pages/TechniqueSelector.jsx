@@ -139,18 +139,39 @@ const TECHNIQUES = [
   },
 ]
 
+// ── Technique recommendation engine ──────────────────────────────────────────
+
+function recommendTechnique(project, allProjects) {
+  const completedWithEst = allProjects.filter(p => p.id !== project.id && p.status === 'Completed' && p.estimations.length > 0)
+  const hasVelocityData  = project.tasks?.some(t => (t.storyPoints || 0) > 0)
+  const featureCount     = project.features.length
+  const isEarlyStage     = project.status === 'Planning'
+
+  if (completedWithEst.length >= 1)
+    return { id: 'analogy', reason: `You have ${completedWithEst.length} completed project(s) that can serve as an analogy base — this is the most data-grounded choice.` }
+  if (hasVelocityData)
+    return { id: 'storypoints', reason: 'Your team already uses story points on tasks — Story Points velocity is the most accurate next step.' }
+  if (featureCount > 10)
+    return { id: 'decomposition', reason: `With ${featureCount} features, Decomposition + SD gives you confidence intervals so you can communicate schedule risk.` }
+  if (isEarlyStage)
+    return { id: 'expert', reason: 'Early Planning stage with limited historical data — Expert Judgment (PERT) is the standard starting point.' }
+  return { id: 'fuzzy', reason: 'Feature scope is still uncertain — Fuzzy Logic classification is ideal when requirements are not yet fully defined.' }
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function TechniqueSelector() {
   const C = useThemeColors()
   const { id } = useParams()
   const navigate = useNavigate()
-  const { getProject } = useProjects()
+  const { getProject, projects } = useProjects()
   const project = getProject(id)
 
   if (!project) return <div style={{ padding: 32, color: C.textSecondary, textAlign: 'center' }}>Project not found.</div>
 
-  const nextVersion = project.estimations.length === 0 ? 'v1' : `v${project.estimations.length + 1}`
+  const nextVersion  = project.estimations.length === 0 ? 'v1' : `v${project.estimations.length + 1}`
+  const rec          = recommendTechnique(project, projects || [])
+  const recTechnique = TECHNIQUES.find(t => t.path === rec.id || t.id === rec.id)
 
   return (
     <div style={{ padding: '28px 32px', background: C.mainBg, minHeight: '100%' }}>
@@ -178,6 +199,26 @@ export default function TechniqueSelector() {
             &nbsp;·&nbsp; {project.estimations.length} previous run{project.estimations.length !== 1 ? 's' : ''}
           </p>
         </div>
+
+        {/* Q3: ASPM Technique Recommendation */}
+        {recTechnique && (
+          <div style={{ background: C.primary + '0d', border: `1px solid ${C.primary}28`, borderRadius: 10, padding: '14px 18px', marginBottom: 24, display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+            <div style={{ width: 40, height: 40, borderRadius: 8, background: `linear-gradient(135deg, ${recTechnique.gradient[0]}, ${recTechnique.gradient[1]})`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <recTechnique.Icon color="#fff" />
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: C.primary, textTransform: 'uppercase', letterSpacing: 0.5 }}>ASPM Recommended</span>
+                <span style={{ padding: '2px 9px', borderRadius: 4, fontSize: 12, fontWeight: 700, background: recTechnique.gradient[0] + '18', color: recTechnique.gradient[0], border: `1px solid ${recTechnique.gradient[0]}30` }}>{recTechnique.label}</span>
+              </div>
+              <p style={{ margin: 0, fontSize: 13, color: C.textSecondary, lineHeight: 1.6 }}>{rec.reason}</p>
+            </div>
+            <button onClick={() => navigate(`/dashboard/projects/${id}/estimate/${recTechnique.path}`)}
+              style={{ padding: '7px 16px', background: C.primary, color: '#fff', border: 'none', borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
+              Use This
+            </button>
+          </div>
+        )}
 
         {/* Cards grid */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>

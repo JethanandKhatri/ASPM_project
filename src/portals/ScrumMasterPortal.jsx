@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useProjects } from '../case-tool/context/ProjectContext'
 import { useThemeColors } from '../case-tool/context/ThemeContext'
@@ -24,11 +24,7 @@ const RETRO_CATS    = [
   { id: 'improve', label: 'What to improve?', ck: 'warning' },
   { id: 'action',  label: 'Action items',     ck: 'primary' },
 ]
-const RETRO_DEFAULTS = {
-  good:    ['Good team communication', 'Stand-ups stayed on time', 'PR reviews were fast'],
-  improve: ['Estimate accuracy can be improved', 'Documentation needs updates'],
-  action:  ['Set up automated tests', 'Run a DoD review session'],
-}
+const RETRO_DEFAULTS = { good: [], improve: [], action: [] }
 function lsGet(key, fb) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fb } catch { return fb } }
 function lsSet(key, val) { try { localStorage.setItem(key, JSON.stringify(val)) } catch {} }
 
@@ -208,7 +204,12 @@ function BoardTab({ allTasks, sprints, projects, standupNotes, teamMembers }) {
   const [selProject,  setSelProject]  = useState('all')
   const [selAssignee, setSelAssignee] = useState('all')
   const [selTask,     setSelTask]     = useState(null)
+  const wipKey = `sm_wip_${activeSprint?.id || 'global'}`
+  const [wipLimit, setWipLimit] = useState(() => activeSprint?.wipLimit ?? lsGet(wipKey, 5))
+  const [editWip,  setEditWip]  = useState(false)
+  const [wipInput, setWipInput] = useState(String(activeSprint?.wipLimit ?? lsGet(wipKey, 5)))
 
+  const { updateSprint: updateSprintWip } = useScrum()
   const allAssignees = useMemo(() => [...new Set(allTasks.map(t => t.assignee).filter(Boolean))], [allTasks])
 
   const filtered = useMemo(() => {
@@ -247,15 +248,39 @@ function BoardTab({ allTasks, sprints, projects, standupNotes, teamMembers }) {
         <span style={{ fontSize: 12, color: C.textSecondary, marginLeft: 'auto' }}>{filtered.length} tasks</span>
       </div>
 
+      {/* WIP Limit control */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, fontSize: 12 }}>
+        <span style={{ color: C.textSecondary }}>WIP Limit (In Progress):</span>
+        {editWip ? (
+          <>
+            <input type="number" min={1} max={50} value={wipInput} onChange={e => setWipInput(e.target.value)}
+              style={{ width: 54, padding: '3px 6px', border: `1px solid ${C.border}`, borderRadius: 6, fontSize: 12, background: C.cardBg, color: C.textPrimary, outline: 'none' }} />
+            <button onClick={() => { const v = parseInt(wipInput) || 5; setWipLimit(v); lsSet(wipKey, v); if (activeSprint) updateSprintWip(activeSprint.id, { wipLimit: v }); setEditWip(false) }}
+              style={{ padding: '3px 10px', background: C.primary, color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>Save</button>
+            <button onClick={() => setEditWip(false)} style={{ padding: '3px 10px', background: 'none', border: `1px solid ${C.border}`, borderRadius: 6, fontSize: 12, cursor: 'pointer', color: C.textSecondary, fontFamily: 'inherit' }}>Cancel</button>
+          </>
+        ) : (
+          <>
+            <span style={{ fontWeight: 700, color: C.primary }}>{wipLimit}</span>
+            <button onClick={() => { setWipInput(String(wipLimit)); setEditWip(true) }}
+              style={{ padding: '3px 10px', background: 'none', border: `1px solid ${C.border}`, borderRadius: 6, fontSize: 11, cursor: 'pointer', color: C.textSecondary, fontFamily: 'inherit' }}>Edit</button>
+          </>
+        )}
+      </div>
+
       {/* Kanban columns */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14, alignItems: 'start' }}>
         {COLS.map(col => {
           const colTasks = filtered.filter(t => t.status === col.id)
+          const wipExceeded = col.id === 'In Progress' && wipLimit > 0 && colTasks.length > wipLimit
           return (
-            <div key={col.id} style={{ background: C.mainBg, border: `1px solid ${C.border}`, borderRadius: 10, overflow: 'hidden' }}>
-              <div style={{ padding: '11px 13px', borderBottom: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: col.cc+'08' }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: col.cc, letterSpacing: 0.7 }}>{col.label}</span>
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#fff', background: col.cc, borderRadius: '50%', width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{colTasks.length}</span>
+            <div key={col.id} style={{ background: C.mainBg, border: `1px solid ${wipExceeded ? C.danger : C.border}`, borderRadius: 10, overflow: 'hidden' }}>
+              <div style={{ padding: '11px 13px', borderBottom: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: wipExceeded ? C.danger+'10' : col.cc+'08' }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: wipExceeded ? C.danger : col.cc, letterSpacing: 0.7 }}>{col.label}{col.id === 'In Progress' ? ` / WIP ${wipLimit}` : ''}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  {wipExceeded && <span style={{ fontSize: 10, fontWeight: 700, color: C.danger }}>⚠ LIMIT EXCEEDED</span>}
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#fff', background: wipExceeded ? C.danger : col.cc, borderRadius: '50%', width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{colTasks.length}</span>
+                </div>
               </div>
               <div style={{ padding: 9, minHeight: 180, maxHeight: 'calc(100vh - 420px)', overflowY: 'auto' }}>
                 {colTasks.length === 0
@@ -295,7 +320,10 @@ function BoardTab({ allTasks, sprints, projects, standupNotes, teamMembers }) {
           <div style={{ fontSize: 10, fontWeight: 700, color: C.textSecondary, marginBottom: 8, letterSpacing: 0.5 }}>MOVE TO</div>
           <div style={{ display: 'flex', gap: 8 }}>
             {['To Do','In Progress','Done'].map(s => (
-              <button key={s} onClick={async () => { await updateTaskStatus(selTask.projectId, selTask.id, s); setSelTask(p => ({...p, status: s})) }}
+              <button key={s} onClick={async () => {
+                await updateTaskStatus(selTask.projectId, selTask.id, s)
+                setSelTask(p => ({...p, status: s}))
+              }}
                 style={{ flex: 1, padding: '8px', background: selTask.status===s?C.primary:C.cardBg, color: selTask.status===s?'#fff':C.textSecondary, border: `1px solid ${selTask.status===s?C.primary:C.border}`, borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
                 {s}
               </button>
@@ -316,11 +344,12 @@ function BacklogTab({ allTasks, sprints, projects, teamMembers }) {
   const [expanded,   setExpanded]   = useState('unassigned')
   const [showComp,   setShowComp]   = useState(false)
   const [showAdd,    setShowAdd]    = useState(false)
-  const [addForm,    setAddForm]    = useState({ projectId: '', name: '', priority: 'Medium', assignee: '', dueDate: '', feature: '' })
+  const [addForm,    setAddForm]    = useState({ projectId: '', name: '', priority: 'Medium', assignee: '', dueDate: '', feature: '', storyPoints: '' })
   const [addErr,     setAddErr]     = useState('')
 
   const filtered    = selProject === 'all' ? allTasks : allTasks.filter(t => t.projectId === selProject)
-  const assignedIds = new Set(sprints.flatMap(s => s.taskIds||[]))
+  // Q17: exclude completed sprints — undone tasks from finished sprints return to backlog
+  const assignedIds = new Set(sprints.filter(s => s.status !== 'completed').flatMap(s => s.taskIds||[]))
   const unassigned  = filtered.filter(t => !assignedIds.has(t.id))
   const active      = sprints.filter(s => s.status !== 'completed')
   const completed   = sprints.filter(s => s.status === 'completed')
@@ -336,8 +365,8 @@ function BacklogTab({ allTasks, sprints, projects, teamMembers }) {
 
   async function submitAdd() {
     if (!addForm.projectId || !addForm.name.trim()) { setAddErr('Project and task name are required.'); return }
-    await addTask(addForm.projectId, { name: addForm.name.trim(), priority: addForm.priority, assignee: addForm.assignee, dueDate: addForm.dueDate||null, feature: addForm.feature, status: 'To Do' })
-    setAddForm({ projectId: '', name: '', priority: 'Medium', assignee: '', dueDate: '', feature: '' })
+    await addTask(addForm.projectId, { name: addForm.name.trim(), priority: addForm.priority, assignee: addForm.assignee, dueDate: addForm.dueDate||null, feature: addForm.feature, storyPoints: parseInt(addForm.storyPoints)||0, status: 'To Do' })
+    setAddForm({ projectId: '', name: '', priority: 'Medium', assignee: '', dueDate: '', feature: '', storyPoints: '' })
     setAddErr(''); setShowAdd(false)
   }
 
@@ -357,6 +386,7 @@ function BacklogTab({ allTasks, sprints, projects, teamMembers }) {
         </div>
         <Badge label={task.priority||'Low'} color={pc} bg={pc+'18'} />
         <Badge label={task.status} color={task.status==='Done'?C.success:task.status==='In Progress'?C.primary:C.textSecondary} bg={task.status==='Done'?C.success+'15':task.status==='In Progress'?C.primary+'15':C.border} />
+        {task.storyPoints > 0 && <span style={{ fontSize: 11, fontWeight: 700, color: C.primary, background: C.primary+'12', padding: '1px 7px', borderRadius: 4, flexShrink: 0 }}>{task.storyPoints} SP</span>}
         {task.assignee && <div style={{ width: 22, height: 22, borderRadius: '50%', background: C.primary+'20', color: C.primary, fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} title={task.assignee}>{initials(task.assignee)}</div>}
         {task.dueDate && <span style={{ fontSize: 11, color: ov?C.danger:C.textSecondary, flexShrink: 0 }}>{task.dueDate}</span>}
         {!readOnly && (sprintId
@@ -485,6 +515,10 @@ function BacklogTab({ allTasks, sprints, projects, teamMembers }) {
               <input type="date" value={addForm.dueDate} onChange={e => setAddForm(f=>({...f,dueDate:e.target.value}))} style={inpF} />
             </div>
           </div>
+          <div style={{ marginBottom: 12 }}>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textPrimary, marginBottom: 5 }}>Story Points <span style={{ fontWeight: 400, color: C.textSecondary }}>(effort estimate)</span></label>
+            <input type="number" min={0} max={100} value={addForm.storyPoints} onChange={e => setAddForm(f=>({...f,storyPoints:e.target.value}))} placeholder="e.g. 3, 5, 8…" style={inpF} />
+          </div>
           {addErr && <p style={{ margin: '0 0 10px', color: C.danger, fontSize: 12 }}>{addErr}</p>}
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
             <button onClick={() => setShowAdd(false)} style={{ padding: '8px 18px', background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 13, cursor: 'pointer', color: C.textSecondary, fontFamily: 'inherit' }}>Cancel</button>
@@ -514,13 +548,14 @@ function SprintsTab({ sprints, allTasks, projects }) {
     storyMap[key].tasks.push(t)
   })
   const committedStories = Object.values(storyMap)
-  const totalCommittedSP = committedStories.reduce((sum, s) => sum + (s.story?.storyPoints || 0), 0)
+  const totalCommittedSP = sprintTasks.reduce((sum, t) => sum + (t.storyPoints || 0), 0)
   const totalCapacity    = activeSprint ? (activeSprint.capacity || []).reduce((s, m) => s + (m.availableDays || 0), 0) : 0
   const [showCreate,   setShowCreate]   = useState(false)
   const [reviewModal,  setReviewModal]  = useState(null)
   const [reviewNotes,  setReviewNotes]  = useState('')
-  const [form,         setForm]         = useState({ name:'', goal:'', startDate:'', endDate:'' })
+  const [form,         setForm]         = useState({ name:'', goal:'', startDate:'', endDate:'', releaseId:'' })
   const [formErr,      setFormErr]      = useState('')
+  const allReleases = projects ? projects.flatMap(p => (p.releases||[]).map(r => ({ ...r, projectName: p.name }))) : []
 
   const inp = { width: '100%', padding: '9px 12px', border: `1.5px solid ${C.border}`, borderRadius: 8, fontSize: 13, outline: 'none', background: C.cardBg, color: C.textPrimary, fontFamily: 'inherit', boxSizing: 'border-box' }
   const stB = { planned:{ color:C.textSecondary,bg:C.border }, active:{ color:C.primary,bg:C.primary+'15' }, completed:{ color:C.success,bg:C.success+'15' } }
@@ -529,15 +564,30 @@ function SprintsTab({ sprints, allTasks, projects }) {
   function save() {
     if (!form.name.trim()||!form.startDate||!form.endDate) { setFormErr('Name, start and end dates are required.'); return }
     if (form.endDate <= form.startDate) { setFormErr('End date must be after start date.'); return }
-    addSprint({ name: form.name, goal: form.goal, startDate: form.startDate, endDate: form.endDate })
-    setForm({ name:'', goal:'', startDate:'', endDate:'' }); setFormErr(''); setShowCreate(false)
+    addSprint({ name: form.name, goal: form.goal, startDate: form.startDate, endDate: form.endDate, releaseId: form.releaseId || null })
+    setForm({ name:'', goal:'', startDate:'', endDate:'', releaseId:'' }); setFormErr(''); setShowCreate(false)
   }
 
   function openReview(sprint) { setReviewModal(sprint); setReviewNotes('') }
 
   function completeSprint() {
-    const done = allTasks.filter(t => reviewModal.taskIds?.includes(t.id) && t.status==='Done').length
-    updateSprint(reviewModal.id, { status:'completed', completedAt:todayStr(), completedTaskCount:done, reviewNotes })
+    const spTasks     = allTasks.filter(t => reviewModal.taskIds?.includes(t.id))
+    const doneTasks   = spTasks.filter(t => t.status === 'Done')
+    const undoneTasks = spTasks.filter(t => t.status !== 'Done')
+    const completedSP = doneTasks.reduce((s, t) => s + (t.storyPoints || 0), 0)
+    const keptIds     = doneTasks.map(t => t.id)
+    const droppedNames = undoneTasks.map(t => t.name)
+    const closureNote = droppedNames.length > 0
+      ? `${reviewNotes ? reviewNotes + '\n\n' : ''}[Returned to backlog (${droppedNames.length}): ${droppedNames.join(', ')}]`
+      : reviewNotes
+    updateSprint(reviewModal.id, {
+      status: 'completed', completedAt: todayStr(),
+      completedTaskCount: doneTasks.length,
+      committedPoints: completedSP,
+      reviewNotes: closureNote,
+      droppedTaskNames: droppedNames,
+      taskIds: keptIds,
+    })
     setReviewModal(null)
   }
 
@@ -638,10 +688,18 @@ function SprintsTab({ sprints, allTasks, projects }) {
                   <span style={{ fontSize:12, fontWeight:600, color:drColor, marginLeft:4 }}>{drLabel}</span>
                 </div>
                 {sprint.goal && <p style={{ margin:'0 0 6px', fontSize:12, color:C.primary, fontWeight:500 }}>Goal: {sprint.goal}</p>}
-                <div style={{ fontSize:12, color:C.textSecondary, marginBottom:8 }}>{sprint.startDate} → {sprint.endDate} · {spTasks.length} tasks ({done} done)</div>
+                <div style={{ fontSize:12, color:C.textSecondary, marginBottom:8 }}>
+                  {sprint.startDate} → {sprint.endDate} · {spTasks.length} tasks ({done} done)
+                  {sprint.releaseId && (() => { const rel = projects?.flatMap(p=>p.releases||[]).find(r=>r.id===sprint.releaseId); return rel ? <span style={{ marginLeft:8, color:C.primary, fontWeight:600 }}>· Release: {rel.name}</span> : null })()}
+                </div>
                 {sprint.reviewNotes && (
-                  <div style={{ fontSize:12, color:C.textSecondary, padding:'6px 10px', background:C.mainBg, borderRadius:6, marginBottom:8, borderLeft:`3px solid ${C.primary}` }}>
+                  <div style={{ fontSize:12, color:C.textSecondary, padding:'6px 10px', background:C.mainBg, borderRadius:6, marginBottom:8, borderLeft:`3px solid ${C.primary}`, whiteSpace:'pre-wrap' }}>
                     <strong>Review:</strong> {sprint.reviewNotes}
+                  </div>
+                )}
+                {sprint.droppedTaskNames?.length > 0 && sprint.status === 'completed' && (
+                  <div style={{ fontSize:11, color:C.warning, padding:'5px 10px', background:C.warning+'0A', borderRadius:6, marginBottom:8, borderLeft:`2px solid ${C.warning}` }}>
+                    {sprint.droppedTaskNames.length} task{sprint.droppedTaskNames.length!==1?'s':''} returned to backlog: {sprint.droppedTaskNames.join(', ')}
                   </div>
                 )}
                 {spTasks.length>0 && (
@@ -679,6 +737,15 @@ function SprintsTab({ sprints, allTasks, projects }) {
               <input type={f.t} style={inp} placeholder={f.ph} value={form[f.k]} onChange={e => setForm(p=>({...p,[f.k]:e.target.value}))} />
             </div>
           ))}
+          {allReleases.length > 0 && (
+            <div style={{ marginBottom:13 }}>
+              <label style={{ display:'block', fontSize:12, fontWeight:600, color:C.textPrimary, marginBottom:5 }}>Target Release <span style={{ fontWeight:400, color:C.textSecondary }}>(optional)</span></label>
+              <select value={form.releaseId} onChange={e => setForm(p=>({...p,releaseId:e.target.value}))} style={inp}>
+                <option value="">— No release —</option>
+                {allReleases.map(r => <option key={r.id} value={r.id}>{r.projectName} — {r.name} (v{r.version})</option>)}
+              </select>
+            </div>
+          )}
           {formErr && <p style={{ margin:'0 0 10px', color:C.danger, fontSize:12 }}>{formErr}</p>}
           <div style={{ display:'flex', justifyContent:'flex-end', gap:10, marginTop:18 }}>
             <button onClick={() => setShowCreate(false)} style={{ padding:'8px 18px', background:C.cardBg, border:`1px solid ${C.border}`, borderRadius:8, fontSize:13, cursor:'pointer', color:C.textSecondary, fontFamily:'inherit' }}>Cancel</button>
@@ -691,6 +758,15 @@ function SprintsTab({ sprints, allTasks, projects }) {
       {reviewModal && (
         <Modal title="Complete Sprint — Sprint Review" onClose={() => setReviewModal(null)} C={C} width={520}>
           <p style={{ margin:'0 0 14px', fontSize:13, color:C.textSecondary }}>Record what was demoed and accepted before marking this sprint complete.</p>
+          {(() => {
+            const undone = allTasks.filter(t => reviewModal.taskIds?.includes(t.id) && t.status !== 'Done')
+            return undone.length > 0 ? (
+              <div style={{ marginBottom:14, padding:'9px 13px', background:C.warning+'10', border:`1px solid ${C.warning}25`, borderRadius:8 }}>
+                <div style={{ fontSize:12, fontWeight:600, color:C.warning, marginBottom:4 }}>⚠ {undone.length} undone task{undone.length!==1?'s':''} will be returned to the backlog</div>
+                <div style={{ fontSize:11, color:C.textSecondary }}>These tasks were not completed and will be available for re-prioritization in the next sprint.</div>
+              </div>
+            ) : null
+          })()}
           <div style={{ marginBottom:14 }}>
             <div style={{ fontSize:12, fontWeight:600, color:C.textPrimary, marginBottom:6 }}>Tasks Completed This Sprint</div>
             <div style={{ padding:'10px 14px', background:C.mainBg, borderRadius:8, border:`1px solid ${C.border}`, maxHeight:120, overflowY:'auto' }}>
@@ -718,58 +794,20 @@ function SprintsTab({ sprints, allTasks, projects }) {
 }
 
 // ── REPORTS TAB ───────────────────────────────────────────────────────────────
-const DAY_LABELS = ['D1','D2','D3','D4','D5','D6','D7','D8','D9','D10']
-const IDEAL_PTS  = [100,88,77,66,55,44,33,22,11,0]
-
-function ReportsTab({ sprints, allTasks, allTeamMembers, burndownSnapshots, recordBurndownSnapshot, loadBurndownSnapshots }) {
+function ReportsTab({ sprints, allTasks, allTeamMembers }) {
   const C = useThemeColors()
   const { updateSprint } = useScrum()
-  const [subTab, setSubTab] = useState('velocity')
-  const [recordingBD, setRecordingBD] = useState(false)
+  const { projects: allProjects } = useProjects()
+  const [subTab, setSubTab] = useState('capacity')
 
   const completed = sprints.filter(s => s.status==='completed')
   const active    = sprints.find(s => s.status==='active')
 
-  // Velocity
-  const vels   = completed.map(s => ({ name:s.name, count:s.completedTaskCount||0 }))
-  const avgVel = vels.length>0?Math.round(vels.reduce((a,v)=>a+v.count,0)/vels.length):0
-  const maxV   = Math.max(...vels.map(v=>v.count),1)
-
-  // Burndown — real snapshot data
-  const spTasks    = active ? allTasks.filter(t => active.taskIds?.includes(t.id)) : []
-  const doneCnt    = spTasks.filter(t => t.status==='Done').length
-  const total      = spTasks.length
-  const remaining  = total - doneCnt
-  const velPct     = total>0 ? doneCnt/total : 0
-  const realSnaps  = active ? (burndownSnapshots[active.id] || []) : []
-  const hasRealData = realSnaps.length > 0
-
-  // Build ideal burndown line (task count over sprint days)
-  function buildIdealLine(sprint, totalTasks) {
-    if (!sprint?.startDate || !sprint?.endDate || totalTasks === 0) return []
-    const start = new Date(sprint.startDate)
-    const end   = new Date(sprint.endDate)
-    const days  = Math.max(1, Math.round((end - start) / 86400000))
-    const pts   = []
-    for (let i = 0; i <= days; i++) {
-      const d = new Date(start); d.setDate(d.getDate() + i)
-      pts.push({ date: d.toISOString().split('T')[0], ideal: Math.max(0, Math.round(totalTasks * (1 - i/days))) })
-    }
-    return pts
-  }
-
-  const idealLine = buildIdealLine(active, total)
-
-  async function handleRecordSnapshot() {
-    if (!active) return
-    setRecordingBD(true)
-    await recordBurndownSnapshot(active.id, remaining, doneCnt)
-    await loadBurndownSnapshots(active.id)
-    setRecordingBD(false)
-  }
-
-  // Projected fallback (for when no real snapshots)
-  const actualPts = DAY_LABELS.map((_,i)=>Math.max(0,Math.round(100-velPct*100*(i/(DAY_LABELS.length-1))*1.1)))
+  // Velocity averages — used by capacity recommendation
+  const useVelSP = completed.some(s => (s.committedPoints || 0) > 0)
+  const velUnit  = useVelSP ? 'SP' : 'tasks'
+  const vels     = completed.map(s => ({ name: s.name, count: useVelSP ? (s.committedPoints || 0) : (s.completedTaskCount || 0) }))
+  const avgVel   = vels.length > 0 ? Math.round(vels.reduce((a, v) => a + v.count, 0) / vels.length) : 0
 
   // Capacity
   const [capId,    setCapId]    = useState(()=>active?.id||sprints[0]?.id||'')
@@ -781,6 +819,28 @@ function ReportsTab({ sprints, allTasks, allTeamMembers, burndownSnapshots, reco
   const totAvail   = capacity.reduce((s,m)=>s+(m.availableDays||0),0)
   const totDays    = capacity.reduce((s,m)=>s+(m.totalDays||0),0)
   const utilPct    = totDays>0?Math.round(totAvail/totDays*100):0
+
+  // Q9: auto-derive working days from sprint dates when sprint selection changes
+  useEffect(() => {
+    if (!capSprint?.startDate || !capSprint?.endDate) return
+    const s = new Date(capSprint.startDate), e = new Date(capSprint.endDate)
+    let days = 0; const d = new Date(s)
+    while (d <= e) { if (d.getDay() !== 0 && d.getDay() !== 6) days++; d.setDate(d.getDate() + 1) }
+    if (days > 0) setCapTotal(String(days))
+  }, [capId])
+
+  // Q10: recommended SP based on velocity and available capacity
+  const avgSprintWorkingDays = completed.length > 0
+    ? completed.reduce((s, sp) => {
+        if (!sp.startDate || !sp.endDate) return s + 10
+        const sd = new Date(sp.startDate), ed = new Date(sp.endDate)
+        let wd = 0; const d = new Date(sd)
+        while (d <= ed) { if (d.getDay() !== 0 && d.getDay() !== 6) wd++; d.setDate(d.getDate() + 1) }
+        return s + (wd || 10)
+      }, 0) / completed.length
+    : 10
+  const avgVelPerDay   = avgSprintWorkingDays > 0 ? avgVel / avgSprintWorkingDays : 0
+  const recommendedSP  = totAvail > 0 && avgVelPerDay > 0 ? Math.round(totAvail * avgVelPerDay) : 0
 
   // Workload (all tasks)
   const workload = useMemo(()=>{
@@ -807,7 +867,7 @@ function ReportsTab({ sprints, allTasks, allTeamMembers, burndownSnapshots, reco
   }
   function removeMember(mid) { updateSprint(capId,{ capacity:capacity.filter(m=>m.id!==mid) }) }
 
-  const SUB=[{id:'velocity',l:'Velocity'},{id:'burndown',l:'Burndown'},{id:'capacity',l:'Capacity'},{id:'workload',l:'Workload'}]
+  const SUB=[{id:'capacity',l:'Capacity'},{id:'workload',l:'Workload'}]
 
   return (
     <>
@@ -819,140 +879,6 @@ function ReportsTab({ sprints, allTasks, allTeamMembers, burndownSnapshots, reco
           </button>
         ))}
       </div>
-
-      {subTab==='velocity' && (
-        <>
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, marginBottom:18 }}>
-            <MetricCard C={C} label="Completed Sprints" value={completed.length}           icon="⬛" color={C.primary} />
-            <MetricCard C={C} label="Avg Velocity"      value={`${avgVel} tasks`}          icon="⚡" color={C.success} />
-            <MetricCard C={C} label="Best Sprint"       value={vels.length>0?`${Math.max(...vels.map(v=>v.count))} tasks`:'—'} icon="◎" color={C.warning} />
-          </div>
-          <Card C={C}>
-            <SecTitle C={C}>Velocity per Sprint</SecTitle>
-            {completed.length===0
-              ? <p style={{ margin:0, fontSize:13, color:C.textSecondary }}>Complete a sprint to see velocity data.</p>
-              : <>
-                  <div style={{ display:'flex', gap:10, alignItems:'flex-end', height:180, marginBottom:12 }}>
-                    {vels.map((v,i)=>{
-                      const h=Math.max(4,Math.round(v.count/maxV*160))
-                      return (
-                        <div key={i} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:4 }}>
-                          <div style={{ fontSize:10, fontWeight:600, color:C.textPrimary }}>{v.count}</div>
-                          <div style={{ width:'100%', height:h, background:v.count>=avgVel?C.success:C.primary, borderRadius:'4px 4px 0 0', transition:'height .4s' }} title={`${v.name}: ${v.count}`} />
-                          <div style={{ fontSize:9, color:C.textSecondary, textAlign:'center', lineHeight:1.3 }}>{v.name}</div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                  <div style={{ display:'flex', gap:16, justifyContent:'center' }}>
-                    {[{color:C.success,label:'Above avg'},{color:C.primary,label:'Below avg'}].map(l=>(
-                      <span key={l.label} style={{ display:'flex', alignItems:'center', gap:5, fontSize:12, color:C.textSecondary }}>
-                        <span style={{ width:10, height:10, borderRadius:2, background:l.color, display:'inline-block' }}/>{l.label}
-                      </span>
-                    ))}
-                  </div>
-                </>
-            }
-          </Card>
-        </>
-      )}
-
-      {subTab==='burndown' && (
-        <Card C={C}>
-          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
-            <h3 style={{ margin:0, fontSize:14, fontWeight:600, color:C.textPrimary }}>{active ? `${active.name} — Burndown` : 'Sprint Burndown'}</h3>
-            {active && (
-              <button onClick={handleRecordSnapshot} disabled={recordingBD}
-                style={{ padding:'7px 14px', background:C.primary, color:'#fff', border:'none', borderRadius:8, fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'inherit', opacity:recordingBD?0.6:1 }}>
-                {recordingBD ? 'Recording…' : "Record Today's Progress"}
-              </button>
-            )}
-          </div>
-
-          {!active ? (
-            <p style={{ margin:0, fontSize:13, color:C.textSecondary }}>Start a sprint to see burndown.</p>
-          ) : hasRealData ? (
-            <>
-              {/* Real burndown chart using snapshots */}
-              <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10, marginBottom:18 }}>
-                <div style={{ padding:'10px 14px', background:C.primary+'10', borderRadius:8, border:`1px solid ${C.primary}20` }}>
-                  <div style={{ fontSize:10, color:C.textSecondary, textTransform:'uppercase', letterSpacing:.5, marginBottom:2 }}>Total Tasks</div>
-                  <div style={{ fontSize:20, fontWeight:700, color:C.primary }}>{total}</div>
-                </div>
-                <div style={{ padding:'10px 14px', background:C.success+'10', borderRadius:8, border:`1px solid ${C.success}20` }}>
-                  <div style={{ fontSize:10, color:C.textSecondary, textTransform:'uppercase', letterSpacing:.5, marginBottom:2 }}>Done</div>
-                  <div style={{ fontSize:20, fontWeight:700, color:C.success }}>{doneCnt}</div>
-                </div>
-                <div style={{ padding:'10px 14px', background:remaining>0?C.warning+'10':C.success+'10', borderRadius:8, border:`1px solid ${remaining>0?C.warning:C.success}20` }}>
-                  <div style={{ fontSize:10, color:C.textSecondary, textTransform:'uppercase', letterSpacing:.5, marginBottom:2 }}>Remaining</div>
-                  <div style={{ fontSize:20, fontWeight:700, color:remaining>0?C.warning:C.success }}>{remaining}</div>
-                </div>
-              </div>
-              <div style={{ overflowX:'auto', marginBottom:12 }}>
-                <div style={{ display:'flex', gap:4, alignItems:'flex-end', height:180, minWidth:Math.max(realSnaps.length*40,280) }}>
-                  {idealLine.map((pt, i) => {
-                    const snap = realSnaps.find(s => s.date === pt.date)
-                    const maxT = total || 1
-                    const idealH = Math.round(pt.ideal/maxT*160)
-                    const actH   = snap ? Math.round(snap.remainingPoints/maxT*160) : null
-                    const behind = snap && snap.remainingPoints > pt.ideal
-                    return (
-                      <div key={pt.date} style={{ flex:1, minWidth:30, display:'flex', flexDirection:'column', alignItems:'center', gap:3 }}>
-                        <div style={{ display:'flex', gap:2, alignItems:'flex-end', height:160 }}>
-                          <div style={{ width:10, height:Math.max(2,idealH), background:C.border, borderRadius:'2px 2px 0 0' }} title={`Ideal: ${pt.ideal}`}/>
-                          {actH !== null && <div style={{ width:10, height:Math.max(2,actH), background:behind?C.danger:C.success, borderRadius:'2px 2px 0 0' }} title={`Actual: ${snap.remainingPoints}`}/>}
-                        </div>
-                        <div style={{ fontSize:8, color:C.textSecondary, transform:'rotate(-45deg)', transformOrigin:'top left', whiteSpace:'nowrap', marginTop:4 }}>{pt.date.slice(5)}</div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-              <div style={{ display:'flex', gap:14, justifyContent:'center' }}>
-                {[{color:C.border,label:'Ideal'},{color:C.success,label:'On track'},{color:C.danger,label:'Behind'}].map(l=>(
-                  <span key={l.label} style={{ display:'flex', alignItems:'center', gap:5, fontSize:11, color:C.textSecondary }}>
-                    <span style={{ width:10, height:10, borderRadius:'50%', background:l.color, display:'inline-block' }}/>{l.label}
-                  </span>
-                ))}
-              </div>
-              <p style={{ margin:'12px 0 0', fontSize:11, color:C.textSecondary, textAlign:'center' }}>{realSnaps.length} snapshot{realSnaps.length!==1?'s':''} recorded.</p>
-            </>
-          ) : (
-            <>
-              <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:14, padding:'8px 12px', background:C.warning+'10', border:`1px solid ${C.warning}25`, borderRadius:8 }}>
-                <span style={{ fontSize:14, color:C.warning }}>⚠</span>
-                <span style={{ fontSize:12, color:C.warning, fontWeight:500 }}>No snapshots yet — showing projected burndown.</span>
-              </div>
-              <p style={{ margin:'0 0 18px', fontSize:13, color:C.textSecondary }}>
-                {`${doneCnt}/${total} tasks done (${Math.round(velPct*100)}%) at current rate`}
-              </p>
-              <div style={{ display:'flex', gap:6, alignItems:'flex-end', height:180, marginBottom:10 }}>
-                {DAY_LABELS.map((label,i)=>{
-                  const idealH=Math.round(IDEAL_PTS[i]/100*160)
-                  const actH  =Math.round(actualPts[i]/100*160)
-                  const behind=actualPts[i]>IDEAL_PTS[i]
-                  return (
-                    <div key={label} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:3 }}>
-                      <div style={{ display:'flex', gap:2, alignItems:'flex-end', height:160 }}>
-                        <div style={{ width:12, height:idealH, background:C.border, borderRadius:'2px 2px 0 0' }}/>
-                        <div style={{ width:12, height:actH,   background:behind?C.danger:C.success, borderRadius:'2px 2px 0 0' }}/>
-                      </div>
-                      <div style={{ fontSize:9, color:C.textSecondary }}>{label}</div>
-                    </div>
-                  )
-                })}
-              </div>
-              <div style={{ display:'flex', gap:14, justifyContent:'center' }}>
-                {[{color:C.border,label:'Ideal'},{color:C.success,label:'On track'},{color:C.danger,label:'Behind'}].map(l=>(
-                  <span key={l.label} style={{ display:'flex', alignItems:'center', gap:5, fontSize:11, color:C.textSecondary }}>
-                    <span style={{ width:10, height:10, borderRadius:'50%', background:l.color, display:'inline-block' }}/>{l.label}
-                  </span>
-                ))}
-              </div>
-            </>
-          )}
-        </Card>
-      )}
 
       {subTab==='capacity' && (
         <>
@@ -1007,6 +933,15 @@ function ReportsTab({ sprints, allTasks, allTeamMembers, burndownSnapshots, reco
                       </table>
                   }
                 </Card>
+                {recommendedSP > 0 && (
+                  <div style={{ marginBottom:14, padding:'12px 16px', background:C.primary+'10', border:`1px solid ${C.primary}25`, borderRadius:9 }}>
+                    <div style={{ fontSize:12, fontWeight:700, color:C.primary, marginBottom:4 }}>Recommended Sprint Commitment</div>
+                    <div style={{ fontSize:22, fontWeight:700, color:C.primary }}>{recommendedSP} {velUnit}</div>
+                    <div style={{ fontSize:11, color:C.textSecondary, marginTop:3 }}>
+                      Based on {totAvail} available person-days × avg {avgVelPerDay.toFixed(1)} {velUnit}/person-day (from {completed.length} completed sprint{completed.length!==1?'s':''})
+                    </div>
+                  </div>
+                )}
                 <Card C={C}>
                   <SecTitle C={C}>Add Member</SecTitle>
                   <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr 1fr auto', gap:10, alignItems:'end' }}>
@@ -1026,6 +961,41 @@ function ReportsTab({ sprints, allTasks, allTeamMembers, burndownSnapshots, reco
                     <button onClick={addMember} disabled={!capName.trim()} style={{ padding:'9px 16px', background:C.primary, color:'#fff', border:'none', borderRadius:8, fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit', opacity:!capName.trim()?.5:1 }}>Add</button>
                   </div>
                 </Card>
+
+                {/* PM Estimation Reference */}
+                {(() => {
+                  const estRefs = (allProjects||[]).flatMap(p => {
+                    if (!p.estimations || p.estimations.length === 0) return []
+                    const latest = p.estimations[p.estimations.length - 1]
+                    if (!latest?.result) return []
+                    return [{ projectName: p.name, technique: latest.technique, result: latest.result }]
+                  })
+                  if (estRefs.length === 0) return null
+                  return (
+                    <Card C={C} style={{ marginTop:14, border:`1px solid ${C.primary}20` }}>
+                      <SecTitle C={C}>PM Estimation Reference</SecTitle>
+                      <p style={{ margin:'0 0 12px', fontSize:11, color:C.textSecondary }}>Latest PM estimation results per project — use these to cross-check your capacity commitment.</p>
+                      <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
+                        <thead><tr style={{ borderBottom:`1px solid ${C.border}` }}>
+                          {['Project','Technique','Effort','Duration','Cost'].map(h=>(
+                            <th key={h} style={{ padding:'6px 10px', textAlign:'left', fontSize:10, fontWeight:600, color:C.textSecondary, textTransform:'uppercase', letterSpacing:.5 }}>{h}</th>
+                          ))}
+                        </tr></thead>
+                        <tbody>
+                          {estRefs.map((e,i)=>(
+                            <tr key={i} style={{ borderBottom:`1px solid ${C.border}`, background:i%2===0?C.cardBg:C.mainBg }}>
+                              <td style={{ padding:'8px 10px', fontWeight:500, color:C.textPrimary }}>{e.projectName}</td>
+                              <td style={{ padding:'8px 10px', color:C.textSecondary }}>{e.technique||'—'}</td>
+                              <td style={{ padding:'8px 10px', color:C.primary, fontWeight:600 }}>{e.result.effort!=null?`${e.result.effort} person-days`:'—'}</td>
+                              <td style={{ padding:'8px 10px', color:C.textSecondary }}>{e.result.duration!=null?`${e.result.duration} days`:'—'}</td>
+                              <td style={{ padding:'8px 10px', color:C.textSecondary }}>{e.result.cost!=null?`$${Number(e.result.cost).toLocaleString()}`:'—'}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </Card>
+                  )
+                })()}
               </>
           }
         </>
@@ -1091,6 +1061,8 @@ function TeamTab({ allTeamMembers, allRisks, profile, sprints }) {
   const [retroId,    setRetroId]    = useState(activeSprint?.id||sprints[0]?.id||'global')
   const [retro,      setRetroRaw]   = useState(()=>lsGet(`sm_retro_${retroId}`,RETRO_DEFAULTS))
   const [newItems,   setNewItems]   = useState({ good:'', improve:'', action:'' })
+  const [actionOwner, setActionOwner] = useState('')
+  const [actionDue,   setActionDue]   = useState('')
 
   function setRetro(updater) {
     setRetroRaw(prev => {
@@ -1103,13 +1075,20 @@ function TeamTab({ allTeamMembers, allRisks, profile, sprints }) {
     setRetroId(id)
     setRetroRaw(lsGet(`sm_retro_${id}`, RETRO_DEFAULTS))
   }
-  function retroAdd(cat)    { const v=newItems[cat].trim(); if(!v)return; setRetro(r=>({...r,[cat]:[...r[cat],v]})); setNewItems(n=>({...n,[cat]:''})) }
+  function retroAdd(cat) {
+    const v = newItems[cat].trim(); if (!v) return
+    const item = cat === 'action' ? { text: v, owner: actionOwner.trim(), dueDate: actionDue } : v
+    setRetro(r => ({...r, [cat]: [...r[cat], item]}))
+    setNewItems(n => ({...n, [cat]: ''}))
+    if (cat === 'action') { setActionOwner(''); setActionDue('') }
+  }
   function retroRemove(cat,i){ setRetro(r=>({...r,[cat]:r[cat].filter((_,idx)=>idx!==i)})) }
 
   // Impediments (localStorage-persisted)
   const [localImps, setLocalImpsRaw] = useState(()=>lsGet('sm_impediments',[]))
-  const [impText,   setImpText]      = useState('')
-  const [impOwner,  setImpOwner]     = useState('')
+  const [impText,     setImpText]     = useState('')
+  const [impOwner,    setImpOwner]   = useState('')
+  const [impSeverity, setImpSeverity]= useState('medium')
 
   function setLocalImps(updater) {
     setLocalImpsRaw(prev => {
@@ -1120,8 +1099,8 @@ function TeamTab({ allTeamMembers, allRisks, profile, sprints }) {
   }
   function logImp() {
     if(!impText.trim()) return
-    setLocalImps(p=>[{ id:'li'+uid(), title:impText.trim(), owner:impOwner||profile?.full_name||'Me', severity:'medium', status:'open', source:'manual' },...p])
-    setImpText(''); setImpOwner('')
+    setLocalImps(p=>[{ id:'li'+uid(), title:impText.trim(), owner:impOwner||profile?.full_name||'Me', severity:impSeverity, status:'open', source:'manual' },...p])
+    setImpText(''); setImpOwner(''); setImpSeverity('medium')
   }
   function resolveImp(id) { setLocalImps(p=>p.map(i=>i.id===id?{...i,status:'resolved'}:i)) }
   function removeImp(id)  { setLocalImps(p=>p.filter(i=>i.id!==id)) }
@@ -1129,10 +1108,30 @@ function TeamTab({ allTeamMembers, allRisks, profile, sprints }) {
   const inp = { width:'100%', padding:'9px 12px', border:`1.5px solid ${C.border}`, borderRadius:8, fontSize:13, outline:'none', background:C.cardBg, color:C.textPrimary, fontFamily:'inherit', boxSizing:'border-box' }
   const ta  = { ...inp, resize:'vertical', minHeight:58 }
 
-  // Standup helpers
-  function saveStandup() {
+  const [blockerEscalated, setBlockerEscalated] = useState(false)
+  const [dupWarning,       setDupWarning]       = useState(false)
+
+  // Standup helpers — auto-escalate blockers to impediments; prevent duplicate entries per member per day
+  function saveStandup(force = false) {
     if(!form.memberName.trim()||!form.did.trim()) return
+    if (!force) {
+      const alreadyLogged = notes.some(n => n.date === selDate && n.memberName.trim().toLowerCase() === form.memberName.trim().toLowerCase())
+      if (alreadyLogged) { setDupWarning(true); return }
+    }
+    setDupWarning(false)
     addStandupNote({ id:uid(), date:selDate, ...form })
+    if (form.blockers.trim()) {
+      setLocalImps(p => [{
+        id: 'li' + uid(),
+        title: `[Standup ${selDate}] ${form.memberName}: ${form.blockers.trim()}`,
+        owner: form.memberName,
+        severity: 'medium',
+        status: 'open',
+        source: 'standup',
+      }, ...p])
+      setBlockerEscalated(true)
+      setTimeout(() => setBlockerEscalated(false), 4000)
+    }
     setForm({ memberName:'', did:'', will:'', blockers:'' })
   }
   const todayNotes  = notes.filter(n=>n.date===selDate)
@@ -1188,6 +1187,18 @@ function TeamTab({ allTeamMembers, allRisks, profile, sprints }) {
                 <h3 style={{ margin:0, fontSize:14, fontWeight:600, color:C.textPrimary }}>Log Entry</h3>
                 <input type="date" value={selDate} onChange={e=>setSelDate(e.target.value)} style={{ padding:'4px 8px', border:`1px solid ${C.border}`, borderRadius:6, fontSize:12, outline:'none', background:C.cardBg, color:C.textPrimary, fontFamily:'inherit' }} />
               </div>
+              {/* Q12: retroactive logging warning */}
+              {selDate < todayStr() && (
+                <div style={{ marginBottom:10, padding:'7px 11px', background:C.warning+'10', border:`1px solid ${C.warning}25`, borderRadius:7, fontSize:11, color:C.warning }}>
+                  ⚠ Logging for a past date. ASPM daily standups should be recorded on the day they occur.
+                </div>
+              )}
+              {/* Q11: blocker escalation confirmation */}
+              {blockerEscalated && (
+                <div style={{ marginBottom:10, padding:'7px 11px', background:C.success+'12', border:`1px solid ${C.success}25`, borderRadius:7, fontSize:11, color:C.success }}>
+                  ✓ Blocker auto-added to Impediments tab for tracking.
+                </div>
+              )}
               <div style={{ marginBottom:12 }}>
                 <label style={{ display:'block', fontSize:12, fontWeight:600, color:C.textPrimary, marginBottom:5 }}>Team Member</label>
                 <input list="sm-members" style={inp} placeholder="Select or type name" value={form.memberName} onChange={e=>setForm(f=>({...f,memberName:e.target.value}))} />
@@ -1199,7 +1210,16 @@ function TeamTab({ allTeamMembers, allRisks, profile, sprints }) {
                   <textarea style={ta} placeholder={f.ph} value={form[f.key]} onChange={e=>setForm(p=>({...p,[f.key]:e.target.value}))}/>
                 </div>
               ))}
-              <button onClick={saveStandup} disabled={!form.memberName.trim()||!form.did.trim()}
+              {dupWarning && (
+                <div style={{ marginBottom:10, padding:'10px 13px', background:C.warning+'10', border:`1px solid ${C.warning}30`, borderRadius:8 }}>
+                  <div style={{ fontSize:12, fontWeight:600, color:C.warning, marginBottom:8 }}>⚠ {form.memberName} already has a standup entry for {selDate}. Log another?</div>
+                  <div style={{ display:'flex', gap:8 }}>
+                    <button onClick={() => saveStandup(true)} style={{ padding:'5px 14px', background:C.warning, color:'#fff', border:'none', borderRadius:6, fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'inherit' }}>Log Anyway</button>
+                    <button onClick={() => setDupWarning(false)} style={{ padding:'5px 14px', background:'none', border:`1px solid ${C.border}`, borderRadius:6, fontSize:12, cursor:'pointer', color:C.textSecondary, fontFamily:'inherit' }}>Cancel</button>
+                  </div>
+                </div>
+              )}
+              <button onClick={() => saveStandup()} disabled={!form.memberName.trim()||!form.did.trim()}
                 style={{ width:'100%', padding:'9px', background:C.primary, color:'#fff', border:'none', borderRadius:8, fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit', opacity:!form.memberName.trim()?.5:1 }}>
                 Log Update
               </button>
@@ -1272,6 +1292,7 @@ function TeamTab({ allTeamMembers, allRisks, profile, sprints }) {
           <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16 }}>
             {RETRO_CATS.map(cat=>{
               const cc=C[cat.ck]
+              const isAction = cat.id === 'action'
               return (
                 <Card key={cat.id} C={C}>
                   <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
@@ -1279,18 +1300,42 @@ function TeamTab({ allTeamMembers, allRisks, profile, sprints }) {
                     <span style={{ fontSize:11, fontWeight:600, color:cc, background:cc+'15', borderRadius:10, padding:'2px 8px' }}>{retro[cat.id].length}</span>
                   </div>
                   <div style={{ borderBottom:`1px solid ${C.border}`, marginBottom:12 }}/>
-                  {retro[cat.id].map((item,i)=>(
-                    <div key={i} style={{ display:'flex', alignItems:'flex-start', gap:6, marginBottom:8 }}>
-                      <span style={{ width:6, height:6, borderRadius:'50%', background:cc, flexShrink:0, marginTop:6 }}/>
-                      <span style={{ fontSize:13, color:C.textSecondary, lineHeight:1.5, flex:1 }}>{item}</span>
-                      <button onClick={()=>retroRemove(cat.id,i)} style={{ background:'none', border:'none', color:C.textSecondary, cursor:'pointer', fontSize:16, padding:0, lineHeight:1, fontFamily:'inherit' }}>×</button>
+                  {retro[cat.id].map((item,i)=>{
+                    const text   = isAction && typeof item === 'object' ? item.text   : (typeof item === 'object' ? item.text : item)
+                    const owner  = isAction && typeof item === 'object' ? item.owner  : ''
+                    const due    = isAction && typeof item === 'object' ? item.dueDate : ''
+                    return (
+                      <div key={i} style={{ marginBottom:10, padding:'7px 9px', background:C.mainBg, borderRadius:7, border:`1px solid ${C.border}` }}>
+                        <div style={{ display:'flex', alignItems:'flex-start', gap:6 }}>
+                          <span style={{ width:6, height:6, borderRadius:'50%', background:cc, flexShrink:0, marginTop:6 }}/>
+                          <span style={{ fontSize:13, color:C.textPrimary, lineHeight:1.5, flex:1 }}>{text}</span>
+                          <button onClick={()=>retroRemove(cat.id,i)} style={{ background:'none', border:'none', color:C.textSecondary, cursor:'pointer', fontSize:16, padding:0, lineHeight:1, fontFamily:'inherit' }}>×</button>
+                        </div>
+                        {isAction && (owner || due) && (
+                          <div style={{ display:'flex', gap:8, marginTop:4, marginLeft:12, flexWrap:'wrap' }}>
+                            {owner && <span style={{ fontSize:10, color:C.primary, background:C.primary+'12', padding:'1px 7px', borderRadius:4 }}>Owner: {owner}</span>}
+                            {due   && <span style={{ fontSize:10, color:C.warning, background:C.warning+'12', padding:'1px 7px', borderRadius:4 }}>Due: {due}</span>}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                  <div style={{ marginTop:10 }}>
+                    <div style={{ display:'flex', gap:6, marginBottom: isAction ? 6 : 0 }}>
+                      <input value={newItems[cat.id]} onChange={e=>setNewItems(n=>({...n,[cat.id]:e.target.value}))}
+                        onKeyDown={e=>{ if(e.key==='Enter' && !isAction) retroAdd(cat.id) }} placeholder={isAction ? 'Action item…' : 'Add item…'}
+                        style={{ flex:1, padding:'7px 10px', border:`1.5px solid ${C.border}`, borderRadius:7, fontSize:12, outline:'none', background:C.cardBg, color:C.textPrimary, fontFamily:'inherit' }}/>
+                      {!isAction && <button onClick={()=>retroAdd(cat.id)} style={{ padding:'7px 12px', background:cc, color:'#fff', border:'none', borderRadius:7, fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit' }}>+</button>}
                     </div>
-                  ))}
-                  <div style={{ display:'flex', gap:6, marginTop:10 }}>
-                    <input value={newItems[cat.id]} onChange={e=>setNewItems(n=>({...n,[cat.id]:e.target.value}))}
-                      onKeyDown={e=>e.key==='Enter'&&retroAdd(cat.id)} placeholder="Add item…"
-                      style={{ flex:1, padding:'7px 10px', border:`1.5px solid ${C.border}`, borderRadius:7, fontSize:12, outline:'none', background:C.cardBg, color:C.textPrimary, fontFamily:'inherit' }}/>
-                    <button onClick={()=>retroAdd(cat.id)} style={{ padding:'7px 12px', background:cc, color:'#fff', border:'none', borderRadius:7, fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit' }}>+</button>
+                    {isAction && (
+                      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr auto', gap:6 }}>
+                        <input value={actionOwner} onChange={e=>setActionOwner(e.target.value)} placeholder="Owner…"
+                          style={{ padding:'6px 9px', border:`1.5px solid ${C.border}`, borderRadius:7, fontSize:12, outline:'none', background:C.cardBg, color:C.textPrimary, fontFamily:'inherit' }}/>
+                        <input type="date" value={actionDue} onChange={e=>setActionDue(e.target.value)}
+                          style={{ padding:'6px 9px', border:`1.5px solid ${C.border}`, borderRadius:7, fontSize:12, outline:'none', background:C.cardBg, color:C.textPrimary, fontFamily:'inherit' }}/>
+                        <button onClick={()=>retroAdd(cat.id)} disabled={!newItems.action.trim()} style={{ padding:'6px 12px', background:cc, color:'#fff', border:'none', borderRadius:7, fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit', opacity:!newItems.action.trim()?.5:1 }}>+</button>
+                      </div>
+                    )}
                   </div>
                 </Card>
               )
@@ -1306,12 +1351,18 @@ function TeamTab({ allTeamMembers, allRisks, profile, sprints }) {
               <h3 style={{ margin:0, fontSize:14, fontWeight:600, color:C.textPrimary }}>Log New Impediment</h3>
               <span style={{ fontSize:11, color:C.success, fontWeight:600 }}>✓ Saved to browser</span>
             </div>
-            <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr auto', gap:10 }}>
+            <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr 1fr auto', gap:10 }}>
               <input style={{ padding:'9px 12px', border:`1.5px solid ${C.border}`, borderRadius:8, fontSize:13, outline:'none', background:C.cardBg, color:C.textPrimary, fontFamily:'inherit' }}
                 placeholder="Describe a blocker or impediment…" value={impText} onChange={e=>setImpText(e.target.value)} onKeyDown={e=>e.key==='Enter'&&logImp()}/>
               <input list="imp-owners" style={{ padding:'9px 12px', border:`1.5px solid ${C.border}`, borderRadius:8, fontSize:13, outline:'none', background:C.cardBg, color:C.textPrimary, fontFamily:'inherit' }}
                 placeholder="Owner (optional)" value={impOwner} onChange={e=>setImpOwner(e.target.value)}/>
               <datalist id="imp-owners">{allTeamMembers.map(m=><option key={m} value={m}/>)}</datalist>
+              <select value={impSeverity} onChange={e=>setImpSeverity(e.target.value)}
+                style={{ padding:'9px 10px', border:`1.5px solid ${C.border}`, borderRadius:8, fontSize:13, outline:'none', background:C.cardBg, color: impSeverity==='high'?C.danger:impSeverity==='low'?C.success:C.warning, fontFamily:'inherit', fontWeight:600 }}>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
               <button onClick={logImp} style={{ padding:'9px 18px', background:C.primary, color:'#fff', border:'none', borderRadius:8, fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit' }}>Log</button>
             </div>
           </Card>
@@ -1362,114 +1413,12 @@ function TeamTab({ allTeamMembers, allRisks, profile, sprints }) {
   )
 }
 
-// ── DOD TAB ───────────────────────────────────────────────────────────────────
-function DoDTab({ projects }) {
-  const C = useThemeColors()
-  const { dodItems, addDodItem, deleteDodItem, toggleDodItem, dodChecks, setDodCheck } = useScrum()
-  const [newText,   setNewText]   = useState('')
-  const [newCat,    setNewCat]    = useState('Quality')
-  const [selFeatId, setSelFeatId] = useState('')
-
-  const allFeatures   = projects.flatMap(p => (p.features||[]).map(f=>({...f,projectName:p.name})))
-  const selFeat       = allFeatures.find(f=>f.id===selFeatId)
-  const featChecks    = dodChecks?.[selFeatId]||{}
-  const activeItems   = dodItems.filter(d=>d.enabled)
-  const checkedCount  = activeItems.filter(d=>featChecks[d.id]===true).length
-  const completionPct = activeItems.length>0?Math.round(checkedCount/activeItems.length*100):0
-
-  const byCategory = dodItems.reduce((acc,d)=>{ (acc[d.cat]=acc[d.cat]||[]).push(d); return acc },{})
-
-  const inp = { width:'100%', padding:'9px 12px', border:`1.5px solid ${C.border}`, borderRadius:8, fontSize:13, outline:'none', background:C.cardBg, color:C.textPrimary, fontFamily:'inherit', boxSizing:'border-box' }
-
-  function addItem() {
-    if(!newText.trim()) return
-    addDodItem({ text:newText.trim(), cat:newCat })
-    setNewText('')
-  }
-
-  return (
-    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 }}>
-      {/* Left: global criteria */}
-      <div>
-        <Card C={C} style={{ marginBottom:14 }}>
-          <SecTitle C={C}>Global DoD Criteria</SecTitle>
-          <p style={{ margin:'0 0 14px', fontSize:12, color:C.textSecondary }}>Toggle criteria on/off. Enabled items apply to all feature trackers by default.</p>
-          {dodItems.length===0 && <p style={{ margin:0, fontSize:13, color:C.textSecondary }}>No criteria yet. Add your first one below.</p>}
-          {Object.entries(byCategory).map(([cat,items])=>(
-            <div key={cat} style={{ marginBottom:14 }}>
-              <div style={{ fontSize:10, fontWeight:700, color:C.textSecondary, textTransform:'uppercase', letterSpacing:.6, marginBottom:6 }}>{cat}</div>
-              {items.map(item=>(
-                <div key={item.id} style={{ display:'flex', alignItems:'center', gap:8, padding:'7px 0', borderBottom:`1px solid ${C.border}` }}>
-                  <input type="checkbox" checked={item.enabled} onChange={()=>toggleDodItem(item.id)} style={{ cursor:'pointer', width:14, height:14, accentColor:C.primary }}/>
-                  <span style={{ flex:1, fontSize:13, color:item.enabled?C.textPrimary:C.textSecondary, textDecoration:item.enabled?'none':'line-through' }}>{item.text}</span>
-                  <button onClick={()=>deleteDodItem(item.id)} style={{ background:'none', border:'none', color:C.textSecondary, cursor:'pointer', fontSize:15, padding:'0 2px', lineHeight:1, fontFamily:'inherit' }}>×</button>
-                </div>
-              ))}
-            </div>
-          ))}
-        </Card>
-        <Card C={C}>
-          <SecTitle C={C}>Add Criterion</SecTitle>
-          <div style={{ marginBottom:12 }}>
-            <label style={{ display:'block', fontSize:12, fontWeight:600, color:C.textPrimary, marginBottom:5 }}>Category</label>
-            <select value={newCat} onChange={e=>setNewCat(e.target.value)} style={inp}>
-              {['Quality','Testing','Deployment','Documentation','Security','Performance'].map(c=><option key={c}>{c}</option>)}
-            </select>
-          </div>
-          <div style={{ marginBottom:12 }}>
-            <label style={{ display:'block', fontSize:12, fontWeight:600, color:C.textPrimary, marginBottom:5 }}>Criterion</label>
-            <input style={inp} placeholder="e.g. Unit tests written and passing" value={newText} onChange={e=>setNewText(e.target.value)} onKeyDown={e=>e.key==='Enter'&&addItem()}/>
-          </div>
-          <button onClick={addItem} disabled={!newText.trim()} style={{ width:'100%', padding:'9px', background:C.primary, color:'#fff', border:'none', borderRadius:8, fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit', opacity:!newText.trim()?.5:1 }}>Add Criterion</button>
-        </Card>
-      </div>
-
-      {/* Right: per-feature tracker */}
-      <Card C={C}>
-        <SecTitle C={C}>Feature DoD Tracker</SecTitle>
-        <div style={{ marginBottom:16 }}>
-          <label style={{ display:'block', fontSize:12, fontWeight:600, color:C.textPrimary, marginBottom:5 }}>Select Feature</label>
-          <select value={selFeatId} onChange={e=>setSelFeatId(e.target.value)} style={inp}>
-            <option value="">— select a feature —</option>
-            {allFeatures.map(f=><option key={f.id} value={f.id}>{f.projectName} › {f.name}</option>)}
-          </select>
-        </div>
-        {!selFeatId
-          ? <p style={{ margin:0, fontSize:13, color:C.textSecondary }}>Select a feature to track its DoD completion status.</p>
-          : <>
-              <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:16, padding:'12px 14px', background:C.mainBg, borderRadius:9, border:`1px solid ${C.border}` }}>
-                <MiniRing todo={activeItems.length-checkedCount} inProg={0} done={checkedCount} C={C} size={52}/>
-                <div>
-                  <div style={{ fontSize:15, fontWeight:700, color:completionPct===100?C.success:C.textPrimary }}>{completionPct}% DoD Complete</div>
-                  <div style={{ fontSize:12, color:C.textSecondary }}>{selFeat?.name} · {selFeat?.projectName}</div>
-                  <div style={{ fontSize:11, color:C.textSecondary, marginTop:2 }}>{checkedCount}/{activeItems.length} criteria met</div>
-                </div>
-              </div>
-              {activeItems.length===0
-                ? <p style={{ margin:0, fontSize:13, color:C.textSecondary }}>Enable criteria on the left to track them here.</p>
-                : activeItems.map(item=>(
-                  <div key={item.id} style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 0', borderBottom:`1px solid ${C.border}` }}>
-                    <input type="checkbox" checked={featChecks[item.id]===true} onChange={e=>setDodCheck(selFeatId,item.id,e.target.checked)} style={{ cursor:'pointer', width:14, height:14, accentColor:C.success }}/>
-                    <div style={{ flex:1 }}>
-                      <span style={{ fontSize:13, color:featChecks[item.id]?C.textSecondary:C.textPrimary, textDecoration:featChecks[item.id]?'line-through':'none' }}>{item.text}</span>
-                    </div>
-                    <span style={{ fontSize:10, color:C.textSecondary, background:C.border, padding:'1px 6px', borderRadius:3 }}>{item.cat}</span>
-                  </div>
-                ))
-              }
-            </>
-        }
-      </Card>
-    </div>
-  )
-}
-
 // ── ROOT ──────────────────────────────────────────────────────────────────────
 export default function ScrumMasterPortal() {
   const C = useThemeColors()
   const { profile } = useAuth()
   const { projects, loading } = useProjects()
-  const { sprints, standupNotes, scrumLoading, burndownSnapshots, recordBurndownSnapshot, loadBurndownSnapshots } = useScrum()
+  const { sprints, standupNotes, scrumLoading } = useScrum()
   const [tab, setTab] = useState('board')
 
   const allTasks       = projects.flatMap(p => (p.tasks||[]).map(t=>({...t,projectName:p.name,projectId:p.id})))
@@ -1480,12 +1429,11 @@ export default function ScrumMasterPortal() {
   const activeProjects = projects.filter(p=>p.status==='Active')
 
   const TABS = [
-    { id:'board',   label:'Board',       icon:'⬛' },
-    { id:'backlog', label:'Backlog',     icon:'☰'  },
-    { id:'sprints', label:'Sprints',     icon:'▶'  },
-    { id:'reports', label:'Reports',     icon:'◈'  },
-    { id:'team',    label:`Team${openImpCnt>0?` (${openImpCnt})`:''}`, icon:'◉' },
-    { id:'dod',     label:'Def of Done', icon:'✓'  },
+    { id:'board',   label:'Board'   },
+    { id:'backlog', label:'Backlog' },
+    { id:'sprints', label:'Sprints' },
+    { id:'reports', label:'Reports' },
+    { id:'team',    label:`Team${openImpCnt>0?` (${openImpCnt})`:''}`  },
   ]
 
   if (loading||scrumLoading) return (
@@ -1519,8 +1467,8 @@ export default function ScrumMasterPortal() {
       <div style={{ display:'flex', gap:2, borderBottom:`2px solid ${C.border}`, marginBottom:22 }}>
         {TABS.map(t=>(
           <button key={t.id} onClick={()=>setTab(t.id)}
-            style={{ padding:'10px 16px', border:'none', background:'none', cursor:'pointer', fontSize:13, fontWeight:tab===t.id?700:400, fontFamily:'inherit', color:tab===t.id?C.primary:C.textSecondary, borderBottom:tab===t.id?`2px solid ${C.primary}`:'2px solid transparent', marginBottom:-2, whiteSpace:'nowrap', display:'flex', alignItems:'center', gap:5, transition:'color .15s' }}>
-            {t.icon} {t.label}
+            style={{ padding:'10px 16px', border:'none', background:'none', cursor:'pointer', fontSize:13, fontWeight:tab===t.id?700:400, fontFamily:'inherit', color:tab===t.id?C.primary:C.textSecondary, borderBottom:tab===t.id?`2px solid ${C.primary}`:'2px solid transparent', marginBottom:-2, whiteSpace:'nowrap', transition:'color .15s' }}>
+            {t.label}
           </button>
         ))}
       </div>
@@ -1528,9 +1476,8 @@ export default function ScrumMasterPortal() {
       {tab==='board'   && <BoardTab   allTasks={allTasks} sprints={sprints} projects={projects} standupNotes={standupNotes} teamMembers={allTeamMembers}/>}
       {tab==='backlog' && <BacklogTab allTasks={allTasks} sprints={sprints} projects={projects} teamMembers={allTeamMembers}/>}
       {tab==='sprints' && <SprintsTab sprints={sprints} allTasks={allTasks} projects={projects}/>}
-      {tab==='reports' && <ReportsTab sprints={sprints} allTasks={allTasks} allTeamMembers={allTeamMembers} burndownSnapshots={burndownSnapshots} recordBurndownSnapshot={recordBurndownSnapshot} loadBurndownSnapshots={loadBurndownSnapshots}/>}
+      {tab==='reports' && <ReportsTab sprints={sprints} allTasks={allTasks} allTeamMembers={allTeamMembers}/>}
       {tab==='team'    && <TeamTab    allTeamMembers={allTeamMembers} allRisks={allRisks} profile={profile} sprints={sprints}/>}
-      {tab==='dod'     && <DoDTab     projects={projects}/>}
     </div>
   )
 }

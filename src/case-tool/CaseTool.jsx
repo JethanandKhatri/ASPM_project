@@ -120,7 +120,7 @@ function NotificationsDropdown({ onClose }) {
 function Layout({ children, navItems = NAV_ITEMS }) {
   const { profile, signOut } = useAuth()
   const { unreadCount, projects } = useProjects()
-  const { isDark, colors: C } = useTheme()
+  const { isDark, toggleDark, colors: C } = useTheme()
   const navigate = useNavigate()
   const [showNotif, setShowNotif] = useState(false)
   const [search, setSearch] = useState('')
@@ -205,6 +205,13 @@ function Layout({ children, navItems = NAV_ITEMS }) {
             <div style={{ flex: 1, overflow: 'hidden' }}>
               <div style={{ fontSize: 12, fontWeight: 600, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayName}</div>
               <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>{roleLabel}</div>
+            </div>
+          </div>
+          {/* Dark mode toggle */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)' }}>{isDark ? '🌙 Dark' : '☀️ Light'}</span>
+            <div onClick={toggleDark} style={{ width: 36, height: 20, borderRadius: 10, background: isDark ? C.primary : 'rgba(255,255,255,0.25)', cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+              <div style={{ position: 'absolute', top: 2, left: isDark ? 18 : 2, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.3)' }} />
             </div>
           </div>
           <button onClick={signOut} style={{ width: '100%', padding: '8px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 6, color: '#E8F4FB', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>Sign out</button>

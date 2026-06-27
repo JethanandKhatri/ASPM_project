@@ -1,5 +1,6 @@
 import { useAuth } from '../context/AuthContext'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { useTheme } from '../case-tool/context/ThemeContext'
 
 const ROLE_META = {
   developer: { color: '#6366f1', bg: '#eef2ff', icon: '💻', label: 'Developer' },
@@ -12,6 +13,7 @@ export default function Sidebar({ navItems }) {
   const { profile, signOut } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+  const { isDark, toggleDark } = useTheme()
   const meta = ROLE_META[profile?.role] || ROLE_META.developer
 
   async function handleSignOut() {
@@ -65,6 +67,16 @@ export default function Sidebar({ navItems }) {
       </nav>
 
       <div style={styles.spacer} />
+
+      {/* Dark mode toggle */}
+      <div style={{ margin: '0 12px 10px', padding: '10px 14px', borderRadius: 10, border: '1.5px solid #e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: isDark ? '#1e293b' : '#f9fafb' }}>
+        <span style={{ fontSize: 12, fontWeight: 600, color: isDark ? '#94a3b8' : '#6b7280' }}>
+          {isDark ? '🌙 Dark Mode' : '☀️ Light Mode'}
+        </span>
+        <div onClick={toggleDark} style={{ width: 38, height: 21, borderRadius: 11, background: isDark ? meta.color : '#d1d5db', cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+          <div style={{ position: 'absolute', top: 2.5, left: isDark ? 19 : 2.5, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
+        </div>
+      </div>
 
       <button onClick={handleSignOut} style={styles.signOutBtn}>
         🚪 Sign Out

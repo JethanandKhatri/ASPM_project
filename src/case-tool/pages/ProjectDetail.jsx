@@ -101,20 +101,42 @@ function OverviewTab({ project }) {
             </tr>
           </thead>
           <tbody>
-            {project.features.map((f, i) => (
-              <tr key={f.id} style={{ borderBottom: `1px solid ${C.border}`, background: i % 2 === 0 ? C.cardBg : C.mainBg }}>
-                <td style={{ padding: '10px 12px', color: C.textSecondary }}>{i + 1}</td>
-                <td style={{ padding: '10px 12px', fontWeight: 500, color: C.textPrimary }}>{f.name}</td>
-                <td style={{ padding: '10px 12px', color: C.textSecondary }}>{f.description}</td>
-                <td style={{ padding: '10px 12px' }}><PriorityBadge priority={f.priority} /></td>
-                <td style={{ padding: '10px 12px', color: C.textSecondary, fontSize: 12, maxWidth: 180 }}>
-                  {f.acceptanceCriteria || <span style={{ color: C.border }}>—</span>}
-                </td>
-                <td style={{ padding: '10px 12px' }}>
-                  <span style={{ fontSize: 12, fontWeight: 600, color: statusColor[f.status] || C.textSecondary }}>{f.status}</span>
-                </td>
-              </tr>
-            ))}
+            {project.features.map((f, i) => {
+              const acList = Array.isArray(f.acceptanceCriteria)
+                ? f.acceptanceCriteria
+                : (typeof f.acceptanceCriteria === 'string' && f.acceptanceCriteria.trim()
+                    ? f.acceptanceCriteria.split('\n').map(s => s.trim()).filter(Boolean)
+                    : [])
+              const acVerified = f.status === 'Done' && acList.length > 0
+              return (
+                <tr key={f.id} style={{ borderBottom: `1px solid ${C.border}`, background: i % 2 === 0 ? C.cardBg : C.mainBg }}>
+                  <td style={{ padding: '10px 12px', color: C.textSecondary }}>{i + 1}</td>
+                  <td style={{ padding: '10px 12px', fontWeight: 500, color: C.textPrimary }}>{f.name}</td>
+                  <td style={{ padding: '10px 12px', color: C.textSecondary }}>{f.description}</td>
+                  <td style={{ padding: '10px 12px' }}><PriorityBadge priority={f.priority} /></td>
+                  <td style={{ padding: '10px 12px', fontSize: 12, maxWidth: 200, verticalAlign: 'top' }}>
+                    {acList.length === 0
+                      ? <span style={{ color: C.border }}>—</span>
+                      : (
+                        <div>
+                          {acList.slice(0, 3).map((ac, j) => (
+                            <div key={j} style={{ display: 'flex', alignItems: 'flex-start', gap: 5, marginBottom: 3 }}>
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={acVerified ? C.success : C.textSecondary} strokeWidth="2.5" strokeLinecap="round" style={{ flexShrink: 0, marginTop: 2 }}><polyline points="20 6 9 17 4 12"/></svg>
+                              <span style={{ color: acVerified ? C.textPrimary : C.textSecondary, lineHeight: 1.4 }}>{ac}</span>
+                            </div>
+                          ))}
+                          {acList.length > 3 && <span style={{ fontSize: 10, color: C.textSecondary }}>+{acList.length - 3} more</span>}
+                          {acVerified && <div style={{ marginTop: 4, fontSize: 10, fontWeight: 700, color: C.success }}>✓ AC Verified (Done)</div>}
+                        </div>
+                      )
+                    }
+                  </td>
+                  <td style={{ padding: '10px 12px' }}>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: statusColor[f.status] || C.textSecondary }}>{f.status}</span>
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>
@@ -698,6 +720,124 @@ function TimelineTab({ project }) {
   )
 }
 
+// ---- Q14: Change Requests Tab ----
+const CR_STATUSES = ['Submitted', 'Under Review', 'Approved', 'Rejected']
+const CR_IMPACTS  = ['Scope', 'Schedule', 'Budget', 'Scope + Schedule', 'Scope + Budget', 'All Three']
+
+function ChangeRequestsTab({ projectId }) {
+  const C = useThemeColors()
+  const storageKey = `aspm_cr_${projectId}`
+  const [crs, setCrs] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(storageKey) || '[]') } catch { return [] }
+  })
+  const [showModal, setShowModal] = useState(false)
+  const [form, setForm] = useState({ title: '', description: '', impact: 'Scope', status: 'Submitted' })
+
+  function saveAll(updated) {
+    setCrs(updated)
+    localStorage.setItem(storageKey, JSON.stringify(updated))
+  }
+
+  function submitCR() {
+    if (!form.title.trim()) return
+    const cr = {
+      id: 'cr' + Date.now(),
+      number: crs.length + 1,
+      title: form.title.trim(),
+      description: form.description.trim(),
+      impact: form.impact,
+      status: 'Submitted',
+      date: new Date().toISOString().split('T')[0],
+    }
+    saveAll([...crs, cr])
+    setForm({ title: '', description: '', impact: 'Scope', status: 'Submitted' })
+    setShowModal(false)
+  }
+
+  function updateStatus(id, status) {
+    saveAll(crs.map(c => c.id === id ? { ...c, status } : c))
+  }
+
+  const statusColor = { Submitted: C.primary, 'Under Review': C.warning, Approved: C.success, Rejected: C.danger }
+  const inp = { width: '100%', padding: '8px 10px', border: `1px solid ${C.border}`, borderRadius: 6, fontSize: 13, boxSizing: 'border-box', outline: 'none', background: C.cardBg, color: C.textPrimary, fontFamily: 'inherit' }
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <h4 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: C.textPrimary }}>Change Requests ({crs.length})</h4>
+        <button onClick={() => setShowModal(true)}
+          style={{ padding: '6px 14px', background: C.warning + '15', color: C.warning, border: `1px solid ${C.warning}30`, borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+          + New CR
+        </button>
+      </div>
+
+      {crs.length === 0 ? (
+        <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 10, padding: 36, textAlign: 'center' }}>
+          <div style={{ fontSize: 12, color: C.textSecondary }}>No change requests yet. Use CRs to formally track scope, schedule, or budget changes for audit and impact analysis.</div>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {crs.map(cr => (
+            <div key={cr.id} style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 10, padding: 16 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: C.textSecondary }}>CR-{String(cr.number).padStart(3, '0')}</span>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: C.textPrimary }}>{cr.title}</span>
+                </div>
+                <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                  <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600, background: '#e2e8f015', color: C.textSecondary, border: `1px solid ${C.border}` }}>{cr.impact}</span>
+                  <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 700, background: (statusColor[cr.status] || C.primary) + '15', color: statusColor[cr.status] || C.primary }}>{cr.status}</span>
+                </div>
+              </div>
+              {cr.description && <p style={{ margin: '0 0 10px', fontSize: 13, color: C.textSecondary, lineHeight: 1.6 }}>{cr.description}</p>}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 11, color: C.textSecondary }}>Submitted: {cr.date}</span>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  {CR_STATUSES.filter(s => s !== cr.status).map(s => (
+                    <button key={s} onClick={() => updateStatus(cr.id, s)}
+                      style={{ padding: '3px 10px', border: `1px solid ${(statusColor[s] || C.border)}30`, borderRadius: 5, background: (statusColor[s] || C.border) + '10', color: statusColor[s] || C.textSecondary, fontSize: 10, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                      → {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {showModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: C.cardBg, borderRadius: 14, padding: 28, width: 480, boxShadow: '0 12px 40px rgba(0,0,0,0.18)', border: `1px solid ${C.border}` }}>
+            <h3 style={{ margin: '0 0 6px', fontSize: 16, fontWeight: 700, color: C.textPrimary }}>New Change Request</h3>
+            <p style={{ margin: '0 0 20px', fontSize: 13, color: C.textSecondary }}>Formally document a requested change for tracking, approval, and impact analysis.</p>
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textPrimary, marginBottom: 5 }}>CR Title *</label>
+              <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="e.g. Add SSO authentication module" style={inp} />
+            </div>
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textPrimary, marginBottom: 5 }}>Description & Justification</label>
+              <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                placeholder="Why is this change needed? What are the business / technical drivers?"
+                style={{ ...inp, minHeight: 72, resize: 'vertical' }} />
+            </div>
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textPrimary, marginBottom: 5 }}>Impact Area</label>
+              <select value={form.impact} onChange={e => setForm(f => ({ ...f, impact: e.target.value }))} style={inp}>
+                {CR_IMPACTS.map(i => <option key={i}>{i}</option>)}
+              </select>
+            </div>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button onClick={() => setShowModal(false)} style={{ padding: '8px 18px', border: `1px solid ${C.border}`, borderRadius: 7, background: C.cardBg, fontSize: 13, cursor: 'pointer', color: C.textSecondary, fontFamily: 'inherit' }}>Cancel</button>
+              <button onClick={submitCR} style={{ padding: '8px 20px', background: C.warning, color: '#fff', border: 'none', borderRadius: 7, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Submit CR</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ---- Main Component ----
 export default function ProjectDetail() {
   const C = useThemeColors()
@@ -713,7 +853,7 @@ export default function ProjectDetail() {
     return <div style={{ padding: 32, textAlign: 'center', color: C.textSecondary }}>Project not found.</div>
   }
 
-  const tabs = ['Overview', 'Estimation', 'Risks', 'Team', 'Activity', 'Tasks', 'Timeline']
+  const tabs = ['Overview', 'Estimation', 'Risks', 'Team', 'Activity', 'Tasks', 'Timeline', 'Change Requests']
   const doneFeat = project.features.filter(f => f.status === 'Done').length
   const durationDays = Math.ceil((new Date(project.deadline) - new Date(project.startDate)) / 86400000)
 
@@ -785,6 +925,7 @@ export default function ProjectDetail() {
       {tab === 'Activity' && <ActivityTab project={project} onAddComment={comment => addComment(id, comment)} />}
       {tab === 'Tasks' && <TasksTab project={project} onAddTask={task => addTask(id, task)} onMoveTask={(taskId, status) => updateTaskStatus(id, taskId, status)} />}
       {tab === 'Timeline' && <TimelineTab project={project} />}
+      {tab === 'Change Requests' && <ChangeRequestsTab projectId={id} />}
     </div>
   )
 }

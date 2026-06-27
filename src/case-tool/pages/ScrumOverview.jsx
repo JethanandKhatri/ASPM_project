@@ -63,6 +63,11 @@ function SprintHealth({ sprints, allTasks }) {
   const C = useThemeColors()
   const active = sprints.find(s => s.status === 'active')
   const completed = sprints.filter(s => s.status === 'completed')
+  // Q9: Capacity — compare sprint SP to historical avg velocity
+  const usePoints = completed.some(s => (s.committedPoints || 0) > 0)
+  const avgVelocity = completed.length > 0
+    ? Math.round(completed.reduce((s, sp) => s + (usePoints ? (sp.committedPoints || 0) : (sp.completedTaskCount || 0)), 0) / completed.length)
+    : 0
 
   if (!active) {
     return (
@@ -77,11 +82,13 @@ function SprintHealth({ sprints, allTasks }) {
     )
   }
 
-  const spTasks     = allTasks.filter(t => active.taskIds.includes(t.id))
-  const done        = spTasks.filter(t => t.status === 'Done').length
-  const inProg      = spTasks.filter(t => t.status === 'In Progress').length
-  const todo        = spTasks.filter(t => t.status === 'To Do').length
-  const total       = spTasks.length
+  const spTasks        = allTasks.filter(t => active.taskIds.includes(t.id))
+  const done           = spTasks.filter(t => t.status === 'Done').length
+  const inProg         = spTasks.filter(t => t.status === 'In Progress').length
+  const todo           = spTasks.filter(t => t.status === 'To Do').length
+  const total          = spTasks.length
+  const totalSprintSP  = spTasks.reduce((s, t) => s + (t.storyPoints || 0), 0)
+  const sprintOverload = avgVelocity > 0 && totalSprintSP > 0 && totalSprintSP > avgVelocity * 1.15
   const pct         = total > 0 ? Math.round((done / total) * 100) : 0
   const totalDays   = daysBetween(active.startDate, active.endDate)
   const elapsed     = Math.min(totalDays, Math.max(0, daysBetween(active.startDate, todayStr())))
@@ -139,7 +146,15 @@ function SprintHealth({ sprints, allTasks }) {
         <span>Start: <strong style={{ color: C.textPrimary }}>{active.startDate}</strong></span>
         <span>End: <strong style={{ color: C.textPrimary }}>{active.endDate}</strong></span>
         <span>Total tasks: <strong style={{ color: C.textPrimary }}>{total}</strong></span>
+        {totalSprintSP > 0 && <span>Sprint SP: <strong style={{ color: sprintOverload ? C.danger : C.textPrimary }}>{totalSprintSP}</strong></span>}
       </div>
+      {/* Q9: Over-commitment warning */}
+      {sprintOverload && (
+        <div style={{ marginTop: 12, padding: '9px 13px', background: C.danger + '0d', border: `1px solid ${C.danger}25`, borderRadius: 8, fontSize: 12, color: C.danger, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0, marginTop: 1 }}><path d="M12 3L2 20h20L12 3z"/><line x1="12" y1="10" x2="12" y2="14"/><circle cx="12" cy="17" r="0.8" fill="currentColor"/></svg>
+          <span><strong>Sprint Over-commitment:</strong> {totalSprintSP} SP committed vs team average velocity of {avgVelocity} {usePoints ? 'SP' : 'tasks'}/sprint. Consider moving lower-priority tasks to the next sprint to reduce risk.</span>
+        </div>
+      )}
     </Card>
   )
 }
@@ -377,7 +392,7 @@ function ImpedimentsOverview({ allRisks }) {
 
 // ── DoD Compliance ────────────────────────────────────────────────────────────
 
-function DoDCompliance({ allFeatures }) {
+function DoDCompliance({ allFeatures, activeSprint }) {
   const C = useThemeColors()
   const { dodItems, dodChecks: checks } = useScrum()
   const active = dodItems.filter(d => d.enabled)
@@ -444,7 +459,135 @@ function DoDCompliance({ allFeatures }) {
           ✓ <strong>{shippable} feature{shippable !== 1 ? 's' : ''}</strong> have met all DoD criteria and are ready to ship.
         </div>
       )}
+      {/* Q11: Per-project DoD notes */}
+      {activeSprint?.projectId && <ProjectDoDNotes projectId={activeSprint.projectId} />}
     </Card>
+  )
+}
+
+// ── Q10: Auto Burndown from task status ──────────────────────────────────────
+
+function AutoBurndown({ sprints, allTasks }) {
+  const C = useThemeColors()
+  const active = sprints.find(s => s.status === 'active')
+  if (!active) return null
+
+  const spTasks = allTasks.filter(t => active.taskIds.includes(t.id))
+  const total   = spTasks.length
+  if (total === 0) return null
+
+  const usePoints = spTasks.some(t => (t.storyPoints || 0) > 0)
+  const totalSP   = usePoints ? spTasks.reduce((s, t) => s + (t.storyPoints || 0), 0) : total
+
+  const totalDays = daysBetween(active.startDate, active.endDate) || 1
+  const elapsed   = Math.min(totalDays, Math.max(0, daysBetween(active.startDate, todayStr())))
+
+  const doneSP    = usePoints
+    ? spTasks.filter(t => t.status === 'Done').reduce((s, t) => s + (t.storyPoints || 0), 0)
+    : spTasks.filter(t => t.status === 'Done').length
+  const remaining = Math.max(0, totalSP - doneSP)
+  const idealRemaining = Math.max(0, Math.round(totalSP - (totalSP / totalDays) * elapsed))
+  const unit = usePoints ? 'SP' : 'tasks'
+
+  // Build simple day-by-day burndown (ideal line + current snapshot)
+  const points = Array.from({ length: totalDays + 1 }, (_, d) => {
+    const ideal = Math.round(totalSP - (totalSP / totalDays) * d)
+    const actual = d < elapsed ? null : d === elapsed ? remaining : null
+    return { d, ideal, actual }
+  })
+
+  const maxH = 80
+  const barW = Math.max(2, Math.min(12, Math.floor(320 / (totalDays + 1))))
+
+  return (
+    <Card style={{ marginBottom: 20 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+        <SectionTitle>Sprint Burndown (auto-calculated from task status)</SectionTitle>
+        <div style={{ display: 'flex', gap: 14, fontSize: 11, color: C.textSecondary }}>
+          <span>Total: <strong style={{ color: C.textPrimary }}>{totalSP} {unit}</strong></span>
+          <span>Done: <strong style={{ color: C.success }}>{doneSP} {unit}</strong></span>
+          <span>Remaining: <strong style={{ color: remaining > idealRemaining ? C.danger : C.textPrimary }}>{remaining} {unit}</strong></span>
+        </div>
+      </div>
+      <div style={{ fontSize: 11, color: C.warning, background: C.warning + '10', border: `1px solid ${C.warning}25`, borderRadius: 6, padding: '5px 10px', marginBottom: 12 }}>
+        Auto-calculated from current task statuses. {usePoints ? 'Uses story points.' : 'No story points set — showing task count.'} For precision, the Scrum Master can log daily snapshots.
+      </div>
+      <div style={{ overflowX: 'auto' }}>
+        <svg width={Math.max(360, (totalDays + 1) * (barW + 2))} height={maxH + 28} style={{ display: 'block' }}>
+          {/* Ideal line */}
+          <polyline
+            points={points.map(p => `${p.d * (barW + 2) + barW / 2},${maxH - Math.round((p.ideal / totalSP) * maxH)}`).join(' ')}
+            fill="none" stroke={C.border} strokeWidth="1.5" strokeDasharray="4 3"
+          />
+          {/* Actual dot at current day */}
+          {elapsed <= totalDays && (
+            <circle
+              cx={elapsed * (barW + 2) + barW / 2}
+              cy={maxH - Math.round((remaining / totalSP) * maxH)}
+              r="5" fill={remaining > idealRemaining ? C.danger : C.success}
+            />
+          )}
+          {/* X axis */}
+          <line x1="0" y1={maxH} x2={(totalDays + 1) * (barW + 2)} y2={maxH} stroke={C.border} strokeWidth="1" />
+          {/* Day labels every 5 days */}
+          {points.filter(p => p.d % 5 === 0 || p.d === totalDays).map(p => (
+            <text key={p.d} x={p.d * (barW + 2) + barW / 2} y={maxH + 14} textAnchor="middle" fontSize="9" fill={C.textSecondary}>d{p.d}</text>
+          ))}
+          {/* Today marker */}
+          <line x1={elapsed * (barW + 2) + barW / 2} y1="0" x2={elapsed * (barW + 2) + barW / 2} y2={maxH} stroke={C.danger} strokeWidth="1" strokeDasharray="3 2" opacity="0.6" />
+        </svg>
+      </div>
+      <div style={{ display: 'flex', gap: 16, marginTop: 8, fontSize: 11, color: C.textSecondary }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 18, height: 1.5, background: C.border, display: 'inline-block', verticalAlign: 'middle' }}></span> Ideal</span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: C.success, display: 'inline-block' }}></span> Current remaining</span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 18, height: 1.5, background: C.danger, display: 'inline-block', verticalAlign: 'middle', opacity: 0.6 }}></span> Today</span>
+      </div>
+    </Card>
+  )
+}
+
+// ── Q11: Per-project DoD Notes ────────────────────────────────────────────────
+
+function ProjectDoDNotes({ projectId }) {
+  const C = useThemeColors()
+  const storageKey = `aspm_dod_notes_${projectId}`
+  const [notes, setNotes] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(storageKey) || '[]') } catch { return [] }
+  })
+  const [input, setInput] = useState('')
+
+  function addNote() {
+    if (!input.trim()) return
+    const updated = [...notes, { id: Date.now(), text: input.trim() }]
+    setNotes(updated)
+    localStorage.setItem(storageKey, JSON.stringify(updated))
+    setInput('')
+  }
+
+  function removeNote(id) {
+    const updated = notes.filter(n => n.id !== id)
+    setNotes(updated)
+    localStorage.setItem(storageKey, JSON.stringify(updated))
+  }
+
+  if (!projectId) return null
+  return (
+    <div style={{ marginTop: 12, borderTop: `1px solid ${C.border}`, paddingTop: 12 }}>
+      <div style={{ fontSize: 12, fontWeight: 700, color: C.primary, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>Project-Specific DoD Criteria</div>
+      {notes.map(n => (
+        <div key={n.id} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={C.success} strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+          <span style={{ fontSize: 12, color: C.textPrimary, flex: 1 }}>{n.text}</span>
+          <button onClick={() => removeNote(n.id)} style={{ background: 'none', border: 'none', color: C.border, cursor: 'pointer', fontSize: 14, padding: 0, lineHeight: 1 }}>✕</button>
+        </div>
+      ))}
+      <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
+        <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && addNote()}
+          placeholder="Add project-specific DoD criterion..."
+          style={{ flex: 1, padding: '6px 10px', border: `1px solid ${C.border}`, borderRadius: 6, fontSize: 12, outline: 'none', background: C.cardBg, color: C.textPrimary }} />
+        <button onClick={addNote} style={{ padding: '6px 12px', background: C.primary, color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>+ Add</button>
+      </div>
+    </div>
   )
 }
 
@@ -558,8 +701,11 @@ export default function ScrumOverview() {
         <ImpedimentsOverview allRisks={allRisks} />
       </div>
 
+      {/* Q10: Auto Burndown */}
+      <AutoBurndown sprints={sprints} allTasks={allTasks} />
+
       {/* DoD Compliance */}
-      <DoDCompliance allFeatures={allFeatures} />
+      <DoDCompliance allFeatures={allFeatures} activeSprint={activeSprint} />
 
       {/* Sprint History */}
       <SprintHistory sprints={sprints} allTasks={allTasks} />

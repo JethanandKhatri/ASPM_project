@@ -26,9 +26,11 @@ function shapeSprint(s) {
     capacity: s.capacity || [],
     completedTaskCount: s.completed_task_count || 0,
     completedAt: s.completed_at || null,
-    reviewNotes:    s.review_notes    || '',
-    releaseId:      s.release_id      || null,
-    committedPoints: s.committed_points || 0,
+    reviewNotes:      s.review_notes       || '',
+    releaseId:        s.release_id         || null,
+    committedPoints:  s.committed_points   || 0,
+    wipLimit:         s.wip_limit          ?? 5,
+    droppedTaskNames: s.dropped_task_names || [],
   }
 }
 
@@ -154,10 +156,10 @@ export function ScrumProvider({ children }) {
 
   async function addSprint(data) {
     const id  = 'sp' + uid()
-    const mem = { id, name: data.name, goal: data.goal || '', startDate: data.startDate, endDate: data.endDate, status: 'planned', taskIds: [], capacity: [], completedTaskCount: 0, completedAt: null }
+    const mem = { id, name: data.name, goal: data.goal || '', startDate: data.startDate, endDate: data.endDate, status: 'planned', taskIds: [], capacity: [], completedTaskCount: 0, completedAt: null, releaseId: data.releaseId || null }
     setSprints(prev => [...prev, mem])
     if (!useLS) {
-      await db.from('sprints').insert({ id, name: data.name, goal: data.goal || '', start_date: data.startDate || null, end_date: data.endDate || null, status: 'planned', task_ids: [], capacity: [], completed_task_count: 0 })
+      await db.from('sprints').insert({ id, name: data.name, goal: data.goal || '', start_date: data.startDate || null, end_date: data.endDate || null, status: 'planned', task_ids: [], capacity: [], completed_task_count: 0, release_id: data.releaseId || null })
     } else {
       const next = [...sprints, mem]; localStorage.setItem('aspm_sprints', JSON.stringify(next))
     }
@@ -179,6 +181,8 @@ export function ScrumProvider({ children }) {
       if (patches.goal !== undefined)               dbp.goal                 = patches.goal
       if (patches.startDate !== undefined)          dbp.start_date           = patches.startDate
       if (patches.endDate !== undefined)            dbp.end_date             = patches.endDate
+      if (patches.wipLimit !== undefined)           dbp.wip_limit            = patches.wipLimit
+      if (patches.droppedTaskNames !== undefined)   dbp.dropped_task_names   = patches.droppedTaskNames
       if (Object.keys(dbp).length) await db.from('sprints').update(dbp).eq('id', id)
       if (patches.status === 'active' || patches.status === 'completed') {
         const sprint = sprints.find(s => s.id === id)

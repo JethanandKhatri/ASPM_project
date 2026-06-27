@@ -39,30 +39,37 @@ function Badge({ label, color, bg }) {
   return <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600, background: bg, color, textTransform: 'capitalize', whiteSpace: 'nowrap' }}>{label}</span>
 }
 
+const STATUS_CYCLE = { 'To Do': 'In Progress', 'In Progress': 'Done', 'Done': 'To Do' }
 const STATUS_ORDER = ['To Do', 'In Progress', 'Done']
 
 export default function DeveloperPortal() {
   const C = useThemeColors()
   const { profile } = useAuth()
-  const { projects, loading } = useProjects()
+  const { projects, loading, updateTaskStatus } = useProjects()
   const [tab, setTab]   = useState('overview')
   const [form, setForm] = useState({ did: '', will: '', blockers: '' })
   const [submitted, setSubmitted] = useState(false)
 
-  const { sprints, addStandupNote } = useScrum()
-  const displayName = profile?.full_name || profile?.email?.split('@')[0] || 'Developer'
+  const { sprints, addStandupNote, standupNotes } = useScrum()
+  const displayName  = profile?.full_name || profile?.email?.split('@')[0] || 'Developer'
+  const userEmail    = (profile?.email || '').toLowerCase()
+  const userFullName = displayName.toLowerCase()
+
   const activeSprint = sprints.find(s => s.status === 'active')
 
-  // My tasks — any task where assignee matches my name or email
+  // My tasks — exact email match OR exact full name match (no partial first-name match)
   const allTasks = projects.flatMap(p =>
     (p.tasks || []).map(t => ({ ...t, projectName: p.name, projectId: p.id }))
   )
   const myTasks = allTasks.filter(t => {
-    const a = (t.assignee || '').toLowerCase()
-    return a === displayName.toLowerCase() || a === (profile?.email || '').toLowerCase() || a.includes(displayName.toLowerCase().split(' ')[0])
+    const a = (t.assignee || '').toLowerCase().trim()
+    return a === userEmail || a === userFullName
   })
+
+  // Sprint board shows only MY tasks that are in the active sprint
+  const myTaskIds = new Set(myTasks.map(t => t.id))
   const sprintTasks = activeSprint
-    ? allTasks.filter(t => activeSprint.taskIds.includes(t.id))
+    ? allTasks.filter(t => activeSprint.taskIds.includes(t.id) && myTaskIds.has(t.id))
     : myTasks
 
   const done   = myTasks.filter(t => t.status === 'Done').length
@@ -73,6 +80,9 @@ export default function DeveloperPortal() {
   const daysLeft = activeSprint
     ? Math.max(0, Math.round((new Date(activeSprint.endDate) - new Date()) / 86400000))
     : null
+
+  // Check if developer already submitted standup today (in DB)
+  const todayStandupEntry = standupNotes.find(n => n.date === todayStr() && n.memberName === displayName)
 
   const TABS = [
     { id: 'overview', label: 'Overview'     },
@@ -121,10 +131,10 @@ export default function DeveloperPortal() {
       {tab === 'overview' && (
         <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 20 }}>
-            <MetricCard label="Assigned Tasks"  value={myTasks.length} icon="◎" color={C.primary}        />
-            <MetricCard label="In Progress"     value={inProg}         icon="◈" color={C.warning}        />
-            <MetricCard label="Completed"       value={done}           icon="✓"  color={C.success}        />
-            <MetricCard label="To Do"           value={todo}           icon="◎"  color={C.textSecondary}  />
+            <MetricCard label="Assigned Tasks"  value={myTasks.length} icon="◎" color={C.primary}       />
+            <MetricCard label="In Progress"     value={inProg}         icon="◈" color={C.warning}       />
+            <MetricCard label="Completed"       value={done}           icon="✓"  color={C.success}       />
+            <MetricCard label="To Do"           value={todo}           icon="◎" color={C.textSecondary} />
           </div>
 
           <Card style={{ marginBottom: 16 }}>
@@ -142,29 +152,35 @@ export default function DeveloperPortal() {
                 <span style={{ fontSize: 14, fontWeight: 700, color: C.textPrimary }}>{activeSprint.name}</span>
               </div>
               {activeSprint.goal && <p style={{ margin: '0 0 8px', fontSize: 13, color: C.textSecondary }}>Goal: {activeSprint.goal}</p>}
-              <div style={{ fontSize: 12, color: C.textSecondary }}>{activeSprint.startDate} → {activeSprint.endDate} · {sprintTasks.length} tasks total</div>
+              <div style={{ fontSize: 12, color: C.textSecondary }}>{activeSprint.startDate} → {activeSprint.endDate} · {sprintTasks.length} of my tasks in sprint</div>
             </Card>
           )}
 
-          <Card>
-            <h3 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 600, color: C.textPrimary }}>Recent Tasks</h3>
-            {myTasks.length === 0 ? (
-              <p style={{ margin: 0, fontSize: 13, color: C.textSecondary }}>No tasks assigned.</p>
-            ) : myTasks.slice(0, 5).map(t => {
-              const stColor = t.status === 'Done' ? C.success : t.status === 'In Progress' ? C.primary : C.textSecondary
-              return (
-                <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: `1px solid ${C.border}` }}>
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: stColor, flexShrink: 0 }} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 500, color: C.textPrimary }}>{t.name}</div>
-                    <div style={{ fontSize: 11, color: C.textSecondary, marginTop: 2 }}>{t.projectName}</div>
+          {myTasks.length === 0 && (
+            <Card>
+              <p style={{ margin: 0, fontSize: 13, color: C.textSecondary }}>No tasks assigned yet. Ask your Scrum Master to assign tasks using your full name (<strong>{displayName}</strong>) or email (<strong>{profile?.email}</strong>).</p>
+            </Card>
+          )}
+
+          {myTasks.length > 0 && (
+            <Card>
+              <h3 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 600, color: C.textPrimary }}>Recent Tasks</h3>
+              {myTasks.slice(0, 5).map(t => {
+                const stColor = t.status === 'Done' ? C.success : t.status === 'In Progress' ? C.primary : C.textSecondary
+                return (
+                  <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: `1px solid ${C.border}` }}>
+                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: stColor, flexShrink: 0 }} />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 13, fontWeight: 500, color: C.textPrimary }}>{t.name}</div>
+                      <div style={{ fontSize: 11, color: C.textSecondary, marginTop: 2 }}>{t.projectName}</div>
+                    </div>
+                    <Badge label={t.status} color={stColor} bg={stColor + '15'} />
+                    {t.priority && <Badge label={t.priority} color={t.priority === 'High' ? C.danger : t.priority === 'Medium' ? C.warning : C.success} bg={(t.priority === 'High' ? C.danger : t.priority === 'Medium' ? C.warning : C.success) + '15'} />}
                   </div>
-                  <Badge label={t.status} color={stColor} bg={stColor + '15'} />
-                  {t.priority && <Badge label={t.priority} color={t.priority === 'High' ? C.danger : t.priority === 'Medium' ? C.warning : C.success} bg={(t.priority === 'High' ? C.danger : t.priority === 'Medium' ? C.warning : C.success) + '15'} />}
-                </div>
-              )
-            })}
-          </Card>
+                )
+              })}
+            </Card>
+          )}
         </>
       )}
 
@@ -173,12 +189,12 @@ export default function DeveloperPortal() {
         <Card>
           <h3 style={{ margin: '0 0 16px', fontSize: 14, fontWeight: 600, color: C.textPrimary }}>All My Tasks</h3>
           {myTasks.length === 0 ? (
-            <p style={{ margin: 0, fontSize: 13, color: C.textSecondary }}>No tasks assigned.</p>
+            <p style={{ margin: 0, fontSize: 13, color: C.textSecondary }}>No tasks assigned. Ask your Scrum Master to assign tasks using your full name (<strong>{displayName}</strong>) or email (<strong>{profile?.email}</strong>).</p>
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
                 <tr style={{ borderBottom: `2px solid ${C.border}` }}>
-                  {['Task', 'Project', 'Priority', 'Due Date', 'Status'].map(h => (
+                  {['Task', 'Project', 'Priority', 'Due Date', 'Status', 'Update'].map(h => (
                     <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: C.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 }}>{h}</th>
                   ))}
                 </tr>
@@ -187,6 +203,7 @@ export default function DeveloperPortal() {
                 {myTasks.map((t, i) => {
                   const stColor = t.status === 'Done' ? C.success : t.status === 'In Progress' ? C.primary : C.textSecondary
                   const prColor = t.priority === 'High' ? C.danger : t.priority === 'Medium' ? C.warning : C.success
+                  const nextStatus = STATUS_CYCLE[t.status] || 'In Progress'
                   return (
                     <tr key={t.id} style={{ borderBottom: `1px solid ${C.border}`, background: i % 2 === 0 ? C.cardBg : C.mainBg }}>
                       <td style={{ padding: '11px 12px', fontWeight: 500, color: t.status === 'Done' ? C.textSecondary : C.textPrimary, textDecoration: t.status === 'Done' ? 'line-through' : 'none' }}>{t.name}</td>
@@ -194,6 +211,12 @@ export default function DeveloperPortal() {
                       <td style={{ padding: '11px 12px' }}>{t.priority && <Badge label={t.priority} color={prColor} bg={prColor + '15'} />}</td>
                       <td style={{ padding: '11px 12px', color: C.textSecondary, fontSize: 12 }}>{t.dueDate || '—'}</td>
                       <td style={{ padding: '11px 12px' }}><Badge label={t.status} color={stColor} bg={stColor + '15'} /></td>
+                      <td style={{ padding: '11px 12px' }}>
+                        <button onClick={() => updateTaskStatus(t.projectId, t.id, nextStatus)}
+                          style={{ padding: '4px 10px', background: 'none', border: `1px solid ${C.border}`, borderRadius: 5, fontSize: 11, fontWeight: 600, cursor: 'pointer', color: C.textSecondary, fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
+                          → {nextStatus}
+                        </button>
+                      </td>
                     </tr>
                   )
                 })}
@@ -203,7 +226,7 @@ export default function DeveloperPortal() {
         </Card>
       )}
 
-      {/* Sprint Board */}
+      {/* Sprint Board — my tasks only */}
       {tab === 'board' && (
         <>
           {!activeSprint ? (
@@ -215,32 +238,45 @@ export default function DeveloperPortal() {
             <>
               <div style={{ marginBottom: 16, padding: '12px 16px', background: C.primary + '0D', border: `1px solid ${C.primary}25`, borderRadius: 8 }}>
                 <span style={{ fontSize: 13, fontWeight: 600, color: C.primary }}>{activeSprint.name}</span>
-                <span style={{ fontSize: 12, color: C.textSecondary, marginLeft: 12 }}>{activeSprint.startDate} → {activeSprint.endDate} · {sprintTasks.length} tasks</span>
+                <span style={{ fontSize: 12, color: C.textSecondary, marginLeft: 12 }}>{activeSprint.startDate} → {activeSprint.endDate} · {sprintTasks.length} of my tasks</span>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
-                {STATUS_ORDER.map(status => {
-                  const colTasks = sprintTasks.filter(t => t.status === status)
-                  const colColor = status === 'Done' ? C.success : status === 'In Progress' ? C.primary : C.textSecondary
-                  return (
-                    <div key={status} style={{ background: C.mainBg, border: `1px solid ${C.border}`, borderRadius: 10, padding: 14 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: colColor }}>{status}</span>
-                        <span style={{ width: 20, height: 20, borderRadius: '50%', background: colColor, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700 }}>{colTasks.length}</span>
-                      </div>
-                      {colTasks.length === 0 && <p style={{ margin: 0, fontSize: 12, color: C.textSecondary, textAlign: 'center', padding: '12px 0' }}>Empty</p>}
-                      {colTasks.map(t => (
-                        <div key={t.id} style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 8, padding: '10px 12px', marginBottom: 8 }}>
-                          <div style={{ fontSize: 12, fontWeight: 500, color: C.textPrimary, marginBottom: 6 }}>{t.name}</div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: 11, color: C.textSecondary }}>{t.projectName}</span>
-                            {t.priority && <Badge label={t.priority} color={t.priority === 'High' ? C.danger : t.priority === 'Medium' ? C.warning : C.success} bg={(t.priority === 'High' ? C.danger : t.priority === 'Medium' ? C.warning : C.success) + '15'} />}
-                          </div>
+              {sprintTasks.length === 0 && (
+                <Card style={{ textAlign: 'center', padding: '32px 20px', marginBottom: 16 }}>
+                  <p style={{ margin: '0 0 4px', fontSize: 13, fontWeight: 600, color: C.textPrimary }}>No tasks assigned to you in this sprint</p>
+                  <p style={{ margin: 0, fontSize: 12, color: C.textSecondary }}>Ask your Scrum Master to add tasks assigned to <strong>{displayName}</strong> or <strong>{profile?.email}</strong>.</p>
+                </Card>
+              )}
+              {sprintTasks.length > 0 && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
+                  {STATUS_ORDER.map(status => {
+                    const colTasks = sprintTasks.filter(t => t.status === status)
+                    const colColor = status === 'Done' ? C.success : status === 'In Progress' ? C.primary : C.textSecondary
+                    const nextStatus = STATUS_CYCLE[status]
+                    return (
+                      <div key={status} style={{ background: C.mainBg, border: `1px solid ${C.border}`, borderRadius: 10, padding: 14 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: colColor }}>{status}</span>
+                          <span style={{ width: 20, height: 20, borderRadius: '50%', background: colColor, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700 }}>{colTasks.length}</span>
                         </div>
-                      ))}
-                    </div>
-                  )
-                })}
-              </div>
+                        {colTasks.length === 0 && <p style={{ margin: 0, fontSize: 12, color: C.textSecondary, textAlign: 'center', padding: '12px 0' }}>Empty</p>}
+                        {colTasks.map(t => (
+                          <div key={t.id} style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 8, padding: '10px 12px', marginBottom: 8 }}>
+                            <div style={{ fontSize: 12, fontWeight: 500, color: C.textPrimary, marginBottom: 6 }}>{t.name}</div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                              <span style={{ fontSize: 11, color: C.textSecondary }}>{t.projectName}</span>
+                              {t.priority && <Badge label={t.priority} color={t.priority === 'High' ? C.danger : t.priority === 'Medium' ? C.warning : C.success} bg={(t.priority === 'High' ? C.danger : t.priority === 'Medium' ? C.warning : C.success) + '15'} />}
+                            </div>
+                            <button onClick={() => updateTaskStatus(t.projectId, t.id, nextStatus)}
+                              style={{ width: '100%', padding: '5px', background: 'transparent', border: `1px solid ${C.border}`, borderRadius: 5, fontSize: 11, fontWeight: 600, cursor: 'pointer', color: C.textSecondary, fontFamily: 'inherit' }}>
+                              → {nextStatus}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
             </>
           )}
         </>
@@ -252,14 +288,27 @@ export default function DeveloperPortal() {
           <Card>
             <h3 style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 700, color: C.textPrimary }}>Daily Standup</h3>
             <p style={{ margin: '0 0 20px', fontSize: 12, color: C.textSecondary }}>{todayStr()} · {displayName}</p>
-            {submitted ? (
-              <div style={{ textAlign: 'center', padding: '32px 0' }}>
+
+            {(submitted || todayStandupEntry) ? (
+              <div style={{ textAlign: 'center', padding: '24px 0' }}>
                 <div style={{ fontSize: 40, marginBottom: 12 }}>✓</div>
-                <h4 style={{ margin: '0 0 8px', fontSize: 16, fontWeight: 700, color: C.success }}>Standup Submitted!</h4>
-                <p style={{ margin: 0, fontSize: 13, color: C.textSecondary }}>Your update has been recorded. The Scrum Master can see it on the Sprint Board.</p>
+                <h4 style={{ margin: '0 0 8px', fontSize: 16, fontWeight: 700, color: C.success }}>
+                  {submitted ? 'Standup Submitted!' : "Today's Standup Already Logged"}
+                </h4>
+                {todayStandupEntry && !submitted && (
+                  <div style={{ textAlign: 'left', background: C.mainBg, borderRadius: 8, padding: '12px 16px', marginBottom: 16, border: `1px solid ${C.border}` }}>
+                    {[{ l: 'Did', v: todayStandupEntry.did }, { l: 'Will', v: todayStandupEntry.will }, { l: 'Blockers', v: todayStandupEntry.blockers }].filter(r => r.v).map(r => (
+                      <div key={r.l} style={{ marginBottom: 6 }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: C.textSecondary, textTransform: 'uppercase' }}>{r.l}  </span>
+                        <span style={{ fontSize: 13, color: r.l === 'Blockers' ? C.danger : C.textPrimary }}>{r.v}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <p style={{ margin: '0 0 16px', fontSize: 13, color: C.textSecondary }}>Your update has been recorded. The Scrum Master can see it in the Team tab.</p>
                 <button onClick={() => { setSubmitted(false); setForm({ did: '', will: '', blockers: '' }) }}
-                  style={{ marginTop: 16, padding: '8px 20px', background: C.primary, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-                  Submit Another
+                  style={{ padding: '8px 20px', background: C.cardBg, color: C.textSecondary, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                  Submit Another Update
                 </button>
               </div>
             ) : (

@@ -51,8 +51,13 @@ export default function Decomposition() {
   }
 
   const midpoint = Math.round((sumBest + sumWorst) / 2)
-  const conf50Low = Math.round(midpoint - sd / 2)
-  const conf50High = Math.round(midpoint + sd / 2)
+  // ASPM confidence intervals: 50% CI = ±0.674σ, 85% CI = ±1.44σ, 95% CI = ±1.96σ
+  const conf50Low  = Math.round(midpoint - 0.674 * sd)
+  const conf50High = Math.round(midpoint + 0.674 * sd)
+  const conf85Low  = Math.round(midpoint - 1.44  * sd)
+  const conf85High = Math.round(midpoint + 1.44  * sd)
+  const conf95Low  = Math.round(midpoint - 1.96  * sd)
+  const conf95High = Math.round(midpoint + 1.96  * sd)
   const effortMonths = Math.round(midpoint / 22 * 10) / 10
   const costUSD = Math.round(effortMonths * 5000)
 
@@ -65,7 +70,7 @@ export default function Decomposition() {
       duration: `${Math.max(1, Math.round(effortMonths / 3 * 10) / 10)} months`,
       effortNum: effortMonths, costNum: costUSD, durationNum: Math.max(1, Math.round(effortMonths / 3 * 10) / 10),
       status: 'Saved',
-      data: { tasks, sumBest, sumWorst, sd, confidence50Low: conf50Low, confidence50High: conf50High },
+      data: { tasks, sumBest, sumWorst, sd, conf50Low, conf50High, conf85Low, conf85High, conf95Low, conf95High },
     })
     setSaved(true)
     setTimeout(() => navigate(`/dashboard/projects/${id}`), 1200)
@@ -140,8 +145,8 @@ export default function Decomposition() {
           {[
             { label: 'Sum Best Case', value: `${sumBest.toFixed(0)} days` },
             { label: 'Sum Worst Case', value: `${sumWorst.toFixed(0)} days` },
-            { label: 'Std. Deviation', value: `${sd} days`, highlight: true },
-            { label: '50% Conf. Range', value: `${conf50Low}–${conf50High} days` },
+            { label: 'Std. Deviation (σ)', value: `${sd} days`, highlight: true },
+            { label: 'Midpoint', value: `${midpoint} days` },
           ].map(m => (
             <div key={m.label} style={{ background: m.highlight ? C.warning + '15' : C.mainBg, borderRadius: 8, padding: '12px 14px', border: m.highlight ? `1px solid ${C.warning}40` : 'none' }}>
               <div style={{ fontSize: 18, fontWeight: 700, color: m.highlight ? C.warning : C.textPrimary }}>{m.value}</div>
@@ -149,6 +154,24 @@ export default function Decomposition() {
             </div>
           ))}
         </div>
+        {/* Q5: Multiple confidence intervals */}
+        {sd > 0 && (
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: C.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>Confidence Intervals (ASPM Normal Distribution)</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+              {[
+                { label: '50% CI  (±0.674σ)', low: conf50Low, high: conf50High, color: C.textSecondary, bg: C.mainBg },
+                { label: '85% CI  (±1.44σ)',  low: conf85Low, high: conf85High, color: C.warning,       bg: C.warning + '10' },
+                { label: '95% CI  (±1.96σ)',  low: conf95Low, high: conf95High, color: C.primary,       bg: C.primary + '0d' },
+              ].map(ci => (
+                <div key={ci.label} style={{ background: ci.bg, border: `1px solid ${ci.color}25`, borderRadius: 8, padding: '10px 14px' }}>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: ci.color }}>{ci.low}–{ci.high} days</div>
+                  <div style={{ fontSize: 11, color: C.textSecondary, marginTop: 3 }}>{ci.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14, marginBottom: 16 }}>
           {[
             { label: 'Effort', value: `${effortMonths} staff months` },

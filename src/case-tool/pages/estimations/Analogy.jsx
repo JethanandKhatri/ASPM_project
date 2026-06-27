@@ -14,6 +14,7 @@ export default function Analogy() {
   const [selectedPastId, setSelectedPastId] = useState(pastProjects[0]?.id || '')
   const [newLOC, setNewLOC] = useState('')
   const [adjustment, setAdjustment] = useState('')
+  const [adjustmentRationale, setAdjustmentRationale] = useState('')
   const [notes, setNotes] = useState('')
   const [saved, setSaved] = useState(false)
 
@@ -35,7 +36,7 @@ export default function Analogy() {
       duration: `${scaledDuration} months`,
       effortNum: scaledEffort, costNum: scaledCost, durationNum: scaledDuration,
       status: 'Saved',
-      data: { analogyProject: pastProject?.name, analogyLOC: pastLOC, analogyEffort: pastEst?.effortNum, analogyCost: pastEst?.costNum, analogyDuration: pastEst?.durationNum, newLOC: parseFloat(newLOC), adjustmentFactor: parseFloat(adjustment) || 0, scaledEffort, scaledCost, scaledDuration, notes },
+      data: { analogyProject: pastProject?.name, analogyLOC: pastLOC, analogyEffort: pastEst?.effortNum, analogyCost: pastEst?.costNum, analogyDuration: pastEst?.durationNum, newLOC: parseFloat(newLOC), adjustmentFactor: parseFloat(adjustment) || 0, adjustmentRationale, scaledEffort, scaledCost, scaledDuration, notes },
     })
     setSaved(true)
     setTimeout(() => navigate(`/dashboard/projects/${id}`), 1200)
@@ -101,6 +102,13 @@ export default function Analogy() {
             <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textPrimary, marginBottom: 6 }}>Size Adjustment Factor (%)</label>
             <input type="number" style={inp} placeholder="e.g. 10 for +10%" value={adjustment} onChange={e => setAdjustment(e.target.value)} />
             <div style={{ fontSize: 11, color: C.textSecondary, marginTop: 4 }}>Positive = more complex, negative = simpler</div>
+          </div>
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textPrimary, marginBottom: 6 }}>Adjustment Rationale <span style={{ color: C.danger }}>*</span></label>
+            <textarea value={adjustmentRationale} onChange={e => setAdjustmentRationale(e.target.value)}
+              placeholder="Why is the adjustment applied? e.g. New project uses microservices instead of monolith (+15% complexity), but team has stronger DB expertise (−5%)"
+              style={{ ...inp, minHeight: 60, resize: 'vertical', display: 'block', width: '100%', fontFamily: 'Inter, sans-serif', boxSizing: 'border-box' }} />
+            <div style={{ fontSize: 11, color: C.textSecondary, marginTop: 4 }}>Required — audit trail for the adjustment value per ASPM Analogy method</div>
           </div>
 
           {/* Live results */}

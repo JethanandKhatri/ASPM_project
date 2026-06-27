@@ -45,6 +45,7 @@ export default function CreateEditProject() {
     existing?.features || [{ id: 'nf1', name: '', description: '', priority: 'Should Have', status: 'To Do', acceptanceCriteria: '' }]
   )
   const [error, setError] = useState('')
+  const [acGateIdx, setAcGateIdx] = useState(null) // index of feature awaiting AC confirmation
 
   function setField(key, val) { setForm(f => ({ ...f, [key]: val })) }
 
@@ -57,6 +58,14 @@ export default function CreateEditProject() {
   }
 
   function updateFeature(idx, key, val) {
+    // Q2: AC gate — if marking Done and feature has ACs, ask for confirmation first
+    if (key === 'status' && val === 'Done' && isEdit) {
+      const feat = features[idx]
+      if (feat.acceptanceCriteria && String(feat.acceptanceCriteria).trim()) {
+        setAcGateIdx(idx)
+        return
+      }
+    }
     setFeatures(f => f.map((feat, i) => i === idx ? { ...feat, [key]: val } : feat))
   }
 
@@ -78,8 +87,39 @@ export default function CreateEditProject() {
     }
   }
 
+  const namedFeatures = features.filter(f => f.name.trim())
+  const mustHaveCount = namedFeatures.filter(f => f.priority === 'Must Have').length
+  const moscowOverload = namedFeatures.length >= 3 && (mustHaveCount / namedFeatures.length) > 0.6
+
   return (
     <div style={{ padding: 28, maxWidth: 820, margin: '0 auto' }}>
+      {/* Q13: Reminder to enter actuals when marking Completed */}
+      {form.status === 'Completed' && (
+        <div style={{ padding: '10px 14px', background: C.success + '12', border: `1px solid ${C.success}30`, borderRadius: 8, marginBottom: 16, fontSize: 12, color: C.success, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><polyline points="8,12 11,15 16,9"/></svg>
+          <span><strong>Project marked Completed</strong> — Record actual effort, cost, and duration in the <strong>Estimation tab</strong> to generate accuracy reports in Analytics.</span>
+        </div>
+      )}
+      {/* Q2: AC Confirmation Gate Modal */}
+      {acGateIdx !== null && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}>
+          <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 12, padding: 28, width: 420, boxShadow: '0 12px 40px rgba(0,0,0,0.18)' }}>
+            <h3 style={{ margin: '0 0 10px', fontSize: 16, fontWeight: 700, color: C.textPrimary }}>Acceptance Criteria Verified?</h3>
+            <p style={{ margin: '0 0 6px', fontSize: 13, color: C.textSecondary }}>This feature has defined acceptance criteria:</p>
+            <div style={{ background: C.mainBg, border: `1px solid ${C.border}`, borderRadius: 8, padding: '10px 14px', marginBottom: 18, fontSize: 12, color: C.textPrimary, lineHeight: 1.6 }}>
+              {String(features[acGateIdx]?.acceptanceCriteria || '').slice(0, 300)}
+            </div>
+            <p style={{ margin: '0 0 20px', fontSize: 13, color: C.textSecondary }}>Confirm that all criteria above have been tested and verified before marking Done.</p>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button onClick={() => setAcGateIdx(null)} style={{ padding: '8px 16px', border: `1px solid ${C.border}`, borderRadius: 7, background: C.cardBg, fontSize: 13, cursor: 'pointer', color: C.textSecondary, fontFamily: 'inherit' }}>Cancel</button>
+              <button onClick={() => { setFeatures(f => f.map((feat, i) => i === acGateIdx ? { ...feat, status: 'Done' } : feat)); setAcGateIdx(null) }}
+                style={{ padding: '8px 18px', background: C.success, color: '#fff', border: 'none', borderRadius: 7, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                All ACs Verified — Mark Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
         <button onClick={() => navigate(isEdit ? `/dashboard/projects/${id}` : '/dashboard')}
@@ -141,7 +181,7 @@ export default function CreateEditProject() {
 
         {/* Features card */}
         <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 12, padding: 24, marginBottom: 20 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: moscowOverload ? 10 : 16 }}>
             <h3 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: C.textPrimary }}>Features / Requirements</h3>
             <button type="button" onClick={addFeature}
               style={{ padding: '6px 14px', background: C.primary + '15', color: C.primary, border: `1px solid ${C.primary}30`, borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
@@ -149,6 +189,13 @@ export default function CreateEditProject() {
             </button>
           </div>
 
+          {/* Q1: MoSCoW distribution warning */}
+          {moscowOverload && (
+            <div style={{ padding: '9px 13px', background: C.warning + '14', border: `1px solid ${C.warning}35`, borderRadius: 8, marginBottom: 14, fontSize: 12, color: C.warning, display: 'flex', gap: 9, alignItems: 'flex-start' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0, marginTop: 1 }}><path d="M12 3L2 20h20L12 3z"/><line x1="12" y1="10" x2="12" y2="14"/><circle cx="12" cy="17" r="0.8" fill="currentColor"/></svg>
+              <span><strong>MoSCoW Imbalance:</strong> {mustHaveCount} of {namedFeatures.length} features ({Math.round(mustHaveCount / namedFeatures.length * 100)}%) are Must Have. ASPM recommends keeping Must Have below 60% — too many mandatory features removes scope flexibility and increases delivery risk.</span>
+            </div>
+          )}
           {/* Table header */}
           <div style={{ display: 'grid', gridTemplateColumns: isEdit ? '2fr 2fr 1fr 1fr 36px' : '2fr 2fr 1fr 36px', gap: 8, padding: '0 0 8px', borderBottom: `1px solid ${C.border}`, marginBottom: 8 }}>
             {(isEdit ? ['Feature Name', 'Description', 'Priority', 'Status', ''] : ['Feature Name', 'Description', 'Priority', '']).map(h => (
