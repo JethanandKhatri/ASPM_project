@@ -4,7 +4,8 @@ import { useProjects } from '../context/ProjectContext'
 import { useThemeColors } from '../context/ThemeContext'
 
 const DOMAINS = ['Web', 'Mobile', 'Desktop', 'Embedded', 'Other']
-const PRIORITIES = ['High', 'Medium', 'Low']
+const PRIORITIES = ['Must Have', 'Should Have', 'Could Have', "Won't Have"]
+const PROJECT_STATUSES = ['Planning', 'Active', 'On Hold', 'Completed']
 
 function Field({ label, children }) {
   const C = useThemeColors()
@@ -35,19 +36,20 @@ export default function CreateEditProject() {
     startDate: existing?.startDate || '',
     deadline: existing?.deadline || '',
     teamSize: existing?.teamSize || 3,
-    status: existing?.status || 'Active',
+    teamRoles: existing?.teamRoles || '',
+    status: existing?.status || (isEdit ? 'Active' : 'Planning'),
     budget: existing?.budget || 0,
   })
 
   const [features, setFeatures] = useState(
-    existing?.features || [{ id: 'nf1', name: '', description: '', priority: 'Medium', status: 'To Do' }]
+    existing?.features || [{ id: 'nf1', name: '', description: '', priority: 'Should Have', status: 'To Do', acceptanceCriteria: '' }]
   )
   const [error, setError] = useState('')
 
   function setField(key, val) { setForm(f => ({ ...f, [key]: val })) }
 
   function addFeature() {
-    setFeatures(f => [...f, { id: 'nf' + Date.now(), name: '', description: '', priority: 'Medium', status: 'To Do' }])
+    setFeatures(f => [...f, { id: 'nf' + Date.now(), name: '', description: '', priority: 'Should Have', status: 'To Do', acceptanceCriteria: '' }])
   }
 
   function removeFeature(idx) {
@@ -109,15 +111,18 @@ export default function CreateEditProject() {
             </Field>
             <Field label="Status">
               <select style={inputStyle} value={form.status} onChange={e => setField('status', e.target.value)}>
-                {['Active', 'Completed', 'On Hold'].map(s => <option key={s}>{s}</option>)}
+                {PROJECT_STATUSES.map(s => <option key={s}>{s}</option>)}
               </select>
             </Field>
             <Field label="Start Date *">
               <input style={inputStyle} type="date" value={form.startDate} onChange={e => setField('startDate', e.target.value)} required />
             </Field>
-            <Field label="Deadline *">
-              <input style={inputStyle} type="date" value={form.deadline} onChange={e => setField('deadline', e.target.value)} required />
-            </Field>
+            <div>
+              <Field label="Deadline *">
+                <input style={inputStyle} type="date" value={form.deadline} onChange={e => setField('deadline', e.target.value)} required />
+              </Field>
+              <p style={{ margin: '-12px 0 0', fontSize: 11, color: C.textSecondary }}>Defines your release window — scope can still flex after creation.</p>
+            </div>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
@@ -128,6 +133,10 @@ export default function CreateEditProject() {
               <input style={inputStyle} type="number" min={0} step={1000} value={form.budget} onChange={e => setField('budget', parseFloat(e.target.value) || 0)} placeholder="0" />
             </Field>
           </div>
+
+          <Field label="Team Roles (optional)">
+            <input style={inputStyle} value={form.teamRoles} onChange={e => setField('teamRoles', e.target.value)} placeholder="e.g. 2 Developers, 1 QA, 1 BA" />
+          </Field>
         </div>
 
         {/* Features card */}
@@ -141,26 +150,36 @@ export default function CreateEditProject() {
           </div>
 
           {/* Table header */}
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1fr 36px', gap: 8, padding: '0 0 8px', borderBottom: `1px solid ${C.border}`, marginBottom: 8 }}>
-            {['Feature Name', 'Description', 'Priority', 'Status', ''].map(h => (
+          <div style={{ display: 'grid', gridTemplateColumns: isEdit ? '2fr 2fr 1fr 1fr 36px' : '2fr 2fr 1fr 36px', gap: 8, padding: '0 0 8px', borderBottom: `1px solid ${C.border}`, marginBottom: 8 }}>
+            {(isEdit ? ['Feature Name', 'Description', 'Priority', 'Status', ''] : ['Feature Name', 'Description', 'Priority', '']).map(h => (
               <span key={h} style={{ fontSize: 11, fontWeight: 600, color: C.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 }}>{h}</span>
             ))}
           </div>
 
           {features.map((feat, idx) => (
-            <div key={feat.id} style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1fr 36px', gap: 8, marginBottom: 8, alignItems: 'center' }}>
-              <input style={inputStyle} placeholder="Feature name" value={feat.name} onChange={e => updateFeature(idx, 'name', e.target.value)} />
-              <input style={inputStyle} placeholder="Brief description" value={feat.description} onChange={e => updateFeature(idx, 'description', e.target.value)} />
-              <select style={inputStyle} value={feat.priority} onChange={e => updateFeature(idx, 'priority', e.target.value)}>
-                {PRIORITIES.map(p => <option key={p}>{p}</option>)}
-              </select>
-              <select style={inputStyle} value={feat.status} onChange={e => updateFeature(idx, 'status', e.target.value)}>
-                {['To Do', 'In Progress', 'Done'].map(s => <option key={s}>{s}</option>)}
-              </select>
-              <button type="button" onClick={() => removeFeature(idx)} disabled={features.length <= 1}
-                style={{ background: 'none', border: 'none', color: features.length <= 1 ? '#d1d5db' : C.danger, cursor: features.length <= 1 ? 'default' : 'pointer', fontSize: 18, padding: 0 }}>
-                ✕
-              </button>
+            <div key={feat.id} style={{ marginBottom: 14, paddingBottom: 14, borderBottom: `1px solid ${C.border}` }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isEdit ? '2fr 2fr 1fr 1fr 36px' : '2fr 2fr 1fr 36px', gap: 8, marginBottom: 6, alignItems: 'center' }}>
+                <input style={inputStyle} placeholder="Feature name" value={feat.name} onChange={e => updateFeature(idx, 'name', e.target.value)} />
+                <input style={inputStyle} placeholder="Brief description" value={feat.description} onChange={e => updateFeature(idx, 'description', e.target.value)} />
+                <select style={inputStyle} value={feat.priority} onChange={e => updateFeature(idx, 'priority', e.target.value)}>
+                  {PRIORITIES.map(p => <option key={p}>{p}</option>)}
+                </select>
+                {isEdit && (
+                  <select style={inputStyle} value={feat.status} onChange={e => updateFeature(idx, 'status', e.target.value)}>
+                    {['To Do', 'In Progress', 'Done'].map(s => <option key={s}>{s}</option>)}
+                  </select>
+                )}
+                <button type="button" onClick={() => removeFeature(idx)} disabled={features.length <= 1}
+                  style={{ background: 'none', border: 'none', color: features.length <= 1 ? '#d1d5db' : C.danger, cursor: features.length <= 1 ? 'default' : 'pointer', fontSize: 18, padding: 0 }}>
+                  ✕
+                </button>
+              </div>
+              <textarea
+                style={{ ...inputStyle, resize: 'vertical', minHeight: 44, fontSize: 12, color: C.textSecondary }}
+                placeholder="Acceptance Criteria — how will we know this feature is done? (optional)"
+                value={feat.acceptanceCriteria || ''}
+                onChange={e => updateFeature(idx, 'acceptanceCriteria', e.target.value)}
+              />
             </div>
           ))}
         </div>

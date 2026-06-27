@@ -119,14 +119,53 @@ function NotificationsDropdown({ onClose }) {
 
 function Layout({ children, navItems = NAV_ITEMS }) {
   const { profile, signOut } = useAuth()
-  const { unreadCount } = useProjects()
+  const { unreadCount, projects } = useProjects()
   const { isDark, colors: C } = useTheme()
   const navigate = useNavigate()
   const [showNotif, setShowNotif] = useState(false)
   const [search, setSearch] = useState('')
+  const searchRef = useRef(null)
   const displayName = profile?.full_name || profile?.email?.split('@')[0] || 'User'
   const roleLabel = getRoleLabel(profile?.role)
   const userInitial = displayName.trim()[0]?.toUpperCase() || 'U'
+
+  // Close search on outside click or Escape
+  useEffect(() => {
+    function handler(e) {
+      if (searchRef.current && !searchRef.current.contains(e.target)) setSearch('')
+    }
+    function keyHandler(e) { if (e.key === 'Escape') setSearch('') }
+    document.addEventListener('mousedown', handler)
+    document.addEventListener('keydown', keyHandler)
+    return () => { document.removeEventListener('mousedown', handler); document.removeEventListener('keydown', keyHandler) }
+  }, [])
+
+  // Build search results
+  const searchResults = search.trim().length < 2 ? [] : (() => {
+    const q = search.toLowerCase()
+    const results = []
+    ;(projects || []).forEach(p => {
+      if (p.name.toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q)) {
+        results.push({ type: 'Project', label: p.name, sub: p.status, path: `/dashboard/projects/${p.id}`, color: C.primary })
+      }
+      ;(p.features || []).forEach(f => {
+        if ((f.name || '').toLowerCase().includes(q)) {
+          results.push({ type: 'Feature', label: f.name, sub: p.name, path: `/dashboard/projects/${p.id}`, color: C.success })
+        }
+      })
+      ;(p.risks || []).forEach(r => {
+        if ((r.description || '').toLowerCase().includes(q) || (r.riskCategory || '').toLowerCase().includes(q)) {
+          results.push({ type: 'Risk', label: r.description || r.riskCategory || 'Risk', sub: p.name, path: `/dashboard/projects/${p.id}`, color: C.danger })
+        }
+      })
+      ;(p.estimations || []).forEach(e => {
+        if ((e.technique || '').toLowerCase().includes(q) || (e.version || '').toLowerCase().includes(q)) {
+          results.push({ type: 'Estimation', label: `${e.technique} ${e.version}`, sub: p.name, path: `/dashboard/projects/${p.id}`, color: C.warning })
+        }
+      })
+    })
+    return results.slice(0, 8)
+  })()
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', fontFamily: "'Inter', sans-serif", background: C.mainBg }}>
@@ -134,9 +173,11 @@ function Layout({ children, navItems = NAV_ITEMS }) {
       <div style={{ width: 220, background: C.sidebar, color: '#fff', display: 'flex', flexDirection: 'column', flexShrink: 0, position: 'fixed', top: 0, left: 0, height: '100vh', zIndex: 100 }}>
         <div style={{ padding: '24px 20px 20px', borderBottom: '1px solid rgba(255,255,255,0.10)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 8, background: C.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>⚡</div>
+            <div style={{ width: 36, height: 36, borderRadius: 8, background: '#002050', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.35)', flexShrink: 0 }}>
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none"><path d="M13 2L4 14H11L10 22L20 10H13Z" fill="#F97316"/></svg>
+              </div>
             <div>
-              <div style={{ fontWeight: 700, fontSize: 15, letterSpacing: 0.3 }}>ASPM</div>
+              <div style={{ fontWeight: 700, fontSize: 15, letterSpacing: 0.3 }}>STRIX</div>
               <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', marginTop: 1 }}>CASE Tool</div>
             </div>
           </div>
@@ -174,16 +215,42 @@ function Layout({ children, navItems = NAV_ITEMS }) {
       <div style={{ flex: 1, marginLeft: 220, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
         {/* Top navbar */}
         <div style={{ height: 72, background: C.topbarGradient, backdropFilter: 'blur(12px)', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', gap: 18, position: 'sticky', top: 0, zIndex: 50 }}>
-          <div style={{ flex: '1 1 560px', maxWidth: 720 }}>
+          <div ref={searchRef} style={{ flex: '1 1 560px', maxWidth: 720, position: 'relative' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', border: '1px solid rgba(255,255,255,0.18)', borderRadius: 14, background: 'rgba(255,255,255,0.12)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.10)' }}>
-              <span style={{ fontSize: 14, fontWeight: 600, color: '#DCECF7', flexShrink: 0 }}>Search</span>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, opacity: 0.7 }}>
+                <circle cx="11" cy="11" r="7" stroke="#DCECF7" strokeWidth="2"/>
+                <line x1="16.5" y1="16.5" x2="21" y2="21" stroke="#DCECF7" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
               <input
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                placeholder="projects, risks, estimations"
-                style={{ flex: 1, border: 'none', outline: 'none', fontSize: 13, background: 'transparent', color: '#FFFFFF', minWidth: 0 }}
+                placeholder="Search projects, risks, estimations…"
+                style={{ flex: 1, border: 'none', outline: 'none', fontSize: 13, background: 'transparent', color: '#FFFFFF', minWidth: 0, fontFamily: 'inherit' }}
               />
+              {search && (
+                <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: '0 2px', fontFamily: 'inherit' }}>×</button>
+              )}
             </div>
+            {/* Search results dropdown */}
+            {searchResults.length > 0 && (
+              <div style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0, background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 12, boxShadow: '0 12px 32px rgba(0,58,107,0.18)', zIndex: 200, overflow: 'hidden' }}>
+                {searchResults.map((r, i) => (
+                  <div key={i} onClick={() => { navigate(r.path); setSearch('') }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', cursor: 'pointer', borderBottom: i < searchResults.length - 1 ? `1px solid ${C.border}` : 'none', transition: 'background 0.1s' }}
+                    onMouseEnter={e => e.currentTarget.style.background = C.primary + '10'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                    <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 4, background: r.color + '18', color: r.color, flexShrink: 0, textTransform: 'uppercase', letterSpacing: 0.4 }}>{r.type}</span>
+                    <span style={{ fontSize: 13, color: C.textPrimary, flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.label}</span>
+                    <span style={{ fontSize: 11, color: C.textSecondary, flexShrink: 0 }}>{r.sub}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {search.trim().length >= 2 && searchResults.length === 0 && (
+              <div style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0, background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 12, padding: '16px 14px', textAlign: 'center', fontSize: 13, color: C.textSecondary, zIndex: 200 }}>
+                No results for "{search}"
+              </div>
+            )}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
             <div style={{ position: 'relative' }}>

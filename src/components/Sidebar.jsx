@@ -23,8 +23,10 @@ export default function Sidebar({ navItems }) {
     <aside style={styles.sidebar}>
       {/* Brand */}
       <div style={styles.brand}>
-        <div style={styles.brandIcon}>⚡</div>
-        <span style={styles.brandText}>ASPM</span>
+        <div style={styles.brandIcon}>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none"><path d="M13 2L4 14H11L10 22L20 10H13Z" fill="#F97316"/></svg>
+        </div>
+        <span style={styles.brandText}>STRIX</span>
       </div>
 
       {/* Profile card */}
@@ -93,13 +95,12 @@ const styles = {
   brandIcon: {
     width: 36,
     height: 36,
-    background: 'linear-gradient(135deg,#4338ca,#6366f1)',
+    background: '#002050',
     borderRadius: 10,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    fontSize: 18,
-    color: '#fff',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.20)',
   },
   brandText: {
     fontSize: 18,

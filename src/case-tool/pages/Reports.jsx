@@ -4,7 +4,7 @@ import { useThemeColors } from '../context/ThemeContext'
 
 const REPORT_TYPES = [
   { id: 'overview', label: 'Project Overview', desc: 'Name, domain, status, dates, team size, description' },
-  { id: 'features', label: 'Requirements / Features List', desc: 'All features with priority and status' },
+  { id: 'features', label: 'Requirements / Features List', desc: 'All features with priority, acceptance criteria and status' },
   { id: 'estimations', label: 'Estimation Results (all versions)', desc: 'All estimation runs with effort, cost, duration' },
   { id: 'risks', label: 'Risk Table with RMMM', desc: 'Full risk log with mitigation, monitoring, management plans' },
   { id: 'activity', label: 'Activity Log', desc: 'System events and comment history' },
@@ -28,14 +28,19 @@ function buildPdfHtml(project, checkedTypes) {
   }
 
   if (checkedTypes.features) {
-    const rows = project.features.map((f, i) =>
-      `<tr><td>${i + 1}</td><td>${f.name}</td><td>${f.description || '—'}</td><td>${f.priority}</td><td>${f.status}</td></tr>`
-    ).join('')
+    const rows = project.features.map((f, i) => {
+      const ac = Array.isArray(f.acceptanceCriteria)
+        ? f.acceptanceCriteria.join('<br>• ')
+        : (f.acceptanceCriteria || '—')
+      const acDisplay = Array.isArray(f.acceptanceCriteria) && f.acceptanceCriteria.length > 0
+        ? '• ' + ac : (f.acceptanceCriteria || '—')
+      return `<tr><td>${i + 1}</td><td>${f.name}</td><td>${f.description || '—'}</td><td>${f.priority}</td><td style="font-size:11px">${acDisplay}</td><td>${f.status}</td></tr>`
+    }).join('')
     sections.push(`
       <section>
         <h2>Requirements / Features (${project.features.length})</h2>
         <table>
-          <tr><th>#</th><th>Feature</th><th>Description</th><th>Priority</th><th>Status</th></tr>
+          <tr><th>#</th><th>Feature</th><th>Description</th><th>Priority</th><th>Acceptance Criteria</th><th>Status</th></tr>
           ${rows}
         </table>
       </section>`)
@@ -88,7 +93,7 @@ function buildPdfHtml(project, checkedTypes) {
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>${project.name} — ASPM Report</title>
+  <title>${project.name} — STRIX Report</title>
   <style>
     body { font-family: Arial, sans-serif; font-size: 12px; color: #12324A; margin: 0; padding: 24px 32px; }
     h1 { font-size: 20px; color: #003A6B; margin-bottom: 4px; }
@@ -105,7 +110,7 @@ function buildPdfHtml(project, checkedTypes) {
 </head>
 <body>
   <h1>${project.name} — Project Report</h1>
-  <div class="meta">Generated: ${new Date().toLocaleString()} &nbsp;|&nbsp; ASPM CASE Tool</div>
+  <div class="meta">Generated: ${new Date().toLocaleString()} &nbsp;|&nbsp; STRIX</div>
   ${sections.join('\n')}
 </body>
 </html>`
@@ -113,7 +118,7 @@ function buildPdfHtml(project, checkedTypes) {
 
 function buildCsv(project, checkedTypes) {
   const lines = []
-  lines.push(`ASPM CASE Tool Report — ${project.name}`)
+  lines.push(`STRIX Report — ${project.name}`)
   lines.push(`Generated: ${new Date().toLocaleString()}`)
   lines.push('')
 
@@ -130,9 +135,12 @@ function buildCsv(project, checkedTypes) {
 
   if (checkedTypes.features) {
     lines.push('FEATURES')
-    lines.push('#,Feature Name,Description,Priority,Status')
+    lines.push('#,Feature Name,Description,Priority,Acceptance Criteria,Status')
     project.features.forEach((f, i) => {
-      lines.push(`${i + 1},"${f.name}","${f.description || ''}",${f.priority},${f.status}`)
+      const ac = Array.isArray(f.acceptanceCriteria)
+        ? f.acceptanceCriteria.join(' | ')
+        : (f.acceptanceCriteria || '')
+      lines.push(`${i + 1},"${f.name}","${f.description || ''}",${f.priority},"${ac}",${f.status}`)
     })
     lines.push('')
   }

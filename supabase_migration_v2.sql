@@ -92,6 +92,11 @@ ALTER TABLE public.sprints ADD COLUMN IF NOT EXISTS release_id         text;
 ALTER TABLE public.sprints ADD COLUMN IF NOT EXISTS committed_points   integer DEFAULT 0;
 
 -- =====================================================
+-- 8. Add team_roles to projects table
+-- =====================================================
+ALTER TABLE public.projects ADD COLUMN IF NOT EXISTS team_roles text DEFAULT '';
+
+-- =====================================================
 -- DONE. Run this entire file in Supabase SQL Editor.
 -- After running, refresh the app — no data migration needed.
 -- Existing features/tasks/sprints will have empty/null story fields.

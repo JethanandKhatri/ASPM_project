@@ -14,9 +14,10 @@ const ICONS = {
 
 function StatusBadge({ status }) {
   const cfg = {
-    Active: { bg: '#E9F1EC', color: '#3E6F4B' },
+    Planning:  { bg: '#FEF3C7', color: '#92400E' },
+    Active:    { bg: '#E9F1EC', color: '#3E6F4B' },
     Completed: { bg: '#E7F2EA', color: '#3F7A52' },
-    'On Hold': { bg: '#F8EEDC', color: '#8D6732' },
+    'On Hold': { bg: '#F3F1EC', color: '#5F5A53' },
   }[status] || { bg: '#F3F1EC', color: '#5F5A53' }
 
   return (
@@ -158,7 +159,7 @@ export default function DashboardPage() {
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
         <div style={{ display: 'flex', gap: 6 }}>
-          {['All', 'Active', 'Completed'].map(f => (
+          {['All', 'Planning', 'Active', 'Completed', 'On Hold'].map(f => (
             <button
               key={f}
               onClick={() => setFilter(f)}

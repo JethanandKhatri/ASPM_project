@@ -2,8 +2,13 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
+const BoltIcon = ({ size = 22 }) => (
+  <svg viewBox="0 0 24 24" width={size} height={size} fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M13 2L4 14H11L10 22L20 10H13Z" fill="#F97316" />
+  </svg>
+)
+
 const ICONS = {
-  brand:  '⚡',
   shield: '●',
 }
 
@@ -41,9 +46,9 @@ export default function AuthPage() {
           <div style={styles.leftDecorStrokeB} />
 
           <div style={styles.brandRow}>
-            <div style={styles.brandMark}>{ICONS.brand}</div>
+            <div style={styles.brandMark}><BoltIcon size={24} /></div>
             <div>
-              <div style={styles.brandTitle}>ASPM</div>
+              <div style={styles.brandTitle}>STRIX</div>
               <div style={styles.brandSub}>CASE Tool</div>
             </div>
           </div>
@@ -73,7 +78,7 @@ export default function AuthPage() {
                 </div>
               </div>
 
-              <h2 style={styles.cardTitle}>Sign in to ASPM</h2>
+              <h2 style={styles.cardTitle}>Sign in to STRIX</h2>
               <p style={styles.cardSub}>Sign in to continue.</p>
 
               <form onSubmit={handleSubmit} style={styles.form}>
@@ -179,8 +184,9 @@ const styles = {
     position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: 14,
   },
   brandMark: {
-    width: 46, height: 46, borderRadius: 14, background: 'rgba(137, 207, 241, 0.15)',
-    color: '#89CFF1', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22,
+    width: 46, height: 46, borderRadius: 14, background: '#002050',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.30)',
   },
   brandTitle: { fontSize: 16, fontWeight: 700, color: '#FFFFFF' },
   brandSub:   { fontSize: 11, fontWeight: 600, color: '#89CFF1', marginTop: 3 },

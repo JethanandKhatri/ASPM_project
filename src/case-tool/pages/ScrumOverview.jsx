@@ -149,11 +149,17 @@ function SprintHealth({ sprints, allTasks }) {
 function VelocitySection({ sprints }) {
   const C = useThemeColors()
   const completed = sprints.filter(s => s.status === 'completed')
-  const velocities = completed.map(s => ({ name: s.name, count: s.completedTaskCount || 0 }))
-  const avg  = velocities.length > 0 ? Math.round(velocities.reduce((s, v) => s + v.count, 0) / velocities.length) : 0
-  const maxV = Math.max(...velocities.map(v => v.count), 1)
-  const last = velocities[velocities.length - 1]?.count || 0
-  const prev = velocities[velocities.length - 2]?.count || 0
+  // Use story points if available, fall back to task count for older sprints
+  const usePoints = completed.some(s => (s.committedPoints || 0) > 0)
+  const velocities = completed.map(s => ({
+    name: s.name,
+    count: usePoints ? (s.committedPoints || 0) : (s.completedTaskCount || 0),
+  }))
+  const unit  = usePoints ? 'SP' : 'tasks'
+  const avg   = velocities.length > 0 ? Math.round(velocities.reduce((s, v) => s + v.count, 0) / velocities.length) : 0
+  const maxV  = Math.max(...velocities.map(v => v.count), 1)
+  const last  = velocities[velocities.length - 1]?.count || 0
+  const prev  = velocities[velocities.length - 2]?.count || 0
   const trend = velocities.length >= 2 ? (last >= prev ? '↑ Improving' : '↓ Declining') : 'Not enough data'
   const trendColor = velocities.length >= 2 ? (last >= prev ? C.success : C.danger) : C.textSecondary
 
@@ -162,10 +168,16 @@ function VelocitySection({ sprints }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <SectionTitle>Team Velocity</SectionTitle>
         <div style={{ display: 'flex', gap: 16, fontSize: 12 }}>
-          <span style={{ color: C.textSecondary }}>Avg: <strong style={{ color: C.textPrimary }}>{avg} tasks/sprint</strong></span>
+          <span style={{ color: C.textSecondary }}>Avg: <strong style={{ color: C.textPrimary }}>{avg} {unit}/sprint</strong></span>
           <span style={{ fontWeight: 600, color: trendColor }}>{trend}</span>
         </div>
       </div>
+
+      {!usePoints && completed.length > 0 && (
+        <div style={{ fontSize: 11, color: C.warning, background: C.warning + '12', border: `1px solid ${C.warning}30`, borderRadius: 6, padding: '6px 10px', marginBottom: 12 }}>
+          Showing task count — story points not yet recorded for these sprints. Assign story points to tasks for accurate SP velocity.
+        </div>
+      )}
 
       {completed.length === 0 ? (
         <p style={{ margin: 0, fontSize: 13, color: C.textSecondary }}>No completed sprints yet — velocity data will appear here once the Scrum Master completes a sprint.</p>
@@ -176,7 +188,7 @@ function VelocitySection({ sprints }) {
             const isLast = i === velocities.length - 1
             return (
               <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                <div style={{ fontSize: 11, fontWeight: 600, color: C.textPrimary }}>{v.count}</div>
+                <div style={{ fontSize: 11, fontWeight: 600, color: C.textPrimary }}>{v.count} {unit}</div>
                 <div style={{ width: '100%', height: barH, background: isLast ? C.primary : C.primary + '60', borderRadius: '4px 4px 0 0', transition: 'height 0.4s', position: 'relative' }}>
                   {v.count >= avg && <div style={{ position: 'absolute', top: -2, left: 0, right: 0, height: 2, background: C.success, borderRadius: 2 }} />}
                 </div>

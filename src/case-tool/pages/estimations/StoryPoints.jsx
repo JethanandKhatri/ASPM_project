@@ -15,9 +15,9 @@ export default function StoryPoints() {
 
   const [velocity, setVelocity] = useState('')
   const [totalSP, setTotalSP] = useState('')
-  const [iterLen, setIterLen] = useState(2)
+  const [iterLen, setIterLen] = useState('2')
   const [features, setFeatures] = useState(
-    project?.features.map((f, i) => ({ id: 'sf' + i, name: f.name, size: 'M', businessValue: 5, recommendation: 'Include' })) || []
+    project?.features.map((f, i) => ({ id: 'sf' + i, name: f.name, size: 'M', businessValue: '5', recommendation: 'Include' })) || []
   )
   const [sorted, setSorted] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -31,7 +31,7 @@ export default function StoryPoints() {
   function rankFeatures() {
     const ranked = [...features].map(f => {
       const sp = SP_VALUES[f.size] || 5
-      const netValue = f.businessValue / sp
+      const netValue = (parseFloat(f.businessValue) || 1) / sp
       const rec = netValue >= 1.5 ? 'Include' : 'Consider dropping'
       return { ...f, netValue, recommendation: rec }
     }).sort((a, b) => b.netValue - a.netValue)
@@ -89,7 +89,7 @@ export default function StoryPoints() {
           </div>
           <div style={{ marginBottom: 16 }}>
             <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textPrimary, marginBottom: 5 }}>Iteration Length (weeks)</label>
-            <input type="number" style={{ ...inp, width: '100%' }} min={1} max={4} value={iterLen} onChange={e => setIterLen(parseFloat(e.target.value) || 2)} />
+            <input type="number" style={{ ...inp, width: '100%' }} min={1} max={4} value={iterLen} onChange={e => setIterLen(e.target.value)} />
           </div>
           {vel > 0 && (
             <div style={{ background: C.primary + '0d', border: `1px solid ${C.primary}30`, borderRadius: 8, padding: 14 }}>
@@ -135,7 +135,7 @@ export default function StoryPoints() {
                     </td>
                     <td style={{ padding: '7px 8px', fontWeight: 600, color: C.textSecondary }}>{SP_VALUES[f.size]}</td>
                     <td style={{ padding: '7px 8px', width: 70 }}>
-                      <input type="number" min={1} max={10} value={f.businessValue} onChange={e => updateFeature(i, 'businessValue', parseInt(e.target.value) || 1)}
+                      <input type="number" min={1} max={10} value={f.businessValue} onChange={e => updateFeature(i, 'businessValue', e.target.value)}
                         style={{ width: '100%', padding: '3px 5px', border: `1px solid ${C.border}`, borderRadius: 4, fontSize: 11, outline: 'none', boxSizing: 'border-box' }} />
                     </td>
                     <td style={{ padding: '7px 8px' }}>

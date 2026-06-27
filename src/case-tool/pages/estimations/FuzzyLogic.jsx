@@ -23,7 +23,7 @@ export default function FuzzyLogic() {
 
   if (!project) return <div style={{ padding: 32, textAlign: 'center', color: C.textSecondary }}>Project not found.</div>
 
-  const totalLOC = project.features.reduce((sum, f) => sum + (locPerCat[classifications[f.id]] || 0), 0)
+  const totalLOC = project.features.reduce((sum, f) => sum + (parseInt(locPerCat[classifications[f.id]]) || 0), 0)
   const catCounts = CATEGORIES.reduce((acc, cat) => {
     acc[cat] = project.features.filter(f => classifications[f.id] === cat).length
     return acc
@@ -70,7 +70,7 @@ export default function FuzzyLogic() {
                 <div key={cat} style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: 11, fontWeight: 600, color: C.textSecondary, marginBottom: 6 }}>{CAT_LABELS[cat]}</div>
                   <input type="number" min={0} value={locPerCat[cat]}
-                    onChange={e => setLocPerCat(p => ({ ...p, [cat]: parseInt(e.target.value) || 0 }))}
+                    onChange={e => setLocPerCat(p => ({ ...p, [cat]: e.target.value }))}
                     style={{ width: '100%', padding: '7px 8px', border: `1.5px solid ${C.border}`, borderRadius: 6, fontSize: 13, textAlign: 'center', boxSizing: 'border-box', outline: 'none' }} />
                   <div style={{ fontSize: 10, color: C.textSecondary, marginTop: 3 }}>LOC</div>
                 </div>

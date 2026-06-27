@@ -184,7 +184,7 @@ export function ScrumProvider({ children }) {
         const sprint = sprints.find(s => s.id === id)
         const msg = patches.status === 'active'
           ? `Sprint "${sprint?.name}" has started`
-          : `Sprint "${sprint?.name}" completed — ${patches.completedTaskCount ?? 0} tasks done`
+          : `Sprint "${sprint?.name}" completed — ${patches.committedPoints ?? 0} SP / ${patches.completedTaskCount ?? 0} tasks done`
         db.from('notifications').insert({ id: 'n' + Date.now(), type: 'sprint', message: msg, project_id: null, read: false, timestamp: new Date().toISOString() })
       }
     } else {

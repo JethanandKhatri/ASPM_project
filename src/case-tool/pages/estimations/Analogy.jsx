@@ -13,7 +13,7 @@ export default function Analogy() {
 
   const [selectedPastId, setSelectedPastId] = useState(pastProjects[0]?.id || '')
   const [newLOC, setNewLOC] = useState('')
-  const [adjustment, setAdjustment] = useState(0)
+  const [adjustment, setAdjustment] = useState('')
   const [notes, setNotes] = useState('')
   const [saved, setSaved] = useState(false)
 
@@ -21,7 +21,7 @@ export default function Analogy() {
   const pastEst = pastProject?.estimations[0]
   const pastLOC = pastEst?.data?.totalLOC || pastEst?.data?.newLOC || 7600
 
-  const scaleFactor = newLOC ? (parseFloat(newLOC) / pastLOC) * (1 + adjustment / 100) : 0
+  const scaleFactor = newLOC ? (parseFloat(newLOC) / pastLOC) * (1 + (parseFloat(adjustment) || 0) / 100) : 0
   const scaledEffort = pastEst ? Math.round((pastEst.effortNum || 18) * scaleFactor * 10) / 10 : 0
   const scaledCost = pastEst ? Math.round((pastEst.costNum || 90000) * scaleFactor) : 0
   const scaledDuration = pastEst ? Math.round((pastEst.durationNum || 6) * scaleFactor * 10) / 10 : 0
@@ -35,7 +35,7 @@ export default function Analogy() {
       duration: `${scaledDuration} months`,
       effortNum: scaledEffort, costNum: scaledCost, durationNum: scaledDuration,
       status: 'Saved',
-      data: { analogyProject: pastProject?.name, analogyLOC: pastLOC, analogyEffort: pastEst?.effortNum, analogyCost: pastEst?.costNum, analogyDuration: pastEst?.durationNum, newLOC: parseFloat(newLOC), adjustmentFactor: adjustment, scaledEffort, scaledCost, scaledDuration, notes },
+      data: { analogyProject: pastProject?.name, analogyLOC: pastLOC, analogyEffort: pastEst?.effortNum, analogyCost: pastEst?.costNum, analogyDuration: pastEst?.durationNum, newLOC: parseFloat(newLOC), adjustmentFactor: parseFloat(adjustment) || 0, scaledEffort, scaledCost, scaledDuration, notes },
     })
     setSaved(true)
     setTimeout(() => navigate(`/dashboard/projects/${id}`), 1200)
@@ -99,7 +99,7 @@ export default function Analogy() {
           </div>
           <div style={{ marginBottom: 14 }}>
             <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textPrimary, marginBottom: 6 }}>Size Adjustment Factor (%)</label>
-            <input type="number" style={inp} placeholder="e.g. 10 for +10%" value={adjustment} onChange={e => setAdjustment(parseFloat(e.target.value) || 0)} />
+            <input type="number" style={inp} placeholder="e.g. 10 for +10%" value={adjustment} onChange={e => setAdjustment(e.target.value)} />
             <div style={{ fontSize: 11, color: C.textSecondary, marginTop: 4 }}>Positive = more complex, negative = simpler</div>
           </div>
 

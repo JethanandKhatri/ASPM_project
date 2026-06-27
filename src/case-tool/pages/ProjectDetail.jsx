@@ -7,28 +7,74 @@ import { useAuth } from '../../context/AuthContext'
 function StatusBadge({ status }) {
   const C = useThemeColors()
   const cfg = {
+    Planning:  { bg: C.warning + '20',  color: C.warning  },
     Active:    { bg: C.primary + '15',  color: C.primary  },
     Completed: { bg: C.success + '15',  color: C.success  },
-    'On Hold': { bg: C.warning + '15',  color: C.warning  },
+    'On Hold': { bg: C.border,          color: C.textSecondary },
   }[status] || { bg: C.border, color: C.textSecondary }
   return <span style={{ padding: '3px 10px', borderRadius: 20, fontSize: 12, fontWeight: 600, background: cfg.bg, color: cfg.color }}>{status}</span>
 }
 
 function PriorityBadge({ priority }) {
   const C = useThemeColors()
-  const cfg = { High: { bg: C.danger + '15', color: C.danger }, Medium: { bg: C.warning + '20', color: C.warning }, Low: { bg: C.success + '15', color: C.success } }[priority] || {}
+  const cfg = {
+    'Must Have':    { bg: C.danger + '15',   color: C.danger },
+    'Should Have':  { bg: C.warning + '20',  color: C.warning },
+    'Could Have':   { bg: C.success + '15',  color: C.success },
+    "Won't Have":   { bg: C.border,          color: C.textSecondary },
+    High:   { bg: C.danger + '15',  color: C.danger },
+    Medium: { bg: C.warning + '20', color: C.warning },
+    Low:    { bg: C.success + '15', color: C.success },
+  }[priority] || {}
   return <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600, background: cfg.bg, color: cfg.color }}>{priority}</span>
+}
+
+const SVG_ICONS = {
+  features: (c) => (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+    </svg>
+  ),
+  chart: (c) => (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round">
+      <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/>
+    </svg>
+  ),
+  shield: (c) => (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+    </svg>
+  ),
+  calendar: (c) => (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round">
+      <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+    </svg>
+  ),
+  dollar: (c) => (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round">
+      <line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 100 7h5a3.5 3.5 0 110 7H6"/>
+    </svg>
+  ),
+  clock: (c) => (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round">
+      <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+    </svg>
+  ),
 }
 
 function MetricCard({ label, value, sub, icon, color }) {
   const C = useThemeColors()
+  const clr = color || C.primary
+  const svgFn = SVG_ICONS[icon]
   return (
-    <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 10, padding: '16px 18px', display: 'flex', alignItems: 'center', gap: 12 }}>
-      <div style={{ width: 40, height: 40, borderRadius: 10, background: (color || C.primary) + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>{icon}</div>
-      <div>
-        <div style={{ fontSize: 22, fontWeight: 700, color: C.textPrimary }}>{value}</div>
-        <div style={{ fontSize: 12, color: C.textSecondary }}>{label}</div>
-        {sub && <div style={{ fontSize: 11, color: color || C.primary, marginTop: 1 }}>{sub}</div>}
+    <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 12, padding: '18px 20px', display: 'flex', alignItems: 'flex-start', gap: 14, borderLeft: `3px solid ${clr}` }}>
+      <div style={{ width: 42, height: 42, borderRadius: 10, background: clr + '15', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        {svgFn ? svgFn(clr) : <span style={{ fontSize: 18, color: clr }}>{icon}</span>}
+      </div>
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontSize: 24, fontWeight: 700, color: C.textPrimary, lineHeight: 1 }}>{value}</div>
+        <div style={{ fontSize: 12, color: C.textSecondary, marginTop: 4 }}>{label}</div>
+        {sub && <div style={{ fontSize: 11, color: clr, marginTop: 2, fontWeight: 500 }}>{sub}</div>}
       </div>
     </div>
   )
@@ -49,7 +95,7 @@ function OverviewTab({ project }) {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
             <tr style={{ borderBottom: `2px solid ${C.border}` }}>
-              {['#', 'Feature Name', 'Description', 'Priority', 'Status'].map(h => (
+              {['#', 'Feature Name', 'Description', 'Priority', 'Acceptance Criteria', 'Status'].map(h => (
                 <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: C.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 }}>{h}</th>
               ))}
             </tr>
@@ -61,6 +107,9 @@ function OverviewTab({ project }) {
                 <td style={{ padding: '10px 12px', fontWeight: 500, color: C.textPrimary }}>{f.name}</td>
                 <td style={{ padding: '10px 12px', color: C.textSecondary }}>{f.description}</td>
                 <td style={{ padding: '10px 12px' }}><PriorityBadge priority={f.priority} /></td>
+                <td style={{ padding: '10px 12px', color: C.textSecondary, fontSize: 12, maxWidth: 180 }}>
+                  {f.acceptanceCriteria || <span style={{ color: C.border }}>—</span>}
+                </td>
                 <td style={{ padding: '10px 12px' }}>
                   <span style={{ fontSize: 12, fontWeight: 600, color: statusColor[f.status] || C.textSecondary }}>{f.status}</span>
                 </td>
@@ -157,15 +206,15 @@ function EstimationTab({ project, onRunEstimation, onViewComparison }) {
       {actuals && project.estimations.length > 0 && (
         <div style={{ background: C.cardBg, border: `2px solid ${C.success}40`, borderRadius: 10, padding: 18 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-            <span style={{ fontSize: 16 }}>🎯</span>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke={C.success} strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
             <h4 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: C.textPrimary }}>Actual vs Estimated — Accuracy Report</h4>
             <span style={{ fontSize: 11, color: C.textSecondary, marginLeft: 'auto' }}>Completed: {actuals.completedDate}</span>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 16 }}>
             {[
-              { label: 'Actual Effort', value: `${actuals.effortNum} staff months`, icon: '⏱' },
-              { label: 'Actual Cost', value: `$${Number(actuals.costNum).toLocaleString()}`, icon: '💰' },
-              { label: 'Actual Duration', value: `${actuals.durationNum} months`, icon: '📅' },
+              { label: 'Actual Effort', value: `${actuals.effortNum} staff months`, icon: '◷' },
+              { label: 'Actual Cost', value: `$${Number(actuals.costNum).toLocaleString()}`, icon: '$' },
+              { label: 'Actual Duration', value: `${actuals.durationNum} months`, icon: '▣' },
             ].map(m => (
               <div key={m.label} style={{ background: C.success + '0d', border: `1px solid ${C.success}25`, borderRadius: 8, padding: '12px 14px' }}>
                 <div style={{ fontSize: 11, color: C.textSecondary, marginBottom: 4 }}>{m.icon} {m.label}</div>
@@ -294,22 +343,30 @@ function RisksTab({ project, onManageRisks }) {
 function TeamTab({ project }) {
   const C = useThemeColors()
   return (
-    <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 10, padding: 20 }}>
-      <h4 style={{ margin: '0 0 16px', fontSize: 14, fontWeight: 600, color: C.textPrimary }}>Team Members ({project.team.length})</h4>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }}>
-        {project.team.map(m => (
-          <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 8, border: `1px solid ${C.border}`, background: C.mainBg }}>
-            <div style={{ width: 38, height: 38, borderRadius: '50%', background: C.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 700, color: '#fff', flexShrink: 0 }}>
-              {m.name[0]}
-            </div>
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: C.textPrimary }}>{m.name}</div>
-              <div style={{ fontSize: 11, color: m.role === 'project_manager' ? C.primary : C.textSecondary, fontWeight: m.role === 'project_manager' ? 600 : 400 }}>
-                {m.role === 'project_manager' ? 'Project Manager' : 'Team Member'}
+    <div>
+      {project.teamRoles && (
+        <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 10, padding: '14px 18px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: C.textSecondary, flexShrink: 0 }}>Team Roles:</span>
+          <span style={{ fontSize: 13, color: C.textPrimary }}>{project.teamRoles}</span>
+        </div>
+      )}
+      <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 10, padding: 20 }}>
+        <h4 style={{ margin: '0 0 16px', fontSize: 14, fontWeight: 600, color: C.textPrimary }}>Team Members ({project.team.length})</h4>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }}>
+          {project.team.map(m => (
+            <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 8, border: `1px solid ${C.border}`, background: C.mainBg }}>
+              <div style={{ width: 38, height: 38, borderRadius: '50%', background: C.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 700, color: '#fff', flexShrink: 0 }}>
+                {m.name[0]}
+              </div>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: C.textPrimary }}>{m.name}</div>
+                <div style={{ fontSize: 11, color: m.role === 'project_manager' ? C.primary : C.textSecondary, fontWeight: m.role === 'project_manager' ? 600 : 400 }}>
+                  {m.role === 'project_manager' ? 'Project Manager' : 'Team Member'}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   )
@@ -439,7 +496,7 @@ function ActivityTab({ project, onAddComment }) {
 function TasksTab({ project, onAddTask, onMoveTask }) {
   const C = useThemeColors()
   const [showModal, setShowModal] = useState(false)
-  const [newTask, setNewTask] = useState({ name: '', assignee: '', priority: 'Medium', dueDate: '', feature: '', description: '' })
+  const [newTask, setNewTask] = useState({ name: '', assignee: '', priority: 'Should Have', dueDate: '', feature: '', description: '' })
   const columns = ['To Do', 'In Progress', 'Done']
   const colColors = { 'To Do': C.textSecondary, 'In Progress': C.primary, Done: C.success }
 
@@ -447,7 +504,7 @@ function TasksTab({ project, onAddTask, onMoveTask }) {
     if (!newTask.name.trim()) return
     onAddTask(newTask)
     setShowModal(false)
-    setNewTask({ name: '', assignee: '', priority: 'Medium', dueDate: '', feature: '', description: '' })
+    setNewTask({ name: '', assignee: '', priority: 'Should Have', dueDate: '', feature: '', description: '' })
   }
 
   const inp = { width: '100%', padding: '8px 10px', border: `1px solid ${C.border}`, borderRadius: 6, fontSize: 13, boxSizing: 'border-box', outline: 'none', background: C.cardBg, color: C.textPrimary, fontFamily: 'inherit' }
@@ -471,7 +528,7 @@ function TasksTab({ project, onAddTask, onMoveTask }) {
                   <div key={task.id} style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 8, padding: 12 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
                       <span style={{ fontSize: 13, fontWeight: 600, color: C.textPrimary }}>{task.name}</span>
-                      <span style={{ fontSize: 10, fontWeight: 600, color: task.priority === 'High' ? C.danger : task.priority === 'Medium' ? C.warning : C.success, background: (task.priority === 'High' ? C.danger : task.priority === 'Medium' ? C.warning : C.success) + '18', padding: '1px 6px', borderRadius: 3 }}>{task.priority}</span>
+                      <span style={{ fontSize: 10, fontWeight: 600, color: task.priority === 'Must Have' ? C.danger : task.priority === 'Should Have' ? C.warning : task.priority === 'Could Have' ? C.success : C.textSecondary, background: (task.priority === 'Must Have' ? C.danger : task.priority === 'Should Have' ? C.warning : task.priority === 'Could Have' ? C.success : C.border) + '18', padding: '1px 6px', borderRadius: 3 }}>{task.priority}</span>
                     </div>
                     {task.feature && <div style={{ fontSize: 11, color: C.textSecondary, marginBottom: 6 }}>Feature: {task.feature}</div>}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -507,7 +564,7 @@ function TasksTab({ project, onAddTask, onMoveTask }) {
             <div style={{ marginBottom: 14 }}>
               <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textPrimary, marginBottom: 4 }}>Priority</label>
               <select value={newTask.priority} onChange={e => setNewTask(t => ({ ...t, priority: e.target.value }))} style={{ ...inp }}>
-                {['High', 'Medium', 'Low'].map(p => <option key={p}>{p}</option>)}
+                {['Must Have', 'Should Have', 'Could Have', "Won't Have"].map(p => <option key={p}>{p}</option>)}
               </select>
             </div>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
@@ -615,7 +672,7 @@ function TimelineTab({ project }) {
                       transition: 'background 0.2s',
                     }}>
                       <span style={{ fontSize: 10, color: '#fff', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {isOverdue ? '⚠ Overdue' : f.status}
+                        {isOverdue ? '! Overdue' : f.status}
                       </span>
                     </div>
                   </div>
@@ -632,7 +689,7 @@ function TimelineTab({ project }) {
               {today >= start && today <= end && (
                 <span style={{ fontSize: 10, color: C.danger, fontWeight: 600 }}>Today</span>
               )}
-              <span style={{ fontSize: 10, color: overdue ? C.danger : C.textSecondary, fontWeight: overdue ? 600 : 400 }}>{project.deadline}{overdue ? ' ⚠' : ''}</span>
+              <span style={{ fontSize: 10, color: overdue ? C.danger : C.textSecondary, fontWeight: overdue ? 600 : 400 }}>{project.deadline}{overdue ? ' !' : ''}</span>
             </div>
           </div>
         </div>
@@ -675,8 +732,14 @@ export default function ProjectDetail() {
               <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600, background: C.primary + '18', color: C.primary }}>{project.domain}</span>
             </div>
             <div style={{ display: 'flex', gap: 20, fontSize: 12, color: C.textSecondary }}>
-              <span>📅 {project.startDate} → {project.deadline}</span>
-              <span>👥 {project.teamSize} members</span>
+              <span style={{ display:'flex', alignItems:'center', gap:5 }}>
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                {project.startDate} → {project.deadline}
+              </span>
+              <span style={{ display:'flex', alignItems:'center', gap:5 }}>
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+                {project.teamSize} members
+              </span>
             </div>
           </div>
           {isPM && (
@@ -699,11 +762,11 @@ export default function ProjectDetail() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16, marginBottom: 20 }}>
-        <MetricCard label="Total Features" value={project.features.length} sub={`${doneFeat} done`} icon="◈" />
-        <MetricCard label="Estimation Runs" value={project.estimations.length} sub={project.estimations.length > 0 ? `Latest: ${project.estimations[project.estimations.length - 1].technique}` : 'None yet'} icon="▲" color="#0891b2" />
-        <MetricCard label="Total Risks" value={project.risks.length} sub={`${project.risks.filter(r => r.priority === 'High').length} High priority`} icon="⚠" color={C.danger} />
-        <MetricCard label="Duration" value={`${durationDays}d`} sub={`${project.startDate} – ${project.deadline}`} icon="📅" color={C.success} />
-        <MetricCard label="Budget" value={project.budget > 0 ? `$${Number(project.budget).toLocaleString()}` : 'Not set'} sub={project.budget > 0 ? 'Allocated budget' : 'Edit project to set'} icon="💰" color="#059669" />
+        <MetricCard label="Total Features" value={project.features.length} sub={`${doneFeat} done`} icon="features" />
+        <MetricCard label="Estimation Runs" value={project.estimations.length} sub={project.estimations.length > 0 ? `Latest: ${project.estimations[project.estimations.length - 1].technique}` : 'None yet'} icon="chart" color="#0891b2" />
+        <MetricCard label="Total Risks" value={project.risks.length} sub={`${project.risks.filter(r => r.priority === 'High').length} High priority`} icon="shield" color={C.danger} />
+        <MetricCard label="Duration" value={`${durationDays}d`} sub={`${project.startDate} – ${project.deadline}`} icon="calendar" color={C.success} />
+        <MetricCard label="Budget" value={project.budget > 0 ? `$${Number(project.budget).toLocaleString()}` : 'Not set'} sub={project.budget > 0 ? 'Allocated budget' : 'Edit project to set'} icon="dollar" color="#059669" />
       </div>
 
       <div style={{ display: 'flex', gap: 4, borderBottom: `2px solid ${C.border}`, marginBottom: 20 }}>

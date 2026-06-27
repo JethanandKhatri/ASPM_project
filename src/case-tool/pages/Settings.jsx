@@ -223,7 +223,7 @@ export default function Settings() {
           <div style={{ ...card, marginTop: 16 }}>
             <h3 style={{ margin: '0 0 14px', fontSize: 15, fontWeight: 600, color: C.textPrimary }}>About</h3>
             <div style={{ fontSize: 13, color: C.textSecondary, lineHeight: 1.7 }}>
-              <div><strong style={{ color: C.textPrimary }}>ASPM CASE Tool</strong> v1.0</div>
+              <div><strong style={{ color: C.textPrimary }}>STRIX</strong> v1.0</div>
               <div>Agile Software Project Management — Computer-Aided Software Engineering</div>
               <div style={{ marginTop: 8 }}>Built with React + Supabase</div>
             </div>

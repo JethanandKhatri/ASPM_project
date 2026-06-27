@@ -22,6 +22,7 @@ function shapeProject(p, rel = {}) {
   return {
     id: p.id, name: p.name, domain: p.domain,
     description: p.description, teamSize: p.team_size,
+    teamRoles: p.team_roles || '',
     startDate: p.start_date, deadline: p.deadline, status: p.status,
     budget: parseFloat(p.budget) || 0,
 
@@ -271,17 +272,27 @@ export function ProjectProvider({ children }) {
     await db.from('projects').insert({
       id, name: projectData.name, domain: projectData.domain,
       description: projectData.description, team_size: projectData.teamSize,
+      team_roles: projectData.teamRoles || '',
       start_date: projectData.startDate, deadline: projectData.deadline,
-      status: projectData.status || 'Active',
+      status: projectData.status || 'Planning',
       budget: parseFloat(projectData.budget) || 0,
     })
     if (projectData.features?.length) {
       await db.from('features').insert(
-        projectData.features.map((f, i) => ({
-          id: `${id}_f${i + 1}`, project_id: id,
-          name: f.name, description: f.description || '',
-          priority: f.priority || 'Medium', status: f.status || 'To Do',
-        }))
+        projectData.features.map((f, i) => {
+          const ac = f.acceptanceCriteria
+          const acNorm = Array.isArray(ac)
+            ? ac
+            : (typeof ac === 'string' && ac.trim())
+              ? ac.split('\n').map(s => s.trim()).filter(Boolean)
+              : []
+          return {
+            id: `${id}_f${i + 1}`, project_id: id,
+            name: f.name, description: f.description || '',
+            priority: f.priority || 'Should Have', status: f.status || 'To Do',
+            acceptance_criteria: acNorm,
+          }
+        })
       )
     }
     await createNotification('project', `New project "${projectData.name}" created`, id)
@@ -296,6 +307,7 @@ export function ProjectProvider({ children }) {
     if (updates.domain !== undefined)      dbUpdates.domain      = updates.domain
     if (updates.description !== undefined) dbUpdates.description = updates.description
     if (updates.teamSize !== undefined)    dbUpdates.team_size   = updates.teamSize
+    if (updates.teamRoles !== undefined)   dbUpdates.team_roles  = updates.teamRoles || ''
     if (updates.startDate !== undefined)   dbUpdates.start_date  = updates.startDate
     if (updates.deadline !== undefined)    dbUpdates.deadline    = updates.deadline
     if (updates.status !== undefined)      dbUpdates.status      = updates.status
@@ -303,6 +315,16 @@ export function ProjectProvider({ children }) {
 
     if (Object.keys(dbUpdates).length) {
       await db.from('projects').update(dbUpdates).eq('id', projectId)
+    }
+
+    // Notify if deadline or team size changed while estimations exist
+    const existingProject = getProject(projectId)
+    const constraintChanged =
+      (updates.deadline  !== undefined && updates.deadline  !== existingProject?.deadline)  ||
+      (updates.teamSize  !== undefined && updates.teamSize  !== existingProject?.teamSize)
+    if (constraintChanged && existingProject?.estimations?.length > 0) {
+      await createNotification('warning',
+        `Constraints changed on "${existingProject.name}" — saved estimations may be outdated`, projectId)
     }
 
     if (updates.team) {
@@ -319,18 +341,47 @@ export function ProjectProvider({ children }) {
       const existingFeatures = getProject(projectId)?.features || []
       const existingMap = Object.fromEntries(existingFeatures.map(f => [f.id, f]))
 
+      // Log feature-level changes to activity log
+      const activityRows = []
+      const now = new Date().toISOString()
+      const actor = profile?.name || profile?.email || 'PM'
+      for (const newF of updates.features) {
+        const oldF = existingMap[newF.id]
+        if (!oldF) {
+          activityRows.push({ id: 'al' + Date.now() + Math.random(), project_id: projectId, user_name: actor, action: `added feature "${newF.name}"`, timestamp: now })
+        } else {
+          if (oldF.priority !== newF.priority)
+            activityRows.push({ id: 'al' + Date.now() + Math.random(), project_id: projectId, user_name: actor, action: `changed "${newF.name}" priority: ${oldF.priority} → ${newF.priority}`, timestamp: now })
+          if (oldF.name !== newF.name)
+            activityRows.push({ id: 'al' + Date.now() + Math.random(), project_id: projectId, user_name: actor, action: `renamed feature "${oldF.name}" to "${newF.name}"`, timestamp: now })
+          if (oldF.status !== newF.status)
+            activityRows.push({ id: 'al' + Date.now() + Math.random(), project_id: projectId, user_name: actor, action: `changed "${newF.name}" status: ${oldF.status} → ${newF.status}`, timestamp: now })
+        }
+      }
+      for (const oldF of existingFeatures) {
+        if (!updates.features.find(f => f.id === oldF.id))
+          activityRows.push({ id: 'al' + Date.now() + Math.random(), project_id: projectId, user_name: actor, action: `removed feature "${oldF.name}"`, timestamp: now })
+      }
+      if (activityRows.length > 0) await db.from('activity_log').insert(activityRows)
+
       await db.from('features').delete().eq('project_id', projectId)
       if (updates.features.length) {
         await db.from('features').insert(
           updates.features.map((f, i) => {
             const ex = existingMap[f.id] || {}
+            const acValue = f.acceptanceCriteria ?? ex.acceptanceCriteria
+            const acNorm = Array.isArray(acValue)
+              ? acValue
+              : (typeof acValue === 'string' && acValue.trim())
+                ? acValue.split('\n').map(s => s.trim()).filter(Boolean)
+                : []
             return {
               id: f.id?.startsWith('nf') ? `${projectId}_f${i + 1}` : f.id,
               project_id: projectId, name: f.name,
               description: f.description || '', priority: f.priority, status: f.status,
               epic_id:             ex.epicId             || null,
               story_format:        ex.storyFormat        || '',
-              acceptance_criteria: ex.acceptanceCriteria || [],
+              acceptance_criteria: acNorm,
               story_owner:         ex.storyOwner         || '',
               story_points:        ex.storyPoints        || 0,
               is_ready:            ex.isReady            || false,

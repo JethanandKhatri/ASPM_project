@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 const STEPS = [
   {
     icon: '⚡',
-    title: 'Welcome to ASPM CASE Tool',
+    title: 'Welcome to STRIX',
     body: 'Your all-in-one Agile Software Project Management platform. Create projects, estimate effort and cost, track risks, and analyze your team\'s performance — all in one place.',
   },
   {
@@ -67,7 +67,13 @@ export default function OnboardingWizard({ onDone }) {
         </div>
 
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div style={{ fontSize: 56, marginBottom: 20, lineHeight: 1 }}>{current.icon}</div>
+          <div style={{ fontSize: 56, marginBottom: 20, lineHeight: 1 }}>
+            {current.icon === '⚡'
+              ? <span style={{ display: 'inline-flex', width: 64, height: 64, borderRadius: 18, background: '#002050', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 16px rgba(0,0,0,0.18)' }}>
+                  <svg viewBox="0 0 24 24" width="32" height="32" fill="none"><path d="M13 2L4 14H11L10 22L20 10H13Z" fill="#F97316"/></svg>
+                </span>
+              : current.icon}
+          </div>
           <h2 style={{ margin: '0 0 14px', fontSize: 22, fontWeight: 700, color: '#12324A', lineHeight: 1.3 }}>
             {current.title}
           </h2>
