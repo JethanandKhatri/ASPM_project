@@ -997,13 +997,13 @@ function buildPertLayout(tasks) {
   const leafIds = tasks.filter(t => adj[t.id].length === 0).map(t => t.id)
 
   const startEdges = rootIds.map(id => ({
-    x1: startNode.x + CR, y1: startNode.y + CR,
-    x2: pos[id]?.x || 0,  y2: (pos[id]?.y || 0) + NODE_H / 2,
+    x1: startNode.x + CR * 2, y1: startNode.y + CR,
+    x2: pos[id]?.x || 0,      y2: (pos[id]?.y || 0) + NODE_H / 2,
     critical: criticalTaskIds.has(id),
   }))
   const endEdges = leafIds.map(id => ({
     x1: (pos[id]?.x || 0) + NODE_W, y1: (pos[id]?.y || 0) + NODE_H / 2,
-    x2: endNode.x + CR,              y2: endNode.y + CR,
+    x2: endNode.x,                   y2: endNode.y + CR,
     critical: criticalTaskIds.has(id),
   }))
 
