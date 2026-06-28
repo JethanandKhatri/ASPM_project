@@ -25,39 +25,41 @@ const RETRO_CATS    = [
   { id: 'action',  label: 'Action items',     ck: 'primary' },
 ]
 const RETRO_DEFAULTS = { good: [], improve: [], action: [] }
+const PANEL_SHADOW = '0 18px 40px rgba(15, 23, 42, 0.08)'
+const SOFT_RING = 'inset 0 0 0 1px rgba(255,255,255,0.45)'
 function lsGet(key, fb) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fb } catch { return fb } }
 function lsSet(key, val) { try { localStorage.setItem(key, JSON.stringify(val)) } catch {} }
 
 // ── Shared atoms ──────────────────────────────────────────────────────────────
 function MetricCard({ label, value, sub, icon, color, C }) {
   return (
-    <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 10, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
-      <div style={{ width: 40, height: 40, borderRadius: 9, background: (color||C.primary)+'18', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>{icon}</div>
+    <div style={{ background: `linear-gradient(180deg, ${C.cardBg} 0%, ${C.mainBg} 100%)`, border: `1px solid ${color || C.border}`, borderRadius: 16, padding: '16px 18px', display: 'flex', alignItems: 'center', gap: 14, boxShadow: `${SOFT_RING}, ${PANEL_SHADOW}` }}>
+      <div style={{ width: 44, height: 44, borderRadius: 12, background: (color || C.primary) + '18', color: color || C.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0, boxShadow: SOFT_RING }}>{icon}</div>
       <div>
-        <div style={{ fontSize: 20, fontWeight: 700, color: C.textPrimary, lineHeight: 1.2 }}>{value}</div>
-        <div style={{ fontSize: 12, color: C.textSecondary, marginTop: 2 }}>{label}</div>
-        {sub && <div style={{ fontSize: 11, color: color||C.primary, marginTop: 1, fontWeight: 600 }}>{sub}</div>}
+        <div style={{ fontSize: 24, fontWeight: 800, color: C.textPrimary, lineHeight: 1.1 }}>{value}</div>
+        <div style={{ fontSize: 12, color: C.textSecondary, marginTop: 3 }}>{label}</div>
+        {sub && <div style={{ fontSize: 11, color: color || C.primary, marginTop: 4, fontWeight: 700 }}>{sub}</div>}
       </div>
     </div>
   )
 }
 function Card({ children, style, C }) {
-  return <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 10, padding: 20, ...style }}>{children}</div>
+  return <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 18, padding: 20, boxShadow: `${SOFT_RING}, ${PANEL_SHADOW}`, ...style }}>{children}</div>
 }
 function SecTitle({ children, action, C }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-      <h3 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: C.textPrimary }}>{children}</h3>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+      <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: C.textPrimary }}>{children}</h3>
       {action}
     </div>
   )
 }
 function Badge({ label, color, bg }) {
-  return <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600, background: bg, color, textTransform: 'capitalize', whiteSpace: 'nowrap', display: 'inline-block' }}>{label}</span>
+  return <span style={{ padding: '4px 10px', borderRadius: 999, fontSize: 11, fontWeight: 700, background: bg, color, textTransform: 'capitalize', whiteSpace: 'nowrap', display: 'inline-block', border: `1px solid ${color}22` }}>{label}</span>
 }
 function Bar({ pct, color, h = 7, C }) {
   return (
-    <div style={{ height: h, background: C.border, borderRadius: h/2 }}>
+    <div style={{ height: h, background: C.border + '80', borderRadius: h/2, overflow: 'hidden' }}>
       <div style={{ height: '100%', width: `${Math.min(100, Math.max(0, pct))}%`, background: color, borderRadius: h/2, transition: 'width .4s' }} />
     </div>
   )
@@ -225,14 +227,14 @@ function BoardTab({ allTasks, sprints, projects, standupNotes, teamMembers }) {
     { id: 'In Progress', label: 'IN PROGRESS',  cc: C.primary       },
     { id: 'Done',        label: 'DONE',         cc: C.success       },
   ]
-  const inp = { padding: '7px 10px', border: `1.5px solid ${C.border}`, borderRadius: 8, fontSize: 12, outline: 'none', background: C.cardBg, color: C.textPrimary, fontFamily: 'inherit' }
+  const inp = { padding: '9px 12px', border: `1.5px solid ${C.border}`, borderRadius: 10, fontSize: 12, outline: 'none', background: C.cardBg, color: C.textPrimary, fontFamily: 'inherit', boxShadow: SOFT_RING }
 
   return (
     <>
       <SprintHealthPanel sprint={activeSprint} allTasks={allTasks} standupNotes={standupNotes} teamMembers={teamMembers} C={C} />
 
       {/* Filters */}
-      <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 18, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 18, flexWrap: 'wrap', padding: '14px 16px', border: `1px solid ${C.border}`, borderRadius: 16, background: C.cardBg, boxShadow: `${SOFT_RING}, 0 10px 24px rgba(15, 23, 42, 0.05)` }}>
         {[
           { label: 'Sprint',   val: selSprint,   set: setSelSprint,   opts: [{ v: 'all', l: 'All sprints' }, ...sprints.map(s => ({ v: s.id, l: `${s.name} (${s.status})` }))] },
           { label: 'Project',  val: selProject,  set: setSelProject,  opts: [{ v: 'all', l: 'All projects' }, ...projects.map(p => ({ v: p.id, l: p.name }))] },
@@ -249,7 +251,7 @@ function BoardTab({ allTasks, sprints, projects, standupNotes, teamMembers }) {
       </div>
 
       {/* WIP Limit control */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, fontSize: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, fontSize: 12, padding: '10px 14px', borderRadius: 14, background: C.cardBg, border: `1px solid ${C.border}`, boxShadow: `${SOFT_RING}, 0 8px 18px rgba(15, 23, 42, 0.04)`, flexWrap: 'wrap' }}>
         <span style={{ color: C.textSecondary }}>WIP Limit (In Progress):</span>
         {editWip ? (
           <>
@@ -269,20 +271,20 @@ function BoardTab({ allTasks, sprints, projects, standupNotes, teamMembers }) {
       </div>
 
       {/* Kanban columns */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14, alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16, alignItems: 'start' }}>
         {COLS.map(col => {
           const colTasks = filtered.filter(t => t.status === col.id)
           const wipExceeded = col.id === 'In Progress' && wipLimit > 0 && colTasks.length > wipLimit
           return (
-            <div key={col.id} style={{ background: C.mainBg, border: `1px solid ${wipExceeded ? C.danger : C.border}`, borderRadius: 10, overflow: 'hidden' }}>
-              <div style={{ padding: '11px 13px', borderBottom: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: wipExceeded ? C.danger+'10' : col.cc+'08' }}>
+            <div key={col.id} style={{ background: C.cardBg, border: `1px solid ${wipExceeded ? C.danger : C.border}`, borderRadius: 18, overflow: 'hidden', boxShadow: `${SOFT_RING}, 0 16px 32px rgba(15, 23, 42, 0.05)` }}>
+              <div style={{ padding: '14px 14px', borderBottom: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: wipExceeded ? C.danger+'10' : col.cc+'10' }}>
                 <span style={{ fontSize: 11, fontWeight: 700, color: wipExceeded ? C.danger : col.cc, letterSpacing: 0.7 }}>{col.label}{col.id === 'In Progress' ? ` / WIP ${wipLimit}` : ''}</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   {wipExceeded && <span style={{ fontSize: 10, fontWeight: 700, color: C.danger }}>⚠ LIMIT EXCEEDED</span>}
                   <span style={{ fontSize: 11, fontWeight: 700, color: '#fff', background: wipExceeded ? C.danger : col.cc, borderRadius: '50%', width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{colTasks.length}</span>
                 </div>
               </div>
-              <div style={{ padding: 9, minHeight: 180, maxHeight: 'calc(100vh - 420px)', overflowY: 'auto' }}>
+              <div style={{ padding: 10, minHeight: 220, maxHeight: 'calc(100vh - 420px)', overflowY: 'auto', background: `linear-gradient(180deg, ${C.cardBg} 0%, ${C.mainBg} 100%)` }}>
                 {colTasks.length === 0
                   ? <div style={{ textAlign: 'center', padding: '28px 10px', color: C.textSecondary, fontSize: 12 }}>No tasks</div>
                   : colTasks.map(t => <TaskCard key={t.id} task={t} C={C} onClick={setSelTask} onStatusChange={updateTaskStatus} />)
@@ -296,7 +298,7 @@ function BoardTab({ allTasks, sprints, projects, standupNotes, teamMembers }) {
       {/* Task detail modal */}
       {selTask && (
         <Modal title={selTask.name} onClose={() => setSelTask(null)} width={500} C={C}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, marginBottom: 16 }}>
             {[
               { l: 'PRIORITY', v: <Badge label={selTask.priority||'Low'} color={pColor(selTask.priority,C)} bg={pColor(selTask.priority,C)+'18'} /> },
               { l: 'STATUS',   v: <Badge label={selTask.status} color={selTask.status==='Done'?C.success:selTask.status==='In Progress'?C.primary:C.textSecondary} bg={selTask.status==='Done'?C.success+'15':selTask.status==='In Progress'?C.primary+'15':C.border} /> },
@@ -370,15 +372,15 @@ function BacklogTab({ allTasks, sprints, projects, teamMembers }) {
     setAddErr(''); setShowAdd(false)
   }
 
-  const inp = { padding: '7px 10px', border: `1.5px solid ${C.border}`, borderRadius: 8, fontSize: 12, outline: 'none', background: C.cardBg, color: C.textPrimary, fontFamily: 'inherit' }
-  const inpF = { width: '100%', padding: '9px 12px', border: `1.5px solid ${C.border}`, borderRadius: 8, fontSize: 13, outline: 'none', background: C.cardBg, color: C.textPrimary, fontFamily: 'inherit', boxSizing: 'border-box' }
+  const inp = { padding: '9px 12px', border: `1.5px solid ${C.border}`, borderRadius: 10, fontSize: 12, outline: 'none', background: C.cardBg, color: C.textPrimary, fontFamily: 'inherit', boxShadow: SOFT_RING }
+  const inpF = { width: '100%', padding: '10px 12px', border: `1.5px solid ${C.border}`, borderRadius: 10, fontSize: 13, outline: 'none', background: C.cardBg, color: C.textPrimary, fontFamily: 'inherit', boxSizing: 'border-box', boxShadow: SOFT_RING }
   const stB  = { planned:{ color:C.textSecondary,bg:C.border }, active:{ color:C.primary,bg:C.primary+'15' }, completed:{ color:C.success,bg:C.success+'15' } }
 
   function TaskRow({ task, sprintId, readOnly }) {
     const pc = pColor(task.priority, C)
     const ov = isOverdue(task.dueDate) && task.status !== 'Done'
     return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 14px', borderBottom: `1px solid ${C.border}`, background: C.cardBg }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: `1px solid ${C.border}`, background: C.cardBg }}>
         <div style={{ width: 3, height: 30, borderRadius: 2, background: pc, flexShrink: 0 }} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 13, fontWeight: 500, color: C.textPrimary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{task.name}</div>
@@ -406,8 +408,8 @@ function BacklogTab({ allTasks, sprints, projects, teamMembers }) {
     const sc      = stB[sprint.status]||stB.planned
     const isExp   = expanded === sprint.id
     return (
-      <div style={{ marginBottom: 10, border: `1px solid ${C.border}`, borderRadius: 10, overflow: 'hidden' }}>
-        <div onClick={() => setExpanded(isExp?null:sprint.id)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 15px', background: C.cardBg, cursor: 'pointer', borderBottom: isExp?`1px solid ${C.border}`:'none' }}>
+      <div style={{ marginBottom: 12, border: `1px solid ${C.border}`, borderRadius: 16, overflow: 'hidden', boxShadow: `${SOFT_RING}, 0 12px 26px rgba(15, 23, 42, 0.05)` }}>
+        <div onClick={() => setExpanded(isExp?null:sprint.id)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', background: `linear-gradient(180deg, ${C.cardBg} 0%, ${C.mainBg} 100%)`, cursor: 'pointer', borderBottom: isExp?`1px solid ${C.border}`:'none' }}>
           <span style={{ fontSize: 13, fontWeight: 700, color: C.textPrimary }}>{sprint.name}</span>
           <Badge label={sprint.status} color={sc.color} bg={sc.bg} />
           <span style={{ fontSize: 12, color: C.textSecondary }}>{sprint.startDate} → {sprint.endDate}</span>
@@ -437,7 +439,7 @@ function BacklogTab({ allTasks, sprints, projects, teamMembers }) {
   return (
     <>
       {/* Toolbar */}
-      <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 18, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 18, flexWrap: 'wrap', padding: '14px 16px', border: `1px solid ${C.border}`, borderRadius: 16, background: C.cardBg, boxShadow: `${SOFT_RING}, 0 10px 24px rgba(15, 23, 42, 0.05)` }}>
         <span style={{ fontSize: 12, fontWeight: 600, color: C.textSecondary }}>Project:</span>
         <select value={selProject} onChange={e => setSelProject(e.target.value)} style={inp}>
           <option value="all">All projects</option>
@@ -452,8 +454,8 @@ function BacklogTab({ allTasks, sprints, projects, teamMembers }) {
       {active.map(s => <SprintSection key={s.id} sprint={s} readOnly={false} />)}
 
       {/* Unassigned pool */}
-      <div style={{ marginBottom: 10, border: `1px solid ${C.border}`, borderRadius: 10, overflow: 'hidden' }}>
-        <div onClick={() => setExpanded(expanded==='unassigned'?null:'unassigned')} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 15px', background: C.cardBg, cursor: 'pointer', borderBottom: expanded==='unassigned'?`1px solid ${C.border}`:'none' }}>
+      <div style={{ marginBottom: 12, border: `1px solid ${C.border}`, borderRadius: 16, overflow: 'hidden', boxShadow: `${SOFT_RING}, 0 12px 26px rgba(15, 23, 42, 0.05)` }}>
+        <div onClick={() => setExpanded(expanded==='unassigned'?null:'unassigned')} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', background: `linear-gradient(180deg, ${C.cardBg} 0%, ${C.mainBg} 100%)`, cursor: 'pointer', borderBottom: expanded==='unassigned'?`1px solid ${C.border}`:'none' }}>
           <span style={{ fontSize: 13, fontWeight: 700, color: C.textPrimary }}>Backlog</span>
           <Badge label="unassigned" color={C.textSecondary} bg={C.border} />
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 10 }}>
@@ -491,7 +493,7 @@ function BacklogTab({ allTasks, sprints, projects, teamMembers }) {
             <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textPrimary, marginBottom: 5 }}>Task Name *</label>
             <input value={addForm.name} onChange={e => setAddForm(f=>({...f,name:e.target.value}))} placeholder="Task name…" style={inpF} />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12, marginBottom: 12 }}>
             <div>
               <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textPrimary, marginBottom: 5 }}>Priority</label>
               <select value={addForm.priority} onChange={e => setAddForm(f=>({...f,priority:e.target.value}))} style={inpF}>
@@ -504,7 +506,7 @@ function BacklogTab({ allTasks, sprints, projects, teamMembers }) {
               <datalist id="bl-members">{teamMembers.map(m => <option key={m} value={m} />)}</datalist>
             </div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12, marginBottom: 12 }}>
             <div>
               <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textPrimary, marginBottom: 5 }}>Feature</label>
               <input list="bl-feats" value={addForm.feature} onChange={e => setAddForm(f=>({...f,feature:e.target.value}))} placeholder="Feature name…" style={inpF} />
@@ -593,7 +595,7 @@ function SprintsTab({ sprints, allTasks, projects }) {
 
   return (
     <>
-      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:18 }}>
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:18, padding:'14px 16px', border:`1px solid ${C.border}`, borderRadius:16, background:C.cardBg, boxShadow:`${SOFT_RING}, 0 10px 24px rgba(15, 23, 42, 0.05)`, gap:12, flexWrap:'wrap' }}>
         <p style={{ margin:0, fontSize:13, color:C.textSecondary }}>{sprints.length} sprint{sprints.length!==1?'s':''}</p>
         <button onClick={() => setShowCreate(true)} style={{ padding:'8px 18px', background:C.primary, color:'#fff', border:'none', borderRadius:8, fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit' }}>+ New Sprint</button>
       </div>
@@ -609,7 +611,7 @@ function SprintsTab({ sprints, allTasks, projects }) {
       {activeSprint && committedStories.length > 0 && (
         <Card C={C} style={{ marginBottom:18, border:`2px solid ${C.primary}30` }}>
           <SecTitle C={C}>Sprint Planning Artifact — {activeSprint.name}</SecTitle>
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10, marginBottom:16 }}>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(170px, 1fr))', gap:12, marginBottom:16 }}>
             <div style={{ padding:'10px 14px', background:C.primary+'10', borderRadius:8, textAlign:'center' }}>
               <div style={{ fontSize:11, color:C.textSecondary, marginBottom:3 }}>Committed Stories</div>
               <div style={{ fontSize:20, fontWeight:700, color:C.primary }}>{committedStories.length}</div>
@@ -892,7 +894,7 @@ function ReportsTab({ sprints, allTasks, allTeamMembers }) {
           {!capSprint
             ? <Card C={C} style={{ textAlign:'center', padding:'40px 20px' }}><p style={{ margin:0, fontSize:13, color:C.textSecondary }}>Select a sprint to plan capacity.</p></Card>
             : <>
-                <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, marginBottom:18 }}>
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(220px, 1fr))', gap:12, marginBottom:18 }}>
                   <MetricCard C={C} label="Team Members"   value={capacity.length}                      icon="◉" color={C.primary} />
                   <MetricCard C={C} label="Available Days" value={totAvail} sub={`${utilPct}% of total`} icon="◎" color={C.success} />
                   <MetricCard C={C} label="Sprint Tasks"   value={(capSprint.taskIds||[]).length}         icon="◎" color={C.warning} />
@@ -944,7 +946,7 @@ function ReportsTab({ sprints, allTasks, allTeamMembers }) {
                 )}
                 <Card C={C}>
                   <SecTitle C={C}>Add Member</SecTitle>
-                  <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr 1fr auto', gap:10, alignItems:'end' }}>
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(160px, 1fr))', gap:10, alignItems:'end' }}>
                     <div>
                       <label style={{ display:'block', fontSize:12, fontWeight:600, color:C.textPrimary, marginBottom:4 }}>Name</label>
                       <input list="cap-m" style={{ ...inp, width:'100%', boxSizing:'border-box' }} placeholder="Team member" value={capName} onChange={e=>setCapName(e.target.value)} />
@@ -958,7 +960,7 @@ function ReportsTab({ sprints, allTasks, allTeamMembers }) {
                       <label style={{ display:'block', fontSize:12, fontWeight:600, color:C.textPrimary, marginBottom:4 }}>Available</label>
                       <input type="number" min={0} max={30} style={{ ...inp, width:'100%', boxSizing:'border-box' }} value={capAvail} onChange={e=>setCapAvail(e.target.value)} />
                     </div>
-                    <button onClick={addMember} disabled={!capName.trim()} style={{ padding:'9px 16px', background:C.primary, color:'#fff', border:'none', borderRadius:8, fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit', opacity:!capName.trim()?.5:1 }}>Add</button>
+                    <button onClick={addMember} disabled={!capName.trim()} style={{ padding:'9px 16px', background:C.primary, color:'#fff', border:'none', borderRadius:8, fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit', opacity:!capName.trim()?.5:1, minHeight:40 }}>Add</button>
                   </div>
                 </Card>
 
@@ -1003,7 +1005,7 @@ function ReportsTab({ sprints, allTasks, allTeamMembers }) {
 
       {subTab==='workload' && (
         <>
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, marginBottom:18 }}>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(220px, 1fr))', gap:12, marginBottom:18 }}>
             <MetricCard C={C} label="Total Tasks"    value={allTasks.length}                                       icon="◎" color={C.primary} />
             <MetricCard C={C} label="Overdue Tasks"  value={allTasks.filter(t=>isOverdue(t.dueDate)&&t.status!=='Done').length} icon="⚠" color={C.danger} />
             <MetricCard C={C} label="Unassigned"     value={allTasks.filter(t=>!t.assignee).length}               icon="○" color={C.warning} />
@@ -1180,7 +1182,7 @@ function TeamTab({ allTeamMembers, allRisks, profile, sprints }) {
               </div>
             </div>
           )}
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 }}>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(320px, 1fr))', gap:20 }}>
             {/* Log form */}
             <Card C={C}>
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
@@ -1289,7 +1291,7 @@ function TeamTab({ allTeamMembers, allRisks, profile, sprints }) {
             </select>
             <span style={{ fontSize:11, color:C.success, fontWeight:600 }}>✓ Auto-saved to browser</span>
           </div>
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16 }}>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(260px, 1fr))', gap:16 }}>
             {RETRO_CATS.map(cat=>{
               const cc=C[cat.ck]
               const isAction = cat.id === 'action'
@@ -1328,7 +1330,7 @@ function TeamTab({ allTeamMembers, allRisks, profile, sprints }) {
                       {!isAction && <button onClick={()=>retroAdd(cat.id)} style={{ padding:'7px 12px', background:cc, color:'#fff', border:'none', borderRadius:7, fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit' }}>+</button>}
                     </div>
                     {isAction && (
-                      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr auto', gap:6 }}>
+                      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(140px, 1fr))', gap:6 }}>
                         <input value={actionOwner} onChange={e=>setActionOwner(e.target.value)} placeholder="Owner…"
                           style={{ padding:'6px 9px', border:`1.5px solid ${C.border}`, borderRadius:7, fontSize:12, outline:'none', background:C.cardBg, color:C.textPrimary, fontFamily:'inherit' }}/>
                         <input type="date" value={actionDue} onChange={e=>setActionDue(e.target.value)}
@@ -1351,7 +1353,7 @@ function TeamTab({ allTeamMembers, allRisks, profile, sprints }) {
               <h3 style={{ margin:0, fontSize:14, fontWeight:600, color:C.textPrimary }}>Log New Impediment</h3>
               <span style={{ fontSize:11, color:C.success, fontWeight:600 }}>✓ Saved to browser</span>
             </div>
-            <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr 1fr auto', gap:10 }}>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(180px, 1fr))', gap:10 }}>
               <input style={{ padding:'9px 12px', border:`1.5px solid ${C.border}`, borderRadius:8, fontSize:13, outline:'none', background:C.cardBg, color:C.textPrimary, fontFamily:'inherit' }}
                 placeholder="Describe a blocker or impediment…" value={impText} onChange={e=>setImpText(e.target.value)} onKeyDown={e=>e.key==='Enter'&&logImp()}/>
               <input list="imp-owners" style={{ padding:'9px 12px', border:`1.5px solid ${C.border}`, borderRadius:8, fontSize:13, outline:'none', background:C.cardBg, color:C.textPrimary, fontFamily:'inherit' }}
@@ -1437,37 +1439,38 @@ export default function ScrumMasterPortal() {
   ]
 
   if (loading||scrumLoading) return (
-    <div style={{ padding:28, background:C.mainBg, minHeight:'100%', display:'flex', alignItems:'center', justifyContent:'center' }}>
+    <div style={{ padding:28, background:`linear-gradient(180deg, ${C.mainBg} 0%, ${C.cardBg} 100%)`, minHeight:'100%', display:'flex', alignItems:'center', justifyContent:'center' }}>
       <p style={{ color:C.textSecondary, fontSize:14, margin:0 }}>Loading…</p>
     </div>
   )
 
   return (
-    <div style={{ padding:28, background:C.mainBg, minHeight:'100%' }}>
+    <div style={{ padding:'24px 28px 40px', background:`linear-gradient(180deg, ${C.mainBg} 0%, ${C.cardBg} 100%)`, minHeight:'100%', width:'100%', boxSizing:'border-box' }}>
       {/* Header */}
-      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:22 }}>
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:24, padding:'24px 28px', border:`1px solid ${C.border}`, borderRadius:24, background:`linear-gradient(135deg, ${C.cardBg} 0%, ${C.mainBg} 100%)`, boxShadow:`${SOFT_RING}, ${PANEL_SHADOW}`, gap:20, flexWrap:'wrap' }}>
         <div>
-          <h1 style={{ margin:0, fontSize:22, fontWeight:700, color:C.textPrimary }}>Scrum Board</h1>
-          <p style={{ margin:'4px 0 0', fontSize:13, color:C.textSecondary }}>
+          <div style={{ fontSize:11, fontWeight:700, letterSpacing:1, textTransform:'uppercase', color:C.primary, marginBottom:8 }}>Delivery Control Center</div>
+          <h1 style={{ margin:0, fontSize:30, fontWeight:800, color:C.textPrimary }}>Scrum Master Portal</h1>
+          <p style={{ margin:'8px 0 0', fontSize:14, color:C.textSecondary, maxWidth:720, lineHeight:1.5 }}>
             {activeProjects.length} active project{activeProjects.length!==1?'s':''}
             {activeSprint?` · Active: ${activeSprint.name}`:'  · No active sprint'}
           </p>
         </div>
-        <div style={{ display:'flex', gap:8, alignItems:'center' }}>
+        <div style={{ display:'flex', gap:10, alignItems:'center', flexWrap:'wrap' }}>
           {activeSprint && (
-            <span style={{ padding:'5px 13px', borderRadius:20, fontSize:12, fontWeight:600, background:C.success+'12', color:C.success, border:`1px solid ${C.success}30` }}>● {activeSprint.name}</span>
+            <span style={{ padding:'8px 14px', borderRadius:999, fontSize:12, fontWeight:700, background:C.success+'12', color:C.success, border:`1px solid ${C.success}30` }}>Sprint: {activeSprint.name}</span>
           )}
           {openImpCnt>0 && (
-            <span style={{ padding:'5px 13px', borderRadius:20, fontSize:12, fontWeight:600, background:C.danger+'12', color:C.danger, border:`1px solid ${C.danger}30` }}>⚠ {openImpCnt} impediment{openImpCnt!==1?'s':''}</span>
+            <span style={{ padding:'8px 14px', borderRadius:999, fontSize:12, fontWeight:700, background:C.danger+'12', color:C.danger, border:`1px solid ${C.danger}30` }}>{openImpCnt} impediment{openImpCnt!==1?'s':''}</span>
           )}
         </div>
       </div>
 
       {/* Tab nav */}
-      <div style={{ display:'flex', gap:2, borderBottom:`2px solid ${C.border}`, marginBottom:22 }}>
+      <div style={{ display:'flex', gap:8, marginBottom:24, flexWrap:'wrap', padding:'8px', border:`1px solid ${C.border}`, borderRadius:20, background:C.cardBg, boxShadow:`${SOFT_RING}, 0 10px 24px rgba(15, 23, 42, 0.05)` }}>
         {TABS.map(t=>(
           <button key={t.id} onClick={()=>setTab(t.id)}
-            style={{ padding:'10px 16px', border:'none', background:'none', cursor:'pointer', fontSize:13, fontWeight:tab===t.id?700:400, fontFamily:'inherit', color:tab===t.id?C.primary:C.textSecondary, borderBottom:tab===t.id?`2px solid ${C.primary}`:'2px solid transparent', marginBottom:-2, whiteSpace:'nowrap', transition:'color .15s' }}>
+            style={{ padding:'11px 18px', border:`1px solid ${tab===t.id?C.primary+'22':'transparent'}`, background:tab===t.id?C.primary+'12':'transparent', cursor:'pointer', fontSize:13, fontWeight:tab===t.id?700:500, fontFamily:'inherit', color:tab===t.id?C.primary:C.textSecondary, borderRadius:999, whiteSpace:'nowrap', transition:'color .15s, background .15s' }}>
             {t.label}
           </button>
         ))}

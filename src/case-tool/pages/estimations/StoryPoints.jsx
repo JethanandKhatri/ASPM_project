@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useProjects } from '../../context/ProjectContext'
 import { useThemeColors } from '../../context/ThemeContext'
+import { HeaderIconShell, IconCheck, IconStoryPoints } from './EstimationIcons'
 
 const SIZES = ['XS', 'S', 'M', 'L', 'XL']
 const SP_VALUES = { XS: 1, S: 2, M: 5, L: 8, XL: 13 }
@@ -66,17 +67,18 @@ export default function StoryPoints() {
 
   return (
     <div style={{ padding: 28 }}>
-      <button onClick={() => navigate(`/dashboard/projects/${id}/estimate`)} style={{ background: 'none', border: 'none', color: C.textSecondary, cursor: 'pointer', fontSize: 13, marginBottom: 20, padding: 0 }}>← Back to Technique Selector</button>
+      <button onClick={() => navigate(`/dashboard/projects/${id}/estimate`)} style={{ background: 'none', border: 'none', color: C.textSecondary, cursor: 'pointer', fontSize: 13, marginBottom: 20, padding: 0 }}>Back to Technique Selector</button>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
-        <div style={{ fontSize: 28 }}>🃏</div>
+        <HeaderIconShell accent={C.primary}>
+          <IconStoryPoints color={C.primary} />
+        </HeaderIconShell>
         <div>
-          <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: C.textPrimary }}>Story Points & T-Shirt Sizing</h1>
+          <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: C.textPrimary }}>Story Points and T-Shirt Sizing</h1>
           <p style={{ margin: '3px 0 0', fontSize: 13, color: C.textSecondary }}>{project.name}</p>
         </div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
-        {/* Story Points panel */}
         <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 10, padding: 20 }}>
           <h3 style={{ margin: '0 0 16px', fontSize: 14, fontWeight: 600, color: C.textPrimary }}>Story Points Calculation</h3>
           <div style={{ marginBottom: 12 }}>
@@ -108,10 +110,9 @@ export default function StoryPoints() {
           )}
         </div>
 
-        {/* T-Shirt Sizing panel */}
         <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 10, padding: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-            <h3 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: C.textPrimary }}>T-Shirt Sizing & Prioritization</h3>
+            <h3 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: C.textPrimary }}>T-Shirt Sizing and Prioritization</h3>
             <button onClick={rankFeatures} style={{ padding: '5px 12px', background: C.primary, color: '#fff', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Rank by Value</button>
           </div>
           <div style={{ maxHeight: 320, overflowY: 'auto' }}>
@@ -128,19 +129,17 @@ export default function StoryPoints() {
                   <tr key={f.id} style={{ borderBottom: `1px solid ${C.border}`, background: i % 2 === 0 ? '#fff' : C.mainBg }}>
                     <td style={{ padding: '7px 8px', fontWeight: 500, color: C.textPrimary }}>{f.name}</td>
                     <td style={{ padding: '7px 8px' }}>
-                      <select value={f.size} onChange={e => updateFeature(i, 'size', e.target.value)}
-                        style={{ padding: '3px 5px', border: `1px solid ${C.border}`, borderRadius: 4, fontSize: 11, outline: 'none' }}>
+                      <select value={f.size} onChange={e => updateFeature(i, 'size', e.target.value)} style={{ padding: '3px 5px', border: `1px solid ${C.border}`, borderRadius: 4, fontSize: 11, outline: 'none' }}>
                         {SIZES.map(s => <option key={s}>{s}</option>)}
                       </select>
                     </td>
                     <td style={{ padding: '7px 8px', fontWeight: 600, color: C.textSecondary }}>{SP_VALUES[f.size]}</td>
                     <td style={{ padding: '7px 8px', width: 70 }}>
-                      <input type="number" min={1} max={10} value={f.businessValue} onChange={e => updateFeature(i, 'businessValue', e.target.value)}
-                        style={{ width: '100%', padding: '3px 5px', border: `1px solid ${C.border}`, borderRadius: 4, fontSize: 11, outline: 'none', boxSizing: 'border-box' }} />
+                      <input type="number" min={1} max={10} value={f.businessValue} onChange={e => updateFeature(i, 'businessValue', e.target.value)} style={{ width: '100%', padding: '3px 5px', border: `1px solid ${C.border}`, borderRadius: 4, fontSize: 11, outline: 'none', boxSizing: 'border-box' }} />
                     </td>
                     <td style={{ padding: '7px 8px' }}>
                       <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 6px', borderRadius: 3, background: f.recommendation === 'Include' ? C.success + '15' : C.danger + '15', color: f.recommendation === 'Include' ? C.success : C.danger }}>
-                        {sorted ? f.recommendation : '—'}
+                        {sorted ? f.recommendation : '-'}
                       </span>
                     </td>
                   </tr>
@@ -154,7 +153,10 @@ export default function StoryPoints() {
 
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
         {saved ? (
-          <div style={{ padding: '10px 20px', background: C.success + '12', border: `1px solid ${C.success}30`, borderRadius: 8, fontSize: 13, color: C.success, fontWeight: 600 }}>✓ Estimation Saved!</div>
+          <div style={{ padding: '10px 20px', background: C.success + '12', border: `1px solid ${C.success}30`, borderRadius: 8, fontSize: 13, color: C.success, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <IconCheck color={C.success} />
+            Estimation Saved!
+          </div>
         ) : (
           <button onClick={handleSave} style={{ padding: '10px 24px', background: C.primary, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Save Estimation</button>
         )}

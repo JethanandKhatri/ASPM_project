@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useProjects } from '../../context/ProjectContext'
 import { useThemeColors } from '../../context/ThemeContext'
+import { HeaderIconShell, IconComparison } from './EstimationIcons'
 
 const BAR_COLORS = ['#3B5998', '#7c3aed', '#0891b2', '#059669', '#d97706', '#dc2626']
 
@@ -9,6 +10,7 @@ function SimpleBarChart({ data, label, formatter }) {
   const C = useThemeColors()
   if (!data.length) return null
   const maxVal = Math.max(...data.map(d => d.value), 1)
+
   return (
     <div>
       <div style={{ fontSize: 12, fontWeight: 600, color: C.textSecondary, marginBottom: 10 }}>{label}</div>
@@ -42,17 +44,19 @@ export default function ComparisonSummary() {
     updateProject(id, { comparisonNote: note })
   }
 
-  const effortData = project.estimations.map((e, i) => ({ label: e.version, value: e.effortNum || 0 }))
-  const costData = project.estimations.map((e, i) => ({ label: e.version, value: e.costNum || 0 }))
+  const effortData = project.estimations.map(e => ({ label: e.version, value: e.effortNum || 0 }))
+  const costData = project.estimations.map(e => ({ label: e.version, value: e.costNum || 0 }))
 
   return (
     <div style={{ padding: 28 }}>
-      <button onClick={() => navigate(`/dashboard/projects/${id}`)} style={{ background: 'none', border: 'none', color: C.textSecondary, cursor: 'pointer', fontSize: 13, marginBottom: 20, padding: 0 }}>← Back to {project.name}</button>
+      <button onClick={() => navigate(`/dashboard/projects/${id}`)} style={{ background: 'none', border: 'none', color: C.textSecondary, cursor: 'pointer', fontSize: 13, marginBottom: 20, padding: 0 }}>Back to {project.name}</button>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
-        <div style={{ fontSize: 28 }}>📊</div>
+        <HeaderIconShell accent={C.primary}>
+          <IconComparison color={C.primary} />
+        </HeaderIconShell>
         <div>
           <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: C.textPrimary }}>Estimation Comparison Summary</h1>
-          <p style={{ margin: '3px 0 0', fontSize: 13, color: C.textSecondary }}>{project.name} — {project.estimations.length} estimation run(s)</p>
+          <p style={{ margin: '3px 0 0', fontSize: 13, color: C.textSecondary }}>{project.name} - {project.estimations.length} estimation run(s)</p>
         </div>
       </div>
 
@@ -62,7 +66,6 @@ export default function ComparisonSummary() {
         </div>
       ) : (
         <>
-          {/* Comparison table */}
           <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 10, overflow: 'hidden', marginBottom: 20 }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
@@ -90,7 +93,6 @@ export default function ComparisonSummary() {
             </table>
           </div>
 
-          {/* Charts */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
             <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 10, padding: 20 }}>
               <SimpleBarChart data={effortData} label="Effort Comparison (staff months)" formatter={v => `${v}mo`} />
@@ -100,13 +102,15 @@ export default function ComparisonSummary() {
             </div>
           </div>
 
-          {/* Note field */}
           <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 10, padding: 20 }}>
             <h3 style={{ margin: '0 0 10px', fontSize: 14, fontWeight: 600, color: C.textPrimary }}>PM Notes</h3>
             <p style={{ margin: '0 0 10px', fontSize: 12, color: C.textSecondary }}>Document which estimate to use for final planning and the reasoning.</p>
-            <textarea value={note} onChange={e => setNote(e.target.value)}
-              placeholder="e.g. Using v2 Expert Judgment estimate as the baseline — it accounts for individual task complexity better than the fuzzy logic approach."
-              style={{ width: '100%', padding: '10px 12px', border: `1.5px solid ${C.border}`, borderRadius: 8, fontSize: 13, resize: 'vertical', minHeight: 80, boxSizing: 'border-box', outline: 'none', fontFamily: 'Inter, sans-serif', marginBottom: 12 }} />
+            <textarea
+              value={note}
+              onChange={e => setNote(e.target.value)}
+              placeholder="e.g. Using v2 Expert Judgment estimate as the baseline because it accounts for individual task complexity better than the fuzzy logic approach."
+              style={{ width: '100%', padding: '10px 12px', border: `1.5px solid ${C.border}`, borderRadius: 8, fontSize: 13, resize: 'vertical', minHeight: 80, boxSizing: 'border-box', outline: 'none', fontFamily: 'Inter, sans-serif', marginBottom: 12 }}
+            />
             <button onClick={saveNote} style={{ padding: '8px 20px', background: C.primary, color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Save Note</button>
           </div>
         </>

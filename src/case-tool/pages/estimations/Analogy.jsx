@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useProjects } from '../../context/ProjectContext'
 import { useThemeColors } from '../../context/ThemeContext'
+import { HeaderIconShell, IconAnalogy, IconCheck } from './EstimationIcons'
 
 export default function Analogy() {
   const C = useThemeColors()
@@ -48,9 +49,11 @@ export default function Analogy() {
 
   return (
     <div style={{ padding: 28 }}>
-      <button onClick={() => navigate(`/dashboard/projects/${id}/estimate`)} style={{ background: 'none', border: 'none', color: C.textSecondary, cursor: 'pointer', fontSize: 13, marginBottom: 20, padding: 0 }}>← Back to Technique Selector</button>
+      <button onClick={() => navigate(`/dashboard/projects/${id}/estimate`)} style={{ background: 'none', border: 'none', color: C.textSecondary, cursor: 'pointer', fontSize: 13, marginBottom: 20, padding: 0 }}>Back to Technique Selector</button>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
-        <div style={{ fontSize: 28 }}>🔗</div>
+        <HeaderIconShell accent={C.primary}>
+          <IconAnalogy color={C.primary} />
+        </HeaderIconShell>
         <div>
           <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: C.textPrimary }}>Analogy-Based Estimation</h1>
           <p style={{ margin: '3px 0 0', fontSize: 13, color: C.textSecondary }}>{project.name}</p>
@@ -58,9 +61,8 @@ export default function Analogy() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, maxWidth: 900 }}>
-        {/* Step 1 */}
         <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 10, padding: 20 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: C.primary, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>Step 1 — Select Analogy Project</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: C.primary, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>Step 1 - Select Analogy Project</div>
           {pastProjects.length === 0 ? (
             <p style={{ color: C.textSecondary, fontSize: 13 }}>No completed projects available as analogy base.</p>
           ) : (
@@ -91,9 +93,8 @@ export default function Analogy() {
           )}
         </div>
 
-        {/* Step 2 */}
         <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 10, padding: 20 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: C.primary, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>Step 2 — New Project Parameters</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: C.primary, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>Step 2 - New Project Parameters</div>
           <div style={{ marginBottom: 14 }}>
             <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textPrimary, marginBottom: 6 }}>New Project Estimated LOC</label>
             <input type="number" style={inp} placeholder="e.g. 8500" value={newLOC} onChange={e => setNewLOC(e.target.value)} />
@@ -105,13 +106,15 @@ export default function Analogy() {
           </div>
           <div style={{ marginBottom: 14 }}>
             <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textPrimary, marginBottom: 6 }}>Adjustment Rationale <span style={{ color: C.danger }}>*</span></label>
-            <textarea value={adjustmentRationale} onChange={e => setAdjustmentRationale(e.target.value)}
-              placeholder="Why is the adjustment applied? e.g. New project uses microservices instead of monolith (+15% complexity), but team has stronger DB expertise (−5%)"
-              style={{ ...inp, minHeight: 60, resize: 'vertical', display: 'block', width: '100%', fontFamily: 'Inter, sans-serif', boxSizing: 'border-box' }} />
-            <div style={{ fontSize: 11, color: C.textSecondary, marginTop: 4 }}>Required — audit trail for the adjustment value per ASPM Analogy method</div>
+            <textarea
+              value={adjustmentRationale}
+              onChange={e => setAdjustmentRationale(e.target.value)}
+              placeholder="Why is the adjustment applied? e.g. New project uses microservices instead of monolith (+15% complexity), but team has stronger DB expertise (-5%)"
+              style={{ ...inp, minHeight: 60, resize: 'vertical', display: 'block', width: '100%', fontFamily: 'Inter, sans-serif', boxSizing: 'border-box' }}
+            />
+            <div style={{ fontSize: 11, color: C.textSecondary, marginTop: 4 }}>Required - audit trail for the adjustment value per ASPM Analogy method</div>
           </div>
 
-          {/* Live results */}
           {newLOC && scaledEffort > 0 && (
             <div style={{ background: C.primary + '0d', border: `1px solid ${C.primary}30`, borderRadius: 8, padding: 14 }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: C.primary, marginBottom: 8 }}>Scaled Results (live)</div>
@@ -130,17 +133,22 @@ export default function Analogy() {
           )}
         </div>
 
-        {/* Step 3 */}
         <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 10, padding: 20, gridColumn: '1 / -1' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: C.primary, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>Step 3 — Notes & Rationale</div>
-          <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Document assumptions, differences from analogy project, and rationale for the adjustment factor..."
-            style={{ width: '100%', padding: '10px 12px', border: `1.5px solid ${C.border}`, borderRadius: 8, fontSize: 13, resize: 'vertical', minHeight: 80, boxSizing: 'border-box', outline: 'none', fontFamily: 'Inter, sans-serif' }} />
+          <div style={{ fontSize: 11, fontWeight: 700, color: C.primary, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>Step 3 - Notes and Rationale</div>
+          <textarea
+            value={notes}
+            onChange={e => setNotes(e.target.value)}
+            placeholder="Document assumptions, differences from analogy project, and rationale for the adjustment factor..."
+            style={{ width: '100%', padding: '10px 12px', border: `1.5px solid ${C.border}`, borderRadius: 8, fontSize: 13, resize: 'vertical', minHeight: 80, boxSizing: 'border-box', outline: 'none', fontFamily: 'Inter, sans-serif' }}
+          />
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 14 }}>
             {saved ? (
-              <div style={{ padding: '10px 20px', background: C.success + '12', border: `1px solid ${C.success}30`, borderRadius: 8, fontSize: 13, color: C.success, fontWeight: 600 }}>✓ Estimation Saved!</div>
+              <div style={{ padding: '10px 20px', background: C.success + '12', border: `1px solid ${C.success}30`, borderRadius: 8, fontSize: 13, color: C.success, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <IconCheck color={C.success} />
+                Estimation Saved!
+              </div>
             ) : (
-              <button onClick={handleSave} disabled={!newLOC || !scaledEffort}
-                style={{ padding: '10px 24px', background: C.primary, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', opacity: !newLOC ? 0.5 : 1 }}>
+              <button onClick={handleSave} disabled={!newLOC || !scaledEffort} style={{ padding: '10px 24px', background: C.primary, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', opacity: !newLOC ? 0.5 : 1 }}>
                 Save Estimation
               </button>
             )}

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useProjects } from '../../context/ProjectContext'
 import { useThemeColors } from '../../context/ThemeContext'
-
+import { HeaderIconShell, IconCheck, IconExpert } from './EstimationIcons'
 
 function calcExpected(b, m, w) {
   return Math.round(((parseFloat(b) || 0) + 4 * (parseFloat(m) || 0) + (parseFloat(w) || 0)) / 6 * 10) / 10
@@ -25,8 +25,8 @@ export default function ExpertJudgment() {
   function updateTask(idx, field, val) {
     setTasks(prev => {
       const updated = prev.map((t, i) => i === idx ? { ...t, [field]: val } : t)
-      const t = updated[idx]
-      updated[idx] = { ...t, expected: calcExpected(t.best, t.likely, t.worst) }
+      const task = updated[idx]
+      updated[idx] = { ...task, expected: calcExpected(task.best, task.likely, task.worst) }
       return updated
     })
   }
@@ -66,12 +66,14 @@ export default function ExpertJudgment() {
 
   return (
     <div style={{ padding: 28 }}>
-      <button onClick={() => navigate(`/dashboard/projects/${id}/estimate`)} style={{ background: 'none', border: 'none', color: C.textSecondary, cursor: 'pointer', fontSize: 13, marginBottom: 20, padding: 0 }}>← Back to Technique Selector</button>
+      <button onClick={() => navigate(`/dashboard/projects/${id}/estimate`)} style={{ background: 'none', border: 'none', color: C.textSecondary, cursor: 'pointer', fontSize: 13, marginBottom: 20, padding: 0 }}>Back to Technique Selector</button>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
-        <div style={{ fontSize: 28 }}>🧠</div>
+        <HeaderIconShell accent={C.primary}>
+          <IconExpert color={C.primary} />
+        </HeaderIconShell>
         <div>
           <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: C.textPrimary }}>Expert Judgment Estimation (PERT)</h1>
-          <p style={{ margin: '3px 0 0', fontSize: 13, color: C.textSecondary }}>{project.name} — Expected = (Best + 4×Likely + Worst) / 6</p>
+          <p style={{ margin: '3px 0 0', fontSize: 13, color: C.textSecondary }}>{project.name} - Expected = (Best + 4 x Likely + Worst) / 6</p>
         </div>
       </div>
 
@@ -101,7 +103,7 @@ export default function ExpertJudgment() {
                 ))}
                 <td style={{ padding: '8px 10px', textAlign: 'center', fontWeight: 700, color: C.primary, fontSize: 14 }}>{t.expected}</td>
                 <td style={{ padding: '8px 10px', textAlign: 'center' }}>
-                  <button onClick={() => removeTask(i)} style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', fontSize: 16, padding: 0 }}>✕</button>
+                  <button onClick={() => removeTask(i)} style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', fontSize: 16, padding: 0 }}>x</button>
                 </td>
               </tr>
             ))}
@@ -109,7 +111,6 @@ export default function ExpertJudgment() {
         </table>
       </div>
 
-      {/* Summary */}
       <div style={{ background: C.cardBg, border: `2px solid ${C.primary}30`, borderRadius: 10, padding: 20 }}>
         <h3 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 600, color: C.textPrimary }}>Summary</h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 16 }}>
@@ -139,7 +140,10 @@ export default function ExpertJudgment() {
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           {saved ? (
-            <div style={{ padding: '10px 20px', background: C.success + '12', border: `1px solid ${C.success}30`, borderRadius: 8, fontSize: 13, color: C.success, fontWeight: 600 }}>✓ Estimation Saved!</div>
+            <div style={{ padding: '10px 20px', background: C.success + '12', border: `1px solid ${C.success}30`, borderRadius: 8, fontSize: 13, color: C.success, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <IconCheck color={C.success} />
+              Estimation Saved!
+            </div>
           ) : (
             <button onClick={handleSave} style={{ padding: '10px 24px', background: C.primary, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Save Estimation</button>
           )}

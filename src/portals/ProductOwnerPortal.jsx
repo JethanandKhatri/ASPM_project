@@ -850,6 +850,15 @@ function DependenciesTab({ projects, allStories }) {
   const [selStoryId,   setSelStoryId]   = useState('')
   const [editTask,     setEditTask]     = useState(null)
   const [depInput,     setDepInput]     = useState([])
+  const palette = {
+    shell: '#F4F9FD',
+    panel: '#FFFFFF',
+    edge: '#5A88B2',
+    todo: { color: '#6B88A6', bg: '#D9E7F3', stroke: '#8BA9C6' },
+    progress: { color: '#1B5886', bg: '#D8EAF8', stroke: '#4C84B0' },
+    done: { color: '#5F8F15', bg: '#E7F4CD', stroke: '#93B859' },
+    warn: '#D99118',
+  }
 
   const project   = projects.find(p => p.id === selProjectId)
   const allTasks  = project ? project.tasks || [] : []
@@ -871,7 +880,7 @@ function DependenciesTab({ projects, allStories }) {
 
   // ── PERT layout using topological sort ────────────────────────────────────
   function buildPertLayout(tasks) {
-    if (!tasks.length) return { nodes:[], edges:[], width:0, height:0 }
+    if (!tasks.length) return { nodes:[], edges:[], width:0, height:0, startNode:null, endNode:null }
 
     const NODE_W = 160, NODE_H = 56, PAD_X = 200, PAD_Y = 80
     const idSet  = new Set(tasks.map(t => t.id))
@@ -911,6 +920,10 @@ function DependenciesTab({ projects, allStories }) {
       byLevel[l].push(t)
     })
     const maxLevel = Math.max(...Object.keys(byLevel).map(Number))
+    const sourceIds = tasks.filter(t => inDeg[t.id] === 0).map(t => t.id)
+    const sinkIds = tasks
+      .filter(t => !tasks.some(other => (other.dependsOn || []).includes(t.id)))
+      .map(t => t.id)
 
     // Position nodes
     const pos = {}
@@ -949,33 +962,73 @@ function DependenciesTab({ projects, allStories }) {
 
     const maxX = Math.max(...nodes.map(n => n.x + NODE_W), 200)
     const maxY = Math.max(...nodes.map(n => n.y + NODE_H), 120)
+    const startNode = {
+      x: Math.max(24, Math.min(...nodes.map(n => n.x)) - 115),
+      y: Math.max(40, (maxY / 2) - 34),
+      r: 34,
+      label: 'START',
+    }
+    const endNode = {
+      x: maxX + 110,
+      y: Math.max(40, (maxY / 2) - 34),
+      r: 34,
+      label: 'END',
+    }
 
-    return { nodes, edges, width: maxX + 40, height: maxY + 40 }
+    sourceIds.forEach((taskId) => {
+      const to = pos[taskId]
+      if (!to) return
+      edges.unshift({
+        x1: startNode.x + startNode.r,
+        y1: startNode.y + startNode.r,
+        x2: to.x,
+        y2: to.y + NODE_H / 2,
+        fromId: 'START',
+        toId: taskId,
+        synthetic: true,
+      })
+    })
+
+    sinkIds.forEach((taskId) => {
+      const from = pos[taskId]
+      if (!from) return
+      edges.push({
+        x1: from.x + NODE_W,
+        y1: from.y + NODE_H / 2,
+        x2: endNode.x,
+        y2: endNode.y + endNode.r,
+        fromId: taskId,
+        toId: 'END',
+        synthetic: true,
+      })
+    })
+
+    return { nodes, edges, width: endNode.x + endNode.r + 40, height: Math.max(maxY + 40, endNode.y + endNode.r * 2 + 20), startNode, endNode }
   }
 
-  const { nodes, edges, width, height } = buildPertLayout(storyTasks)
+  const { nodes, edges, width, height, startNode, endNode } = buildPertLayout(storyTasks)
 
   const stC = (st) => ({
-    'Done':        { color:C.success, bg:C.success+'15' },
-    'In Progress': { color:C.primary, bg:C.primary+'15' },
-    'To Do':       { color:C.textSecondary, bg:C.border  },
-  }[st] || { color:C.textSecondary, bg:C.border })
+    'Done':        palette.done,
+    'In Progress': palette.progress,
+    'To Do':       palette.todo,
+  }[st] || palette.todo)
 
   return (
     <>
       {/* Filters */}
-      <div style={{ display:'flex', gap:12, marginBottom:20, flexWrap:'wrap' }}>
+      <div style={{ display:'flex', gap:14, marginBottom:20, flexWrap:'wrap', alignItems:'end' }}>
         <div>
           <label style={{ display:'block', fontSize:12, fontWeight:600, color:C.textSecondary, marginBottom:4 }}>Project</label>
           <select value={selProjectId} onChange={e=>{setSelProjectId(e.target.value);setSelStoryId('')}}
-            style={{ padding:'8px 12px', border:`1.5px solid ${C.border}`, borderRadius:8, fontSize:13, background:C.cardBg, color:C.textPrimary, fontFamily:'inherit', minWidth:200 }}>
+            style={{ padding:'10px 14px', border:`1px solid #C9DDED`, borderRadius:12, fontSize:13, background:'#FFFFFF', color:C.textPrimary, fontFamily:'inherit', minWidth:220, boxShadow:'0 8px 18px rgba(8,43,74,0.05)' }}>
             {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
         </div>
         <div>
           <label style={{ display:'block', fontSize:12, fontWeight:600, color:C.textSecondary, marginBottom:4 }}>Story (filter)</label>
           <select value={selStoryId} onChange={e=>setSelStoryId(e.target.value)}
-            style={{ padding:'8px 12px', border:`1.5px solid ${C.border}`, borderRadius:8, fontSize:13, background:C.cardBg, color:C.textPrimary, fontFamily:'inherit', minWidth:240 }}>
+            style={{ padding:'10px 14px', border:`1px solid #C9DDED`, borderRadius:12, fontSize:13, background:'#FFFFFF', color:C.textPrimary, fontFamily:'inherit', minWidth:280, boxShadow:'0 8px 18px rgba(8,43,74,0.05)' }}>
             <option value="">All tasks</option>
             {(project?.features||[]).map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
           </select>
@@ -983,22 +1036,22 @@ function DependenciesTab({ projects, allStories }) {
       </div>
 
       {/* Stats */}
-      <div style={{ display:'flex', gap:10, marginBottom:18 }}>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(3, minmax(130px, 180px))', gap:12, marginBottom:20 }}>
         {[
           { l:'Tasks', v:storyTasks.length, c:C.primary },
-          { l:'With Dependencies', v:storyTasks.filter(t=>(t.dependsOn||[]).length>0).length, c:C.warning },
+          { l:'With Dependencies', v:storyTasks.filter(t=>(t.dependsOn||[]).length>0).length, c:palette.warn },
           { l:'No Dependencies', v:storyTasks.filter(t=>(t.dependsOn||[]).length===0).length, c:C.success },
         ].map(m => (
-          <div key={m.l} style={{ padding:'10px 16px', background:C.cardBg, border:`1px solid ${C.border}`, borderRadius:8, textAlign:'center', minWidth:80 }}>
-            <div style={{ fontSize:18, fontWeight:700, color:m.c }}>{m.v}</div>
-            <div style={{ fontSize:11, color:C.textSecondary }}>{m.l}</div>
+          <div key={m.l} style={{ padding:'14px 16px', background:'#FFFFFF', border:`1px solid #D7E7F3`, borderRadius:14, textAlign:'center', boxShadow:'0 10px 22px rgba(8,43,74,0.05)' }}>
+            <div style={{ fontSize:28, fontWeight:800, color:m.c, lineHeight:1 }}>{m.v}</div>
+            <div style={{ fontSize:12, color:C.textSecondary, marginTop:4, fontWeight:600 }}>{m.l}</div>
           </div>
         ))}
       </div>
 
-      <div style={{ display:'grid', gridTemplateColumns:'320px 1fr', gap:18, alignItems:'start' }}>
+      <div style={{ display:'grid', gridTemplateColumns:'360px minmax(0, 1fr)', gap:20, alignItems:'start', width:'100%' }}>
         {/* Task dependency list */}
-        <Card C={C}>
+        <Card C={C} style={{ borderRadius:18, border:'1px solid #D8E6F2', boxShadow:'0 16px 30px rgba(8,43,74,0.06)' }}>
           <SecTitle C={C}>Task Dependencies</SecTitle>
           {storyTasks.length === 0
             ? <p style={{ margin:0, fontSize:13, color:C.textSecondary }}>No tasks found. {!selStoryId && 'Select a story to filter.'}</p>
@@ -1006,20 +1059,21 @@ function DependenciesTab({ projects, allStories }) {
                 const deps = (t.dependsOn||[]).map(d => allTasks.find(tk=>tk.id===d)?.name||d)
                 const sc   = stC(t.status)
                 return (
-                  <div key={t.id} style={{ padding:'10px 0', borderBottom:`1px solid ${C.border}` }}>
+                  <div key={t.id} style={{ padding:'14px 0', borderBottom:`1px solid #E4EEF6` }}>
                     <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:deps.length?4:0 }}>
                       <div style={{ flex:1 }}>
-                        <span style={{ fontSize:13, fontWeight:500, color:C.textPrimary }}>{t.name}</span>
+                        <span style={{ fontSize:14, fontWeight:700, color:C.textPrimary, lineHeight:1.4 }}>{t.name}</span>
                         <Badge label={t.status} color={sc.color} bg={sc.bg} />
                       </div>
                       <button onClick={() => openDepEdit(t)}
-                        style={{ padding:'3px 10px', background:C.primary+'15', color:C.primary, border:`1px solid ${C.primary}30`, borderRadius:6, fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:'inherit', flexShrink:0 }}>
+                        style={{ padding:'5px 12px', background:'#E8F2FB', color:C.primary, border:`1px solid #C7DBEE`, borderRadius:10, fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'inherit', flexShrink:0 }}>
                         Edit
                       </button>
                     </div>
+                    {t.assignee && <div style={{ fontSize:11, color:C.textSecondary, marginTop:5, fontWeight:600 }}>Owner: {t.assignee}</div>}
                     {deps.length > 0 && (
-                      <div style={{ fontSize:11, color:C.textSecondary }}>
-                        Depends on: {deps.map((d,i) => <span key={i} style={{ background:C.warning+'15', color:C.warning, padding:'1px 6px', borderRadius:4, marginRight:4, fontWeight:600 }}>{d}</span>)}
+                      <div style={{ fontSize:11, color:C.textSecondary, marginTop:8, lineHeight:1.5 }}>
+                        Depends on: {deps.map((d,i) => <span key={i} style={{ background:'#FFF1D8', color:palette.warn, padding:'3px 8px', borderRadius:999, marginRight:6, marginTop:4, fontWeight:700, display:'inline-block' }}>{d}</span>)}
                       </div>
                     )}
                   </div>
@@ -1029,19 +1083,35 @@ function DependenciesTab({ projects, allStories }) {
         </Card>
 
         {/* PERT Diagram SVG */}
-        <Card C={C} style={{ overflowX:'auto' }}>
+        <Card C={C} style={{ overflowX:'auto', width:'100%', minHeight:430, borderRadius:18, border:'1px solid #D8E6F2', boxShadow:'0 18px 32px rgba(8,43,74,0.06)', background:'linear-gradient(180deg, #FFFFFF 0%, #F7FBFE 100%)' }}>
           <SecTitle C={C}>PERT Network Diagram</SecTitle>
           {storyTasks.length === 0
             ? <p style={{ margin:0, fontSize:13, color:C.textSecondary }}>No tasks to display.</p>
             : edges.length === 0 && nodes.length > 0
             ? <>
-                <p style={{ margin:'0 0 12px', fontSize:12, color:C.textSecondary }}>No dependencies set.</p>
-                <svg width={width} height={height} style={{ display:'block', minWidth:300 }}>
+                <p style={{ margin:'0 0 14px', fontSize:12, color:C.textSecondary }}>No dependencies set.</p>
+                <svg width={Math.max(width, 980)} height={Math.max(height, 360)} style={{ display:'block', minWidth:'100%' }}>
+                  {startNode && (
+                    <g>
+                      <circle cx={startNode.x + startNode.r} cy={startNode.y + startNode.r} r={startNode.r} fill="#6C9F1E" />
+                      <text x={startNode.x + startNode.r} y={startNode.y + startNode.r + 4} textAnchor="middle" fontSize="12" fontWeight="800" fill="#FFFFFF">
+                        {startNode.label}
+                      </text>
+                    </g>
+                  )}
+                  {endNode && (
+                    <g>
+                      <circle cx={endNode.x + endNode.r} cy={endNode.y + endNode.r} r={endNode.r} fill="#6C9F1E" />
+                      <text x={endNode.x + endNode.r} y={endNode.y + endNode.r + 4} textAnchor="middle" fontSize="12" fontWeight="800" fill="#FFFFFF">
+                        {endNode.label}
+                      </text>
+                    </g>
+                  )}
                   {nodes.map(n => {
                     const sc2 = stC(n.status)
                     return (
                       <g key={n.id}>
-                        <rect x={n.x} y={n.y} width={n.w} height={n.h} rx={8} fill={sc2.bg} stroke={sc2.color} strokeWidth={1.5}/>
+                        <rect x={n.x} y={n.y} width={n.w} height={n.h} rx={12} fill={sc2.bg} stroke={sc2.color} strokeWidth={1.8}/>
                         <foreignObject x={n.x+6} y={n.y+6} width={n.w-12} height={n.h-12}>
                           <div style={{ fontSize:10, fontWeight:600, color:sc2.color, wordBreak:'break-word', lineHeight:1.3 }}>{n.name}</div>
                         </foreignObject>
@@ -1050,19 +1120,35 @@ function DependenciesTab({ projects, allStories }) {
                   })}
                 </svg>
               </>
-            : <svg width={width} height={height} style={{ display:'block', minWidth:400 }}>
+            : <svg width={Math.max(width, 1280)} height={Math.max(height, 420)} style={{ display:'block', minWidth:'100%' }}>
                 <defs>
                   <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-                    <path d="M0,0 L0,6 L8,3 z" fill={C.primary}/>
+                    <path d="M0,0 L0,6 L8,3 z" fill={palette.edge}/>
                   </marker>
                 </defs>
+                {startNode && (
+                  <g>
+                    <circle cx={startNode.x + startNode.r} cy={startNode.y + startNode.r} r={startNode.r} fill="#6C9F1E" />
+                    <text x={startNode.x + startNode.r} y={startNode.y + startNode.r + 4} textAnchor="middle" fontSize="12" fontWeight="800" fill="#FFFFFF">
+                      {startNode.label}
+                    </text>
+                  </g>
+                )}
+                {endNode && (
+                  <g>
+                    <circle cx={endNode.x + endNode.r} cy={endNode.y + endNode.r} r={endNode.r} fill="#6C9F1E" />
+                    <text x={endNode.x + endNode.r} y={endNode.y + endNode.r + 4} textAnchor="middle" fontSize="12" fontWeight="800" fill="#FFFFFF">
+                      {endNode.label}
+                    </text>
+                  </g>
+                )}
                 {/* Edges */}
                 {edges.map((e,i) => {
                   const mx = (e.x1 + e.x2) / 2
                   return (
                     <path key={i}
                       d={`M${e.x1},${e.y1} C${mx},${e.y1} ${mx},${e.y2} ${e.x2},${e.y2}`}
-                      fill="none" stroke={C.primary} strokeWidth={1.5} markerEnd="url(#arrow)" opacity={0.7}/>
+                      fill="none" stroke={palette.edge} strokeWidth={2.2} markerEnd="url(#arrow)" opacity={0.88}/>
                   )
                 })}
                 {/* Nodes */}
@@ -1071,11 +1157,11 @@ function DependenciesTab({ projects, allStories }) {
                   const hasDep = (n.dependsOn||[]).length > 0
                   return (
                     <g key={n.id}>
-                      <rect x={n.x} y={n.y} width={n.w} height={n.h} rx={8} fill={sc2.bg} stroke={sc2.color} strokeWidth={hasDep?2:1.5}/>
-                      <foreignObject x={n.x+6} y={n.y+4} width={n.w-12} height={n.h-8}>
-                        <div style={{ fontSize:9, fontWeight:600, color:sc2.color, wordBreak:'break-word', lineHeight:1.3, overflow:'hidden' }}>
+                      <rect x={n.x} y={n.y} width={n.w} height={n.h} rx={14} fill={sc2.bg} stroke={sc2.color} strokeWidth={hasDep?2.4:1.8}/>
+                      <foreignObject x={n.x+8} y={n.y+6} width={n.w-16} height={n.h-12}>
+                        <div style={{ fontSize:10, fontWeight:700, color:sc2.color, wordBreak:'break-word', lineHeight:1.35, overflow:'hidden' }}>
                           {n.name}
-                          {n.assignee && <div style={{ fontWeight:400, color:sc2.color, opacity:.7, fontSize:8 }}>{n.assignee}</div>}
+                          {n.assignee && <div style={{ fontWeight:600, color:sc2.color, opacity:.75, fontSize:8, marginTop:3 }}>{n.assignee}</div>}
                         </div>
                       </foreignObject>
                     </g>
@@ -1085,9 +1171,9 @@ function DependenciesTab({ projects, allStories }) {
           }
           <div style={{ display:'flex', gap:16, marginTop:14, flexWrap:'wrap' }}>
             {[
-              { color:C.textSecondary, bg:C.border,           label:'To Do'       },
-              { color:C.primary,       bg:C.primary+'15',     label:'In Progress' },
-              { color:C.success,       bg:C.success+'15',     label:'Done'        },
+              { color:palette.todo.color, bg:palette.todo.bg,         label:'To Do'       },
+              { color:palette.progress.color, bg:palette.progress.bg, label:'In Progress' },
+              { color:palette.done.color, bg:palette.done.bg,         label:'Done'        },
             ].map(l => (
               <span key={l.label} style={{ display:'flex', alignItems:'center', gap:5, fontSize:11, color:C.textSecondary }}>
                 <span style={{ width:20, height:10, borderRadius:3, background:l.bg, border:`1.5px solid ${l.color}`, display:'inline-block' }}/>

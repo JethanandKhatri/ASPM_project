@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useProjects } from '../../context/ProjectContext'
 import { useThemeColors } from '../../context/ThemeContext'
-
+import { HeaderIconShell, IconCheck, IconDecomposition, IconInfo } from './EstimationIcons'
 
 export default function Decomposition() {
   const C = useThemeColors()
@@ -51,14 +51,14 @@ export default function Decomposition() {
   }
 
   const midpoint = Math.round((sumBest + sumWorst) / 2)
-  // ASPM confidence intervals: 50% CI = ±0.674σ, 85% CI = ±1.44σ, 95% CI = ±1.96σ
-  const conf50Low  = Math.round(midpoint - 0.674 * sd)
+  const conf50Low = Math.round(midpoint - 0.674 * sd)
   const conf50High = Math.round(midpoint + 0.674 * sd)
-  const conf85Low  = Math.round(midpoint - 1.44  * sd)
-  const conf85High = Math.round(midpoint + 1.44  * sd)
-  const conf95Low  = Math.round(midpoint - 1.96  * sd)
-  const conf95High = Math.round(midpoint + 1.96  * sd)
+  const conf85Low = Math.round(midpoint - 1.44 * sd)
+  const conf85High = Math.round(midpoint + 1.44 * sd)
+  const conf95Low = Math.round(midpoint - 1.96 * sd)
+  const conf95High = Math.round(midpoint + 1.96 * sd)
   const effortMonths = Math.round(midpoint / 22 * 10) / 10
+  const durationMonths = Math.max(1, Math.round(effortMonths / 3 * 10) / 10)
   const costUSD = Math.round(effortMonths * 5000)
 
   function handleSave() {
@@ -67,8 +67,8 @@ export default function Decomposition() {
       date: new Date().toISOString().split('T')[0],
       effort: `${effortMonths} staff months`,
       cost: `$${costUSD.toLocaleString()}`,
-      duration: `${Math.max(1, Math.round(effortMonths / 3 * 10) / 10)} months`,
-      effortNum: effortMonths, costNum: costUSD, durationNum: Math.max(1, Math.round(effortMonths / 3 * 10) / 10),
+      duration: `${durationMonths} months`,
+      effortNum: effortMonths, costNum: costUSD, durationNum: durationMonths,
       status: 'Saved',
       data: { tasks, sumBest, sumWorst, sd, conf50Low, conf50High, conf85Low, conf85High, conf95Low, conf95High },
     })
@@ -80,23 +80,24 @@ export default function Decomposition() {
 
   return (
     <div style={{ padding: 28 }}>
-      <button onClick={() => navigate(`/dashboard/projects/${id}/estimate`)} style={{ background: 'none', border: 'none', color: C.textSecondary, cursor: 'pointer', fontSize: 13, marginBottom: 20, padding: 0 }}>← Back to Technique Selector</button>
+      <button onClick={() => navigate(`/dashboard/projects/${id}/estimate`)} style={{ background: 'none', border: 'none', color: C.textSecondary, cursor: 'pointer', fontSize: 13, marginBottom: 20, padding: 0 }}>Back to Technique Selector</button>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
-        <div style={{ fontSize: 28 }}>📐</div>
+        <HeaderIconShell accent={C.primary}>
+          <IconDecomposition color={C.primary} />
+        </HeaderIconShell>
         <div>
           <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: C.textPrimary }}>Decomposition + Standard Deviation</h1>
           <p style={{ margin: '3px 0 0', fontSize: 13, color: C.textSecondary }}>{project.name}</p>
         </div>
       </div>
 
-      {/* Formula info */}
       <div style={{ background: C.warning + '12', border: `1px solid ${C.warning}30`, borderRadius: 8, padding: '10px 14px', marginBottom: 18, fontSize: 12, color: C.warning, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-        <span style={{ fontSize: 16 }}>ℹ</span>
+        <span style={{ lineHeight: 1, marginTop: 1 }}><IconInfo color={C.warning} /></span>
         <div>
           <strong>Formula in use: </strong>
           {n <= 10
-            ? `Simple SD (≤10 tasks): SD = (Sum Worst − Sum Best) / 6. Currently ${n} task(s).`
-            : `Complex SD (>10 tasks): SD = √(Σ individual SD²). Currently ${n} task(s) — using complex formula.`}
+            ? `Simple SD (10 tasks or fewer): SD = (Sum Worst - Sum Best) / 6. Currently ${n} task(s).`
+            : `Complex SD (more than 10 tasks): SD = sqrt(sum of individual SD squared). Currently ${n} task(s).`}
         </div>
       </div>
 
@@ -129,7 +130,7 @@ export default function Decomposition() {
                   </td>
                   <td style={{ padding: '8px 10px', textAlign: 'center', fontWeight: 600, color: C.warning }}>{indSD}</td>
                   <td style={{ padding: '8px 10px', textAlign: 'center' }}>
-                    <button onClick={() => removeTask(i)} style={{ background: 'none', border: 'none', color: tasks.length <= 1 ? C.border : C.danger, cursor: 'pointer', fontSize: 16, padding: 0 }}>✕</button>
+                    <button onClick={() => removeTask(i)} style={{ background: 'none', border: 'none', color: tasks.length <= 1 ? C.border : C.danger, cursor: 'pointer', fontSize: 16, padding: 0 }}>x</button>
                   </td>
                 </tr>
               )
@@ -138,14 +139,13 @@ export default function Decomposition() {
         </table>
       </div>
 
-      {/* Results */}
       <div style={{ background: C.cardBg, border: `2px solid ${C.primary}30`, borderRadius: 10, padding: 20 }}>
         <h3 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 600, color: C.textPrimary }}>Results</h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 14 }}>
           {[
             { label: 'Sum Best Case', value: `${sumBest.toFixed(0)} days` },
             { label: 'Sum Worst Case', value: `${sumWorst.toFixed(0)} days` },
-            { label: 'Std. Deviation (σ)', value: `${sd} days`, highlight: true },
+            { label: 'Std. Deviation (sigma)', value: `${sd} days`, highlight: true },
             { label: 'Midpoint', value: `${midpoint} days` },
           ].map(m => (
             <div key={m.label} style={{ background: m.highlight ? C.warning + '15' : C.mainBg, borderRadius: 8, padding: '12px 14px', border: m.highlight ? `1px solid ${C.warning}40` : 'none' }}>
@@ -154,18 +154,17 @@ export default function Decomposition() {
             </div>
           ))}
         </div>
-        {/* Q5: Multiple confidence intervals */}
         {sd > 0 && (
           <div style={{ marginBottom: 14 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: C.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>Confidence Intervals (ASPM Normal Distribution)</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: C.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>Confidence Intervals</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
               {[
-                { label: '50% CI  (±0.674σ)', low: conf50Low, high: conf50High, color: C.textSecondary, bg: C.mainBg },
-                { label: '85% CI  (±1.44σ)',  low: conf85Low, high: conf85High, color: C.warning,       bg: C.warning + '10' },
-                { label: '95% CI  (±1.96σ)',  low: conf95Low, high: conf95High, color: C.primary,       bg: C.primary + '0d' },
+                { label: '50% CI (+/-0.674 sigma)', low: conf50Low, high: conf50High, color: C.textSecondary, bg: C.mainBg },
+                { label: '85% CI (+/-1.44 sigma)', low: conf85Low, high: conf85High, color: C.warning, bg: C.warning + '10' },
+                { label: '95% CI (+/-1.96 sigma)', low: conf95Low, high: conf95High, color: C.primary, bg: C.primary + '0d' },
               ].map(ci => (
                 <div key={ci.label} style={{ background: ci.bg, border: `1px solid ${ci.color}25`, borderRadius: 8, padding: '10px 14px' }}>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: ci.color }}>{ci.low}–{ci.high} days</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: ci.color }}>{ci.low} to {ci.high} days</div>
                   <div style={{ fontSize: 11, color: C.textSecondary, marginTop: 3 }}>{ci.label}</div>
                 </div>
               ))}
@@ -176,7 +175,7 @@ export default function Decomposition() {
           {[
             { label: 'Effort', value: `${effortMonths} staff months` },
             { label: 'Cost', value: `$${costUSD.toLocaleString()}` },
-            { label: 'Duration', value: `${Math.max(1, Math.round(effortMonths / 3 * 10) / 10)} months` },
+            { label: 'Duration', value: `${durationMonths} months` },
           ].map(m => (
             <div key={m.label} style={{ background: C.success + '12', borderRadius: 8, padding: '12px 14px' }}>
               <div style={{ fontSize: 18, fontWeight: 700, color: C.success }}>{m.value}</div>
@@ -186,7 +185,10 @@ export default function Decomposition() {
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           {saved ? (
-            <div style={{ padding: '10px 20px', background: C.success + '12', border: `1px solid ${C.success}30`, borderRadius: 8, fontSize: 13, color: C.success, fontWeight: 600 }}>✓ Saved!</div>
+            <div style={{ padding: '10px 20px', background: C.success + '12', border: `1px solid ${C.success}30`, borderRadius: 8, fontSize: 13, color: C.success, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <IconCheck color={C.success} />
+              Saved!
+            </div>
           ) : (
             <button onClick={handleSave} style={{ padding: '10px 24px', background: C.primary, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Save Estimation</button>
           )}

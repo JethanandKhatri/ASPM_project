@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+﻿import { useState, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useProjects } from '../context/ProjectContext'
 import { useThemeColors } from '../context/ThemeContext'
@@ -7,26 +7,26 @@ import { useAuth } from '../../context/AuthContext'
 function StatusBadge({ status }) {
   const C = useThemeColors()
   const cfg = {
-    Planning:  { bg: C.warning + '20',  color: C.warning  },
-    Active:    { bg: C.primary + '15',  color: C.primary  },
-    Completed: { bg: C.success + '15',  color: C.success  },
-    'On Hold': { bg: C.border,          color: C.textSecondary },
+    Planning:  { bg: '#FFF3D6', color: '#B7791F', border: '#F0D28B' },
+    Active:    { bg: '#E3F0FB', color: C.primary, border: '#BCD7EE' },
+    Completed: { bg: '#E6F7EF', color: C.success, border: '#B9E6CB' },
+    'On Hold': { bg: '#EEF2F6', color: C.textSecondary, border: '#D7E1EA' },
   }[status] || { bg: C.border, color: C.textSecondary }
-  return <span style={{ padding: '3px 10px', borderRadius: 20, fontSize: 12, fontWeight: 600, background: cfg.bg, color: cfg.color }}>{status}</span>
+  return <span style={{ padding: '5px 12px', borderRadius: 999, fontSize: 12, fontWeight: 700, background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border || 'transparent'}` }}>{status}</span>
 }
 
 function PriorityBadge({ priority }) {
   const C = useThemeColors()
   const cfg = {
-    'Must Have':    { bg: C.danger + '15',   color: C.danger },
-    'Should Have':  { bg: C.warning + '20',  color: C.warning },
-    'Could Have':   { bg: C.success + '15',  color: C.success },
-    "Won't Have":   { bg: C.border,          color: C.textSecondary },
-    High:   { bg: C.danger + '15',  color: C.danger },
-    Medium: { bg: C.warning + '20', color: C.warning },
-    Low:    { bg: C.success + '15', color: C.success },
+    'Must Have':    { bg: '#FEE7E5', color: C.danger },
+    'Should Have':  { bg: '#FFF2D8', color: C.warning },
+    'Could Have':   { bg: '#E7F7ED', color: C.success },
+    "Won't Have":   { bg: '#EEF2F6', color: C.textSecondary },
+    High:   { bg: '#FEE7E5', color: C.danger },
+    Medium: { bg: '#FFF2D8', color: C.warning },
+    Low:    { bg: '#E7F7ED', color: C.success },
   }[priority] || {}
-  return <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600, background: cfg.bg, color: cfg.color }}>{priority}</span>
+  return <span style={{ padding: '4px 9px', borderRadius: 999, fontSize: 11, fontWeight: 700, background: cfg.bg, color: cfg.color }}>{priority}</span>
 }
 
 const SVG_ICONS = {
@@ -67,14 +67,15 @@ function MetricCard({ label, value, sub, icon, color }) {
   const clr = color || C.primary
   const svgFn = SVG_ICONS[icon]
   return (
-    <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 12, padding: '18px 20px', display: 'flex', alignItems: 'flex-start', gap: 14, borderLeft: `3px solid ${clr}` }}>
-      <div style={{ width: 42, height: 42, borderRadius: 10, background: clr + '15', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+    <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 16, padding: '18px 20px', display: 'flex', alignItems: 'flex-start', gap: 14, boxShadow: '0 10px 26px rgba(6, 45, 81, 0.06)', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ position: 'absolute', inset: '0 0 auto 0', height: 4, background: `linear-gradient(90deg, ${clr}, ${clr}99)` }} />
+      <div style={{ width: 46, height: 46, borderRadius: 14, background: clr + '15', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: `inset 0 0 0 1px ${clr}22` }}>
         {svgFn ? svgFn(clr) : <span style={{ fontSize: 18, color: clr }}>{icon}</span>}
       </div>
       <div style={{ minWidth: 0 }}>
-        <div style={{ fontSize: 24, fontWeight: 700, color: C.textPrimary, lineHeight: 1 }}>{value}</div>
-        <div style={{ fontSize: 12, color: C.textSecondary, marginTop: 4 }}>{label}</div>
-        {sub && <div style={{ fontSize: 11, color: clr, marginTop: 2, fontWeight: 500 }}>{sub}</div>}
+        <div style={{ fontSize: 13, fontWeight: 700, color: C.textSecondary, letterSpacing: 0.2 }}>{label}</div>
+        <div style={{ fontSize: 24, fontWeight: 800, color: C.textPrimary, lineHeight: 1.05, marginTop: 6 }}>{value}</div>
+        {sub && <div style={{ fontSize: 11, color: clr, marginTop: 6, fontWeight: 700 }}>{sub}</div>}
       </div>
     </div>
   )
@@ -116,7 +117,7 @@ function OverviewTab({ project }) {
                   <td style={{ padding: '10px 12px' }}><PriorityBadge priority={f.priority} /></td>
                   <td style={{ padding: '10px 12px', fontSize: 12, maxWidth: 200, verticalAlign: 'top' }}>
                     {acList.length === 0
-                      ? <span style={{ color: C.border }}>—</span>
+                      ? <span style={{ color: C.border }}>â€”</span>
                       : (
                         <div>
                           {acList.slice(0, 3).map((ac, j) => (
@@ -126,7 +127,7 @@ function OverviewTab({ project }) {
                             </div>
                           ))}
                           {acList.length > 3 && <span style={{ fontSize: 10, color: C.textSecondary }}>+{acList.length - 3} more</span>}
-                          {acVerified && <div style={{ marginTop: 4, fontSize: 10, fontWeight: 700, color: C.success }}>✓ AC Verified (Done)</div>}
+                          {acVerified && <div style={{ marginTop: 4, fontSize: 10, fontWeight: 700, color: C.success }}>âœ“ AC Verified (Done)</div>}
                         </div>
                       )
                     }
@@ -188,7 +189,7 @@ function EstimationTab({ project, onRunEstimation, onViewComparison }) {
             </button>
           )}
           <button onClick={() => setShowActualsModal(true)} style={{ padding: '6px 14px', background: C.success + '15', color: C.success, border: `1px solid ${C.success}30`, borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-            {actuals ? '✓ Actuals Recorded' : '+ Enter Actuals'}
+            {actuals ? 'âœ“ Actuals Recorded' : '+ Enter Actuals'}
           </button>
         </div>
       </div>
@@ -229,14 +230,14 @@ function EstimationTab({ project, onRunEstimation, onViewComparison }) {
         <div style={{ background: C.cardBg, border: `2px solid ${C.success}40`, borderRadius: 10, padding: 18 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke={C.success} strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-            <h4 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: C.textPrimary }}>Actual vs Estimated — Accuracy Report</h4>
+            <h4 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: C.textPrimary }}>Actual vs Estimated â€” Accuracy Report</h4>
             <span style={{ fontSize: 11, color: C.textSecondary, marginLeft: 'auto' }}>Completed: {actuals.completedDate}</span>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 16 }}>
             {[
-              { label: 'Actual Effort', value: `${actuals.effortNum} staff months`, icon: '◷' },
+              { label: 'Actual Effort', value: `${actuals.effortNum} staff months`, icon: 'â—·' },
               { label: 'Actual Cost', value: `$${Number(actuals.costNum).toLocaleString()}`, icon: '$' },
-              { label: 'Actual Duration', value: `${actuals.durationNum} months`, icon: '▣' },
+              { label: 'Actual Duration', value: `${actuals.durationNum} months`, icon: 'â–£' },
             ].map(m => (
               <div key={m.label} style={{ background: C.success + '0d', border: `1px solid ${C.success}25`, borderRadius: 8, padding: '12px 14px' }}>
                 <div style={{ fontSize: 11, color: C.textSecondary, marginBottom: 4 }}>{m.icon} {m.label}</div>
@@ -258,7 +259,7 @@ function EstimationTab({ project, onRunEstimation, onViewComparison }) {
                 const vc = variance(e.costNum, actuals.costNum)
                 const vd = variance(e.durationNum, actuals.durationNum)
                 const varStyle = v => v === null ? {} : { color: Math.abs(v) < 15 ? C.success : Math.abs(v) < 30 ? C.warning : C.danger, fontWeight: 600 }
-                const varText = v => v === null ? '—' : `${v > 0 ? '+' : ''}${v.toFixed(1)}%`
+                const varText = v => v === null ? 'â€”' : `${v > 0 ? '+' : ''}${v.toFixed(1)}%`
                 return (
                   <tr key={e.id} style={{ borderBottom: `1px solid ${C.border}`, background: i % 2 === 0 ? C.cardBg : C.mainBg }}>
                     <td style={{ padding: '8px 10px', fontWeight: 700, color: C.primary }}>{e.version}</td>
@@ -287,7 +288,7 @@ function EstimationTab({ project, onRunEstimation, onViewComparison }) {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div style={{ background: C.cardBg, borderRadius: 14, padding: 28, width: 460, boxShadow: '0 12px 40px rgba(0,0,0,0.18)', border: `1px solid ${C.border}` }}>
             <h3 style={{ margin: '0 0 6px', fontSize: 16, fontWeight: 700, color: C.textPrimary }}>Enter Actual Results</h3>
-            <p style={{ margin: '0 0 20px', fontSize: 13, color: C.textSecondary }}>Record what the project actually took — used for estimation accuracy reports.</p>
+            <p style={{ margin: '0 0 20px', fontSize: 13, color: C.textSecondary }}>Record what the project actually took â€” used for estimation accuracy reports.</p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
               {[['Actual Effort (staff months)', 'effortNum', 'number', '6.5'], ['Actual Cost ($)', 'costNum', 'number', '32500'], ['Actual Duration (months)', 'durationNum', 'number', '4'], ['Completion Date', 'completedDate', 'date', '']].map(([label, key, type, ph]) => (
                 <div key={key}>
@@ -398,7 +399,7 @@ function TeamTab({ project }) {
 function ActivityTab({ project, onAddComment }) {
   const C = useThemeColors()
   const [commentText, setCommentText] = useState('')
-  const [mentionQuery, setMentionQuery] = useState('')
+  const [mentionQuery, setMentionQuery] = useState(null)
   const [mentionPos, setMentionPos] = useState(null)
   const textareaRef = useRef(null)
 
@@ -493,7 +494,7 @@ function ActivityTab({ project, onAddComment }) {
         {allItems.map((item, i) => (
           <div key={item.id || i} style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 10, padding: 14, display: 'flex', gap: 12 }}>
             <div style={{ width: 34, height: 34, borderRadius: '50%', background: item.itemType === 'comment' ? C.primary : C.border, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: item.itemType === 'comment' ? '#fff' : C.textSecondary, flexShrink: 0 }}>
-              {item.itemType === 'comment' ? (item.author || 'Y')[0] : '⚙'}
+              {item.itemType === 'comment' ? (item.author || 'Y')[0] : 'âš™'}
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', gap: 8, alignItems: 'baseline', marginBottom: 4 }}>
@@ -561,7 +562,7 @@ function TasksTab({ project, onAddTask, onMoveTask }) {
                       {columns.filter(c => c !== col).map(nextCol => (
                         <button key={nextCol} onClick={() => onMoveTask(task.id, nextCol)}
                           style={{ fontSize: 10, padding: '2px 7px', border: `1px solid ${C.border}`, borderRadius: 4, background: C.cardBg, color: C.textSecondary, cursor: 'pointer', fontFamily: 'inherit' }}>
-                          → {nextCol}
+                          â†’ {nextCol}
                         </button>
                       ))}
                     </div>
@@ -600,6 +601,122 @@ function TasksTab({ project, onAddTask, onMoveTask }) {
   )
 }
 
+function TasksBoardTab({ project, onAddTask, onMoveTask }) {
+  const C = useThemeColors()
+  const [showModal, setShowModal] = useState(false)
+  const [newTask, setNewTask] = useState({ name: '', assignee: '', priority: 'Should Have', dueDate: '', feature: '', description: '' })
+  const columns = ['To Do', 'In Progress', 'Done']
+  const colStyles = {
+    'To Do': { accent: '#D39A1E', soft: '#FFF3D8', line: '#F0D18A' },
+    'In Progress': { accent: C.primary, soft: '#E8F2FB', line: '#C7DBEE' },
+    Done: { accent: C.success, soft: '#E7F7ED', line: '#BEE4CC' },
+  }
+
+  function submitTask() {
+    if (!newTask.name.trim()) return
+    onAddTask(newTask)
+    setShowModal(false)
+    setNewTask({ name: '', assignee: '', priority: 'Should Have', dueDate: '', feature: '', description: '' })
+  }
+
+  const inp = { width: '100%', padding: '8px 10px', border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 13, boxSizing: 'border-box', outline: 'none', background: C.cardBg, color: C.textPrimary, fontFamily: 'inherit' }
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, marginBottom: 18, flexWrap: 'wrap' }}>
+        <div>
+          <h4 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: C.textPrimary }}>Task Board</h4>
+          <p style={{ margin: '5px 0 0', fontSize: 12, color: C.textSecondary }}>
+            Move work from planning to execution with a clearer Kanban layout.
+          </p>
+        </div>
+        <button onClick={() => setShowModal(true)} style={{ padding: '10px 16px', background: C.primary, color: '#fff', border: 'none', borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 10px 20px rgba(0,58,107,0.20)' }}>+ Add Task</button>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 18, alignItems: 'start' }}>
+        {columns.map((col) => {
+          const tasks = project.tasks.filter((t) => t.status === col)
+          const styleCfg = colStyles[col]
+          return (
+            <div key={col} style={{ background: C.cardBg, border: `1px solid ${styleCfg.line}`, borderRadius: 18, padding: 14, boxShadow: '0 12px 28px rgba(7, 42, 74, 0.05)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, padding: '4px 4px 12px', borderBottom: `1px solid ${styleCfg.line}` }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ width: 12, height: 12, borderRadius: '50%', background: styleCfg.accent, boxShadow: `0 0 0 5px ${styleCfg.soft}` }} />
+                  <span style={{ fontSize: 14, fontWeight: 800, color: styleCfg.accent }}>{col}</span>
+                </div>
+                <span style={{ fontSize: 11, fontWeight: 800, color: styleCfg.accent, background: styleCfg.soft, borderRadius: 999, minWidth: 28, height: 28, padding: '0 8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{tasks.length}</span>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {tasks.length === 0 && (
+                  <div style={{ border: `1px dashed ${styleCfg.line}`, borderRadius: 14, padding: '18px 14px', background: styleCfg.soft, textAlign: 'center' }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: styleCfg.accent }}>No tasks in {col}</div>
+                    <div style={{ fontSize: 11, color: C.textSecondary, marginTop: 4 }}>
+                      {col === 'To Do' ? 'New tasks will appear here.' : col === 'In Progress' ? 'Move active work here.' : 'Completed tasks will collect here.'}
+                    </div>
+                  </div>
+                )}
+
+                {tasks.map((task) => (
+                  <div key={task.id} style={{ background: '#FFFFFF', border: `1px solid ${C.border}`, borderRadius: 16, padding: 14, boxShadow: '0 10px 20px rgba(7, 42, 74, 0.05)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, marginBottom: 8 }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: C.textPrimary, lineHeight: 1.45 }}>{task.name}</span>
+                      <PriorityBadge priority={task.priority} />
+                    </div>
+
+                    {task.feature && <div style={{ fontSize: 11, color: C.textSecondary, marginBottom: 8, fontWeight: 600 }}>Feature: <span style={{ color: C.textPrimary }}>{task.feature}</span></div>}
+                    {task.description && <div style={{ fontSize: 12, color: C.textSecondary, lineHeight: 1.5, marginBottom: 10 }}>{task.description}</div>}
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: C.primary, background: C.primary + '12', padding: '4px 9px', borderRadius: 999 }}>
+                        {task.assignee?.trim() ? task.assignee : 'Unassigned'}
+                      </span>
+                      {task.dueDate && <span style={{ fontSize: 11, color: C.textSecondary, fontWeight: 600 }}>Due {task.dueDate}</span>}
+                    </div>
+
+                    <div style={{ display: 'flex', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
+                      {columns.filter((c) => c !== col).map((nextCol) => (
+                        <button key={nextCol} onClick={() => onMoveTask(task.id, nextCol)}
+                          style={{ fontSize: 10, padding: '5px 9px', border: `1px solid ${C.border}`, borderRadius: 999, background: C.mainBg, color: C.textSecondary, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 700 }}>
+                          Move to {nextCol}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {showModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: C.cardBg, borderRadius: 14, padding: 24, width: 460, boxShadow: '0 12px 36px rgba(0,0,0,0.16)', border: `1px solid ${C.border}` }}>
+            <h3 style={{ margin: '0 0 16px', fontSize: 15, fontWeight: 700, color: C.textPrimary }}>Add Task</h3>
+            {[['Task Name', 'name', 'text', 'e.g. Build login page'], ['Assign To', 'assignee', 'text', 'Team member name'], ['Due Date', 'dueDate', 'date', ''], ['Feature', 'feature', 'text', 'Linked feature (optional)']].map(([label, key, type, ph]) => (
+              <div key={key} style={{ marginBottom: 12 }}>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: C.textPrimary, marginBottom: 5 }}>{label}</label>
+                <input type={type} placeholder={ph} value={newTask[key]} onChange={e => setNewTask(t => ({ ...t, [key]: e.target.value }))} style={inp} />
+              </div>
+            ))}
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: C.textPrimary, marginBottom: 5 }}>Priority</label>
+              <select value={newTask.priority} onChange={e => setNewTask(t => ({ ...t, priority: e.target.value }))} style={inp}>
+                {['Must Have', 'Should Have', 'Could Have', "Won't Have"].map((p) => <option key={p}>{p}</option>)}
+              </select>
+            </div>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button onClick={() => setShowModal(false)} style={{ padding: '9px 16px', border: `1px solid ${C.border}`, borderRadius: 8, background: C.cardBg, fontSize: 13, cursor: 'pointer', color: C.textSecondary, fontFamily: 'inherit' }}>Cancel</button>
+              <button onClick={submitTask} style={{ padding: '9px 16px', background: C.primary, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Add Task</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ---- Enhanced Timeline / Gantt Tab ----
 function TimelineTab({ project }) {
   const C = useThemeColors()
@@ -607,10 +724,13 @@ function TimelineTab({ project }) {
   const start = new Date(project.startDate)
   const end = new Date(project.deadline)
   const totalMs = Math.max(end - start, 1)
-  const statusColors = { Done: C.success, 'In Progress': C.primary, 'To Do': C.border }
+  const statusColors = {
+    Done: { fill: C.success, track: C.success + '14', text: C.success },
+    'In Progress': { fill: C.primary, track: C.primary + '14', text: C.primary },
+    'To Do': { fill: '#E7B84B', track: '#DCEAF6', text: '#8A6410' },
+  }
   const overdue = today > end
 
-  // Build month labels
   const months = []
   const cur = new Date(start.getFullYear(), start.getMonth(), 1)
   const endMonth = new Date(end.getFullYear(), end.getMonth() + 1, 1)
@@ -624,77 +744,112 @@ function TimelineTab({ project }) {
   }
 
   const todayPct = pct(today)
+  const totalDays = Math.max(1, Math.ceil(totalMs / 86400000))
+  const hasTodayMarker = today >= start && today <= end
+  const featureCount = project.features.length
+  const chartMinWidth = Math.max(760, months.length * 140)
 
   return (
-    <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 10, padding: 20 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <h4 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: C.textPrimary }}>Gantt Chart — Feature Timeline</h4>
-        <div style={{ display: 'flex', gap: 14 }}>
-          {[['Done', C.success], ['In Progress', C.primary], ['To Do', C.border], ['Today', C.danger]].map(([label, color]) => (
-            <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <div style={{ width: label === 'Today' ? 2 : 10, height: label === 'Today' ? 14 : 10, borderRadius: label === 'Today' ? 1 : 2, background: color }} />
-              <span style={{ fontSize: 11, color: C.textSecondary }}>{label}</span>
+    <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 12, padding: 22, boxShadow: '0 10px 24px rgba(0,58,107,0.06)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, marginBottom: 18, flexWrap: 'wrap' }}>
+        <div>
+          <h4 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: C.textPrimary }}>Gantt Chart - Feature Timeline</h4>
+          <p style={{ margin: '6px 0 0', fontSize: 12, color: C.textSecondary }}>
+            {featureCount} feature{featureCount !== 1 ? 's' : ''} across {totalDays} day{totalDays !== 1 ? 's' : ''}
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          {[
+            ['Done', statusColors.Done.fill],
+            ['In Progress', statusColors['In Progress'].fill],
+            ['To Do', statusColors['To Do'].fill],
+            ['Today', C.danger],
+          ].map(([label, color]) => (
+            <div key={label} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 10px', borderRadius: 999, background: C.mainBg, border: `1px solid ${C.border}` }}>
+              <div style={{ width: label === 'Today' ? 3 : 10, height: label === 'Today' ? 16 : 10, borderRadius: label === 'Today' ? 2 : 3, background: color }} />
+              <span style={{ fontSize: 11, fontWeight: 600, color: C.textSecondary }}>{label}</span>
             </div>
           ))}
         </div>
       </div>
 
-      <div style={{ overflowX: 'auto' }}>
-        <div style={{ minWidth: 640 }}>
-          {/* Month header */}
-          <div style={{ display: 'flex', marginBottom: 6 }}>
-            <div style={{ width: 160, flexShrink: 0 }} />
-            <div style={{ flex: 1, position: 'relative', height: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 10, marginBottom: 18 }}>
+        {[
+          { label: 'Project Start', value: project.startDate, color: C.primary },
+          { label: 'Deadline', value: project.deadline, color: overdue ? C.danger : C.warning },
+          { label: 'Today Marker', value: hasTodayMarker ? today.toISOString().split('T')[0] : 'Outside range', color: hasTodayMarker ? C.danger : C.textSecondary },
+        ].map((item) => (
+          <div key={item.label} style={{ padding: '10px 12px', borderRadius: 10, background: C.mainBg, border: `1px solid ${C.border}` }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: C.textSecondary, textTransform: 'uppercase', letterSpacing: 0.4 }}>{item.label}</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: item.color, marginTop: 4 }}>{item.value}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ overflowX: 'auto', paddingBottom: 4 }}>
+        <div style={{ minWidth: chartMinWidth }}>
+          <div style={{ display: 'flex', marginBottom: 10 }}>
+            <div style={{ width: 220, flexShrink: 0, paddingRight: 16 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: C.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 }}>Features</div>
+            </div>
+            <div style={{ flex: 1, position: 'relative', height: 26, background: C.mainBg, borderRadius: 8, border: `1px solid ${C.border}` }}>
               {months.map((m, i) => {
                 const left = pct(m)
                 return (
-                  <div key={i} style={{ position: 'absolute', left: `${left}%`, fontSize: 10, color: C.textSecondary, fontWeight: 500, whiteSpace: 'nowrap', transform: 'translateX(-50%)' }}>
-                    {m.toLocaleDateString('en', { month: 'short', year: i === 0 || m.getMonth() === 0 ? '2-digit' : undefined })}
+                  <div key={i} style={{ position: 'absolute', left: `${left}%`, top: 6, fontSize: 10, color: C.textSecondary, fontWeight: 700, whiteSpace: 'nowrap', transform: 'translateX(-50%)' }}>
+                    {m.toLocaleDateString('en', { month: 'short', year: '2-digit' })}
                   </div>
                 )
               })}
             </div>
           </div>
 
-          {/* Grid lines + feature rows */}
           <div style={{ position: 'relative' }}>
-            {/* Today marker */}
-            {today >= start && today <= end && (
-              <div style={{ position: 'absolute', left: `calc(160px + ${todayPct}% * (100% - 160px) / 100)`, top: 0, bottom: 0, width: 2, background: C.danger, zIndex: 3, opacity: 0.85 }} />
+            {hasTodayMarker && (
+              <div style={{ position: 'absolute', left: `calc(220px + ${todayPct}% * (100% - 220px) / 100)`, top: 0, bottom: 0, width: 3, background: C.danger, zIndex: 3, opacity: 0.9, boxShadow: `0 0 0 2px ${C.cardBg}` }} />
             )}
 
             {project.features.map((f, i) => {
               const segCount = project.features.length
               const segDuration = totalMs / segCount
               const segStart = start.getTime() + i * segDuration
-              const segEnd = segStart + segDuration
               const leftPct = ((segStart - start.getTime()) / totalMs) * 100
               const widthPct = (segDuration / totalMs) * 100
               const isOverdue = f.status !== 'Done' && overdue
-              const barColor = isOverdue ? C.danger : (statusColors[f.status] || C.border)
+              const statusCfg = statusColors[f.status] || statusColors['To Do']
+              const barFill = isOverdue ? C.danger : statusCfg.fill
+              const barText = isOverdue ? '#FFFFFF' : statusCfg.text
+              const trackBg = isOverdue ? C.danger + '14' : statusCfg.track
 
               return (
-                <div key={f.id} style={{ display: 'flex', alignItems: 'center', marginBottom: 10, gap: 0 }}>
-                  <div style={{ width: 160, fontSize: 12, color: C.textPrimary, flexShrink: 0, paddingRight: 12, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={f.name}>
-                    {f.name}
+                <div key={f.id} style={{ display: 'flex', alignItems: 'center', marginBottom: 12, gap: 0 }}>
+                  <div style={{ width: 220, fontSize: 12, color: C.textPrimary, flexShrink: 0, paddingRight: 16 }} title={f.name}>
+                    <div style={{ fontWeight: 600, lineHeight: 1.35, wordBreak: 'break-word' }}>{f.name}</div>
                   </div>
-                  <div style={{ flex: 1, height: 26, background: C.mainBg, borderRadius: 4, position: 'relative', overflow: 'visible' }}>
-                    {/* Month grid lines */}
+                  <div style={{ flex: 1, height: 30, background: '#F3F8FC', borderRadius: 8, position: 'relative', overflow: 'hidden', border: `1px solid ${C.border}` }}>
                     {months.map((m, mi) => {
                       const lp = pct(m)
                       return lp > 0 && lp < 100 ? (
-                        <div key={mi} style={{ position: 'absolute', left: `${lp}%`, top: 0, bottom: 0, width: 1, background: C.border, opacity: 0.5 }} />
+                        <div key={mi} style={{ position: 'absolute', left: `${lp}%`, top: 0, bottom: 0, width: 1, background: '#D7E6F2' }} />
                       ) : null
                     })}
+                    <div style={{ position: 'absolute', inset: 0, background: trackBg }} />
                     <div style={{
                       position: 'absolute',
-                      left: `${leftPct}%`, width: `${widthPct}%`,
-                      height: '100%', background: barColor,
-                      borderRadius: 4, display: 'flex', alignItems: 'center', paddingLeft: 8,
+                      left: `${leftPct}%`,
+                      width: `${widthPct}%`,
+                      top: 3,
+                      bottom: 3,
+                      background: `linear-gradient(135deg, ${barFill}, ${barFill}DD)`,
+                      borderRadius: 7,
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '0 10px',
                       transition: 'background 0.2s',
+                      boxShadow: '0 6px 16px rgba(27,88,134,0.14)',
                     }}>
-                      <span style={{ fontSize: 10, color: '#fff', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {isOverdue ? '! Overdue' : f.status}
+                      <span style={{ fontSize: 10, color: barText, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', letterSpacing: 0.2 }}>
+                        {isOverdue ? 'Overdue' : f.status}
                       </span>
                     </div>
                   </div>
@@ -703,19 +858,413 @@ function TimelineTab({ project }) {
             })}
           </div>
 
-          {/* Date labels */}
-          <div style={{ display: 'flex', marginTop: 4 }}>
-            <div style={{ width: 160, flexShrink: 0 }} />
-            <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 10, color: C.textSecondary }}>{project.startDate}</span>
-              {today >= start && today <= end && (
-                <span style={{ fontSize: 10, color: C.danger, fontWeight: 600 }}>Today</span>
+          <div style={{ display: 'flex', marginTop: 10 }}>
+            <div style={{ width: 220, flexShrink: 0 }} />
+            <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: C.mainBg, borderRadius: 8, border: `1px solid ${C.border}` }}>
+              <span style={{ fontSize: 11, color: C.textSecondary }}><strong style={{ color: C.textPrimary }}>Start:</strong> {project.startDate}</span>
+              {hasTodayMarker && (
+                <span style={{ fontSize: 11, color: C.danger, fontWeight: 700 }}>Today</span>
               )}
-              <span style={{ fontSize: 10, color: overdue ? C.danger : C.textSecondary, fontWeight: overdue ? 600 : 400 }}>{project.deadline}{overdue ? ' !' : ''}</span>
+              <span style={{ fontSize: 11, color: overdue ? C.danger : C.textSecondary, fontWeight: overdue ? 700 : 500 }}>
+                <strong style={{ color: overdue ? C.danger : C.textPrimary }}>End:</strong> {project.deadline}{overdue ? ' !' : ''}
+              </span>
             </div>
           </div>
         </div>
       </div>
+    </div>
+  )
+}
+
+
+// ---- PERT Tab ----
+function PertCard({ children, style, C }) {
+  return <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 10, padding: 20, ...style }}>{children}</div>
+}
+function PertModal({ title, onClose, children, C }) {
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div style={{ background: C.cardBg, borderRadius: 14, padding: 28, width: 500, boxShadow: '0 12px 40px rgba(0,0,0,0.18)', border: `1px solid ${C.border}`, maxHeight: '80vh', overflowY: 'auto' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+          <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: C.textPrimary }}>{title}</h3>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: C.textSecondary, lineHeight: 1, padding: 2 }}>x</button>
+        </div>
+        {children}
+      </div>
+    </div>
+  )
+}
+
+function buildPertLayout(tasks) {
+  if (!tasks.length) return { nodes: [], edges: [], startEdges: [], endEdges: [], startNode: null, endNode: null, width: 0, height: 0, projectDuration: 0, criticalTaskIds: new Set() }
+
+  const NODE_W = 170, NODE_H = 72, PAD_X = 240, PAD_Y = 100, CR = 26
+
+  const idSet = new Set(tasks.map(t => t.id))
+  const adj  = Object.fromEntries(tasks.map(t => [t.id, []]))
+  const pred = Object.fromEntries(tasks.map(t => [t.id, []]))
+  const inDeg = Object.fromEntries(tasks.map(t => [t.id, 0]))
+
+  tasks.forEach(t => {
+    ;(t.dependsOn || []).forEach(dep => {
+      if (!idSet.has(dep)) return
+      adj[dep].push(t.id)
+      pred[t.id].push(dep)
+      inDeg[t.id]++
+    })
+  })
+
+  // Kahn topological sort
+  const topoOrder = []
+  const inDegCopy = { ...inDeg }
+  const q = tasks.filter(t => inDegCopy[t.id] === 0).map(t => t.id)
+  let qi = 0
+  while (qi < q.length) {
+    const cur = q[qi++]
+    topoOrder.push(cur)
+    adj[cur].forEach(nxt => { if (--inDegCopy[nxt] === 0) q.push(nxt) })
+  }
+
+  // Duration: story points as days, default 3
+  const dur = Object.fromEntries(tasks.map(t => [t.id, Math.max(1, t.storyPoints || 3)]))
+
+  // Forward pass — ES, EF
+  const ES = {}, EF = {}
+  topoOrder.forEach(id => {
+    ES[id] = pred[id].length ? Math.max(...pred[id].map(p => EF[p])) : 0
+    EF[id] = ES[id] + dur[id]
+  })
+  const projectDuration = topoOrder.length ? Math.max(...topoOrder.map(id => EF[id])) : 0
+
+  // Backward pass — LF, LS
+  const LF = {}, LS = {}
+  ;[...topoOrder].reverse().forEach(id => {
+    LF[id] = adj[id].length ? Math.min(...adj[id].map(s => LS[s])) : projectDuration
+    LS[id] = LF[id] - dur[id]
+  })
+
+  // Float + critical path
+  const float = Object.fromEntries(tasks.map(t => [t.id, Math.round((LS[t.id] - ES[t.id]) * 10) / 10]))
+  const criticalTaskIds = new Set(tasks.filter(t => float[t.id] === 0).map(t => t.id))
+
+  // Column levels via BFS
+  const level = Object.fromEntries(tasks.map(t => [t.id, 0]))
+  topoOrder.forEach(id => { adj[id].forEach(nxt => { level[nxt] = Math.max(level[nxt], level[id] + 1) }) })
+
+  const byLevel = {}
+  tasks.forEach(t => { const l = level[t.id] || 0; if (!byLevel[l]) byLevel[l] = []; byLevel[l].push(t) })
+  const maxLevel = Math.max(...Object.keys(byLevel).map(Number), 0)
+
+  // Node positions — column 0 reserved for Start
+  const pos = {}
+  Object.entries(byLevel).forEach(([lv, ts]) => {
+    ts.forEach((t, i) => {
+      pos[t.id] = { x: (Number(lv) + 1) * PAD_X + CR * 2 + 10, y: i * PAD_Y + 10 }
+    })
+  })
+
+  const maxY = Math.max(...Object.values(pos).map(p => p.y + NODE_H), NODE_H + 10)
+  const centerY = maxY / 2 - CR
+
+  const startNode = { x: 10,                                               y: centerY, r: CR }
+  const endNode   = { x: (maxLevel + 2) * PAD_X + CR * 2 + 10 + NODE_W,  y: centerY, r: CR }
+
+  const nodes = tasks.map(t => ({
+    ...t,
+    x: pos[t.id]?.x || 0,
+    y: pos[t.id]?.y || 0,
+    w: NODE_W, h: NODE_H,
+    es: ES[t.id], ef: EF[t.id],
+    ls: LS[t.id], lf: LF[t.id],
+    float: float[t.id],
+    duration: dur[t.id],
+    critical: criticalTaskIds.has(t.id),
+  }))
+
+  const edges = []
+  tasks.forEach(t => {
+    ;(t.dependsOn || []).forEach(dep => {
+      if (!idSet.has(dep) || !pos[dep] || !pos[t.id]) return
+      edges.push({
+        x1: pos[dep].x + NODE_W, y1: pos[dep].y + NODE_H / 2,
+        x2: pos[t.id].x,          y2: pos[t.id].y + NODE_H / 2,
+        critical: criticalTaskIds.has(dep) && criticalTaskIds.has(t.id),
+      })
+    })
+  })
+
+  const rootIds = tasks.filter(t => pred[t.id].length === 0).map(t => t.id)
+  const leafIds = tasks.filter(t => adj[t.id].length === 0).map(t => t.id)
+
+  const startEdges = rootIds.map(id => ({
+    x1: startNode.x + CR, y1: startNode.y + CR,
+    x2: pos[id]?.x || 0,  y2: (pos[id]?.y || 0) + NODE_H / 2,
+    critical: criticalTaskIds.has(id),
+  }))
+  const endEdges = leafIds.map(id => ({
+    x1: (pos[id]?.x || 0) + NODE_W, y1: (pos[id]?.y || 0) + NODE_H / 2,
+    x2: endNode.x + CR,              y2: endNode.y + CR,
+    critical: criticalTaskIds.has(id),
+  }))
+
+  const width  = endNode.x + CR * 2 + 20
+  const height = Math.max(maxY + 30, CR * 2 + 60)
+
+  return { nodes, edges, startEdges, endEdges, startNode, endNode, width, height, projectDuration, criticalTaskIds, float, dur }
+}
+
+function PertTab({ project }) {
+  const C = useThemeColors()
+  const { updateTask } = useProjects()
+  const [selStoryId, setSelStoryId] = useState('')
+  const [editTask, setEditTask]     = useState(null)
+  const [depInput, setDepInput]     = useState([])
+
+  const allTasks   = project.tasks || []
+  const story      = project.features?.find(f => f.id === selStoryId)
+  const storyTasks = selStoryId
+    ? allTasks.filter(t => t.storyId === selStoryId || t.feature === story?.name)
+    : allTasks
+
+  function openDepEdit(task) { setEditTask(task); setDepInput(task.dependsOn || []) }
+  async function saveDeps() {
+    if (!editTask) return
+    await updateTask(project.id, editTask.id, { dependsOn: depInput })
+    setEditTask(null)
+  }
+  function toggleDep(taskId) {
+    setDepInput(prev => prev.includes(taskId) ? prev.filter(d => d !== taskId) : [...prev, taskId])
+  }
+
+  const { nodes, edges, startEdges, endEdges, startNode, endNode, width, height, projectDuration, criticalTaskIds, float, dur } = buildPertLayout(storyTasks)
+
+  const CRIT_COLOR  = '#D97706'   // amber — critical path
+  const CRIT_BG     = '#FEF3C7'
+  const CRIT_BORDER = '#F59E0B'
+  const NORM_COLOR  = C.primary
+  const NORM_BG     = C.primary + '12'
+  const DONE_COLOR  = C.success
+  const DONE_BG     = C.success + '12'
+
+  function nodeStyle(n) {
+    if (n.status === 'Done')        return { fill: DONE_BG,  stroke: DONE_COLOR,  text: DONE_COLOR  }
+    if (n.critical)                 return { fill: CRIT_BG,  stroke: CRIT_BORDER, text: CRIT_COLOR  }
+    return                                 { fill: NORM_BG,  stroke: NORM_COLOR,  text: NORM_COLOR  }
+  }
+
+  const criticalNames = nodes.filter(n => n.critical).map(n => n.name)
+  const hasDeps = edges.length > 0
+
+  return (
+    <div>
+      {/* Filter */}
+      <div style={{ display: 'flex', gap: 12, marginBottom: 18, alignItems: 'flex-end' }}>
+        <div>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textSecondary, marginBottom: 4 }}>Filter by Story</label>
+          <select value={selStoryId} onChange={e => setSelStoryId(e.target.value)}
+            style={{ padding: '8px 12px', border: `1.5px solid ${C.border}`, borderRadius: 8, fontSize: 13, background: C.cardBg, color: C.textPrimary, fontFamily: 'inherit', minWidth: 240 }}>
+            <option value="">All tasks</option>
+            {(project.features || []).map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+          </select>
+        </div>
+      </div>
+
+      {/* Summary stats */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+        {[
+          { l: 'Total Tasks',       v: storyTasks.length,              c: C.primary     },
+          { l: 'Project Duration',  v: `${projectDuration} days`,      c: CRIT_COLOR    },
+          { l: 'Critical Tasks',    v: criticalTaskIds.size,           c: CRIT_COLOR    },
+          { l: 'With Dependencies', v: storyTasks.filter(t => (t.dependsOn || []).length > 0).length, c: C.warning },
+        ].map(m => (
+          <div key={m.l} style={{ padding: '12px 16px', background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 8, textAlign: 'center' }}>
+            <div style={{ fontSize: 20, fontWeight: 800, color: m.c }}>{m.v}</div>
+            <div style={{ fontSize: 11, color: C.textSecondary, marginTop: 3 }}>{m.l}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Critical path callout */}
+      {hasDeps && criticalNames.length > 0 && (
+        <div style={{ background: CRIT_BG, border: `1px solid ${CRIT_BORDER}`, borderLeft: `4px solid ${CRIT_COLOR}`, borderRadius: 8, padding: '10px 16px', marginBottom: 18 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: CRIT_COLOR, marginBottom: 4 }}>Critical Path — {projectDuration} days total</div>
+          <div style={{ fontSize: 12, color: '#78350F' }}>{criticalNames.join(' → ')}</div>
+        </div>
+      )}
+
+      <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 18, alignItems: 'start' }}>
+        {/* Dependency list */}
+        <PertCard C={C}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: C.textPrimary, marginBottom: 14, paddingBottom: 8, borderBottom: `1px solid ${C.border}` }}>Task Dependencies</div>
+          {storyTasks.length === 0
+            ? <p style={{ margin: 0, fontSize: 13, color: C.textSecondary }}>No tasks found.</p>
+            : storyTasks.map(t => {
+                const deps = (t.dependsOn || []).map(d => allTasks.find(tk => tk.id === d)?.name || d)
+                const isCrit = criticalTaskIds.has(t.id)
+                const floatVal = float?.[t.id] ?? '—'
+                const duration = dur?.[t.id] ?? (t.storyPoints || 3)
+                return (
+                  <div key={t.id} style={{ padding: '10px 0', borderBottom: `1px solid ${C.border}` }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: 12, fontWeight: 600, color: isCrit ? CRIT_COLOR : C.textPrimary }}>{t.name}</span>
+                          {isCrit && <span style={{ fontSize: 9, fontWeight: 700, background: CRIT_BG, color: CRIT_COLOR, padding: '1px 6px', borderRadius: 3, border: `1px solid ${CRIT_BORDER}` }}>CRITICAL</span>}
+                        </div>
+                        <div style={{ fontSize: 11, color: C.textSecondary, marginTop: 2 }}>
+                          {duration}d duration · Float: {floatVal}d
+                        </div>
+                        {deps.length > 0 && (
+                          <div style={{ fontSize: 11, color: C.textSecondary, marginTop: 3 }}>
+                            After: {deps.map((d, i) => <span key={i} style={{ background: C.warning + '18', color: C.warning, padding: '1px 5px', borderRadius: 3, marginRight: 3, fontWeight: 600 }}>{d}</span>)}
+                          </div>
+                        )}
+                      </div>
+                      <button onClick={() => openDepEdit(t)}
+                        style={{ padding: '3px 10px', background: C.primary + '12', color: C.primary, border: `1px solid ${C.primary}25`, borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
+                        Edit
+                      </button>
+                    </div>
+                  </div>
+                )
+              })
+          }
+        </PertCard>
+
+        {/* PERT SVG diagram */}
+        <PertCard C={C} style={{ overflowX: 'auto', overflowY: 'visible' }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: C.textPrimary, marginBottom: 6, paddingBottom: 8, borderBottom: `1px solid ${C.border}` }}>PERT Network Diagram</div>
+          <div style={{ fontSize: 11, color: C.textSecondary, marginBottom: 14 }}>
+            Node duration = story points (days). {hasDeps ? 'Orange = critical path (zero float).' : 'Set dependencies using Edit to draw arrows.'}
+          </div>
+
+          {storyTasks.length === 0
+            ? <p style={{ margin: 0, fontSize: 13, color: C.textSecondary }}>No tasks to display.</p>
+            : <svg width={width} height={Math.max(height, 120)} style={{ display: 'block', minWidth: 400, overflow: 'visible' }}>
+                <defs>
+                  <marker id="arrow-norm" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+                    <path d="M0,0 L0,6 L9,3 z" fill={NORM_COLOR} />
+                  </marker>
+                  <marker id="arrow-crit" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+                    <path d="M0,0 L0,6 L9,3 z" fill={CRIT_COLOR} />
+                  </marker>
+                  <marker id="arrow-done" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+                    <path d="M0,0 L0,6 L9,3 z" fill={DONE_COLOR} />
+                  </marker>
+                </defs>
+
+                {/* Start node */}
+                {startNode && (
+                  <g>
+                    <circle cx={startNode.x + startNode.r} cy={startNode.y + startNode.r} r={startNode.r} fill={C.success} />
+                    <text x={startNode.x + startNode.r} y={startNode.y + startNode.r + 4} textAnchor="middle" fontSize={9} fontWeight={700} fill="#fff">START</text>
+                  </g>
+                )}
+
+                {/* End node */}
+                {endNode && (
+                  <g>
+                    <circle cx={endNode.x + endNode.r} cy={endNode.y + endNode.r} r={endNode.r} fill={C.success} />
+                    <text x={endNode.x + endNode.r} y={endNode.y + endNode.r + 4} textAnchor="middle" fontSize={9} fontWeight={700} fill="#fff">END</text>
+                  </g>
+                )}
+
+                {/* Start edges */}
+                {startEdges.map((e, i) => {
+                  const color = e.critical ? CRIT_COLOR : NORM_COLOR
+                  const mx = (e.x1 + e.x2) / 2
+                  return <path key={`se${i}`} d={`M${e.x1},${e.y1} L${e.x2},${e.y2}`}
+                    fill="none" stroke={color} strokeWidth={e.critical ? 2 : 1.5}
+                    markerEnd={e.critical ? 'url(#arrow-crit)' : 'url(#arrow-norm)'} opacity={0.8} />
+                })}
+
+                {/* End edges */}
+                {endEdges.map((e, i) => {
+                  const color = e.critical ? CRIT_COLOR : NORM_COLOR
+                  const mx = (e.x1 + e.x2) / 2
+                  return <path key={`ee${i}`} d={`M${e.x1},${e.y1} L${e.x2},${e.y2}`}
+                    fill="none" stroke={color} strokeWidth={e.critical ? 2 : 1.5}
+                    markerEnd={e.critical ? 'url(#arrow-crit)' : 'url(#arrow-norm)'} opacity={0.8} />
+                })}
+
+                {/* Task-to-task edges */}
+                {edges.map((e, i) => {
+                  const color = e.critical ? CRIT_COLOR : NORM_COLOR
+                  const mx = (e.x1 + e.x2) / 2
+                  return <path key={`e${i}`} d={`M${e.x1},${e.y1} L${e.x2},${e.y2}`}
+                    fill="none" stroke={color} strokeWidth={e.critical ? 2.5 : 1.5}
+                    markerEnd={e.critical ? 'url(#arrow-crit)' : 'url(#arrow-norm)'} opacity={0.85} />
+                })}
+
+                {/* Task nodes */}
+                {nodes.map(n => {
+                  const ns = nodeStyle(n)
+                  const label = n.name.length > 24 ? n.name.slice(0, 22) + '…' : n.name
+                  return (
+                    <g key={n.id}>
+                      <rect x={n.x} y={n.y} width={n.w} height={n.h} rx={8}
+                        fill={ns.fill} stroke={ns.stroke} strokeWidth={n.critical ? 2.5 : 1.5}
+                        style={{ filter: n.critical ? `drop-shadow(0 2px 6px ${CRIT_COLOR}40)` : 'none' }} />
+                      {/* Top divider line */}
+                      <line x1={n.x} y1={n.y + n.h - 22} x2={n.x + n.w} y2={n.y + n.h - 22} stroke={ns.stroke} strokeWidth={0.8} opacity={0.4} />
+                      {/* Task name */}
+                      <foreignObject x={n.x + 7} y={n.y + 5} width={n.w - 14} height={n.h - 28}>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: ns.text, lineHeight: 1.35, wordBreak: 'break-word', overflow: 'hidden' }}>{label}</div>
+                      </foreignObject>
+                      {/* Bottom bar: duration + status */}
+                      <text x={n.x + 7} y={n.y + n.h - 7} fontSize={9} fontWeight={600} fill={ns.text} opacity={0.85}>
+                        {n.duration}d
+                      </text>
+                      <text x={n.x + n.w - 7} y={n.y + n.h - 7} fontSize={9} fontWeight={600} fill={ns.text} opacity={0.85} textAnchor="end">
+                        {n.status === 'Done' ? 'Done' : n.status === 'In Progress' ? 'Active' : `Float:${n.float}d`}
+                      </text>
+                    </g>
+                  )
+                })}
+              </svg>
+          }
+
+          {/* Legend */}
+          <div style={{ display: 'flex', gap: 18, marginTop: 16, flexWrap: 'wrap', paddingTop: 12, borderTop: `1px solid ${C.border}` }}>
+            {[
+              { fill: NORM_BG,  stroke: NORM_COLOR,  label: 'Normal task'    },
+              { fill: CRIT_BG,  stroke: CRIT_BORDER, label: 'Critical path'  },
+              { fill: DONE_BG,  stroke: DONE_COLOR,  label: 'Done'           },
+            ].map(l => (
+              <span key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: C.textSecondary }}>
+                <span style={{ width: 24, height: 12, borderRadius: 3, background: l.fill, border: `2px solid ${l.stroke}`, display: 'inline-block' }} />
+                {l.label}
+              </span>
+            ))}
+            <span style={{ fontSize: 11, color: C.textSecondary }}>· Duration = story points (days) · Float = slack time available</span>
+          </div>
+        </PertCard>
+      </div>
+
+      {/* Edit dependencies modal */}
+      {editTask && (
+        <PertModal title={`Set Dependencies — ${editTask.name}`} onClose={() => setEditTask(null)} C={C}>
+          <p style={{ margin: '0 0 14px', fontSize: 13, color: C.textSecondary }}>Select tasks that must finish before this one can start.</p>
+          {allTasks.filter(t => t.id !== editTask.id).length === 0
+            ? <p style={{ color: C.textSecondary, fontSize: 13 }}>No other tasks in this project.</p>
+            : allTasks.filter(t => t.id !== editTask.id).map(t => {
+                const checked = depInput.includes(t.id)
+                const isCrit = criticalTaskIds.has(t.id)
+                return (
+                  <label key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderBottom: `1px solid ${C.border}`, cursor: 'pointer' }}>
+                    <input type="checkbox" checked={checked} onChange={() => toggleDep(t.id)} style={{ width: 14, height: 14, accentColor: C.primary, cursor: 'pointer' }} />
+                    <span style={{ flex: 1, fontSize: 13, color: isCrit ? CRIT_COLOR : C.textPrimary, fontWeight: isCrit ? 600 : 400 }}>{t.name}</span>
+                    <span style={{ fontSize: 11, color: C.textSecondary }}>{dur?.[t.id] ?? (t.storyPoints || 3)}d</span>
+                  </label>
+                )
+              })
+          }
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20 }}>
+            <button onClick={() => setEditTask(null)} style={{ padding: '8px 18px', background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 13, cursor: 'pointer', color: C.textSecondary, fontFamily: 'inherit' }}>Cancel</button>
+            <button onClick={saveDeps} style={{ padding: '8px 18px', background: C.primary, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Save Dependencies</button>
+          </div>
+        </PertModal>
+      )}
     </div>
   )
 }
@@ -796,7 +1345,7 @@ function ChangeRequestsTab({ projectId }) {
                   {CR_STATUSES.filter(s => s !== cr.status).map(s => (
                     <button key={s} onClick={() => updateStatus(cr.id, s)}
                       style={{ padding: '3px 10px', border: `1px solid ${(statusColor[s] || C.border)}30`, borderRadius: 5, background: (statusColor[s] || C.border) + '10', color: statusColor[s] || C.textSecondary, fontSize: 10, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-                      → {s}
+                      â†’ {s}
                     </button>
                   ))}
                 </div>
@@ -853,47 +1402,49 @@ export default function ProjectDetail() {
     return <div style={{ padding: 32, textAlign: 'center', color: C.textSecondary }}>Project not found.</div>
   }
 
-  const tabs = ['Overview', 'Estimation', 'Risks', 'Team', 'Activity', 'Tasks', 'Timeline', 'Change Requests']
+  const tabs = ['Overview', 'Estimation', 'Risks', 'Team', 'Activity', 'Tasks', 'Timeline', 'PERT', 'Change Requests']
   const doneFeat = project.features.filter(f => f.status === 'Done').length
   const durationDays = Math.ceil((new Date(project.deadline) - new Date(project.startDate)) / 86400000)
+  const budgetLabel = project.budget > 0 ? `$${Number(project.budget).toLocaleString()}` : 'Not set'
+  const budgetSub = project.budget > 0 ? 'Allocated budget' : 'Needs project update'
 
   return (
     <div style={{ padding: 28, background: C.mainBg, minHeight: '100%' }}>
-      <button onClick={() => navigate('/dashboard')} style={{ background: 'none', border: 'none', color: C.textSecondary, cursor: 'pointer', fontSize: 13, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 6, padding: 0, fontFamily: 'inherit' }}>
+      <button onClick={() => navigate('/dashboard')} style={{ background: 'none', border: 'none', color: C.textSecondary, cursor: 'pointer', fontSize: 13, marginBottom: 14, display: 'inline-flex', alignItems: 'center', gap: 8, padding: '4px 2px', fontFamily: 'inherit', fontWeight: 600 }}>
         ← Back to Projects
       </button>
 
-      <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 12, padding: '20px 24px', marginBottom: 20 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-              <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: C.textPrimary }}>{project.name}</h1>
+      <div style={{ background: 'linear-gradient(135deg, #FFFFFF 0%, #F5FBFF 100%)', border: `1px solid ${C.border}`, borderRadius: 18, padding: '24px 26px', marginBottom: 22, boxShadow: '0 18px 36px rgba(7, 42, 74, 0.06)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 18, flexWrap: 'wrap' }}>
+          <div style={{ minWidth: 0, flex: '1 1 520px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
+              <h1 style={{ margin: 0, fontSize: 32, lineHeight: 1.1, fontWeight: 800, color: C.textPrimary }}>{project.name}</h1>
               <StatusBadge status={project.status} />
-              <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600, background: C.primary + '18', color: C.primary }}>{project.domain}</span>
+              <span style={{ padding: '5px 10px', borderRadius: 999, fontSize: 11, fontWeight: 700, background: C.primary + '14', color: C.primary }}>{project.domain}</span>
             </div>
-            <div style={{ display: 'flex', gap: 20, fontSize: 12, color: C.textSecondary }}>
-              <span style={{ display:'flex', alignItems:'center', gap:5 }}>
+            <div style={{ display: 'flex', gap: 20, fontSize: 13, color: C.textSecondary, flexWrap: 'wrap' }}>
+              <span style={{ display:'flex', alignItems:'center', gap:6, padding: '8px 12px', background: '#F6FAFD', borderRadius: 999, border: `1px solid ${C.border}` }}>
                 <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                {project.startDate} → {project.deadline}
+                {project.startDate} - {project.deadline}
               </span>
-              <span style={{ display:'flex', alignItems:'center', gap:5 }}>
+              <span style={{ display:'flex', alignItems:'center', gap:6, padding: '8px 12px', background: '#F6FAFD', borderRadius: 999, border: `1px solid ${C.border}` }}>
                 <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
                 {project.teamSize} members
               </span>
             </div>
           </div>
           {isPM && (
-            <div style={{ display: 'flex', gap: 10 }}>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
               <button onClick={() => navigate(`/dashboard/projects/${id}/risks`)}
-                style={{ padding: '8px 14px', background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 12, cursor: 'pointer', color: C.textSecondary, fontFamily: 'inherit' }}>
+                style={{ padding: '10px 15px', background: '#FFFFFF', border: `1px solid ${C.border}`, borderRadius: 10, fontSize: 12, cursor: 'pointer', color: C.textSecondary, fontFamily: 'inherit', fontWeight: 700 }}>
                 + Add Risk
               </button>
               <button onClick={() => navigate(`/dashboard/projects/${id}/estimate`)}
-                style={{ padding: '8px 14px', background: C.primary, color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                style={{ padding: '10px 16px', background: C.primary, color: '#fff', border: 'none', borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 12px 24px rgba(0,58,107,0.18)' }}>
                 Run Estimation
               </button>
               <button onClick={() => navigate(`/dashboard/projects/${id}/edit`)}
-                style={{ padding: '8px 14px', background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 12, cursor: 'pointer', color: C.textSecondary, fontFamily: 'inherit' }}>
+                style={{ padding: '10px 15px', background: '#FFFFFF', border: `1px solid ${C.border}`, borderRadius: 10, fontSize: 12, cursor: 'pointer', color: C.textSecondary, fontFamily: 'inherit', fontWeight: 700 }}>
                 Edit
               </button>
             </div>
@@ -901,18 +1452,18 @@ export default function ProjectDetail() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16, marginBottom: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: 16, marginBottom: 22 }}>
         <MetricCard label="Total Features" value={project.features.length} sub={`${doneFeat} done`} icon="features" />
         <MetricCard label="Estimation Runs" value={project.estimations.length} sub={project.estimations.length > 0 ? `Latest: ${project.estimations[project.estimations.length - 1].technique}` : 'None yet'} icon="chart" color="#0891b2" />
         <MetricCard label="Total Risks" value={project.risks.length} sub={`${project.risks.filter(r => r.priority === 'High').length} High priority`} icon="shield" color={C.danger} />
-        <MetricCard label="Duration" value={`${durationDays}d`} sub={`${project.startDate} – ${project.deadline}`} icon="calendar" color={C.success} />
-        <MetricCard label="Budget" value={project.budget > 0 ? `$${Number(project.budget).toLocaleString()}` : 'Not set'} sub={project.budget > 0 ? 'Allocated budget' : 'Edit project to set'} icon="dollar" color="#059669" />
+        <MetricCard label="Duration" value={`${durationDays}d`} sub={`${project.startDate} - ${project.deadline}`} icon="calendar" color={C.success} />
+        <MetricCard label="Budget" value={budgetLabel} sub={budgetSub} icon="dollar" color={project.budget > 0 ? '#059669' : '#B7791F'} />
       </div>
 
-      <div style={{ display: 'flex', gap: 4, borderBottom: `2px solid ${C.border}`, marginBottom: 20 }}>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
         {tabs.map(t => (
           <button key={t} onClick={() => setTab(t)}
-            style={{ padding: '10px 16px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 13, fontWeight: tab === t ? 600 : 400, color: tab === t ? C.primary : C.textSecondary, borderBottom: tab === t ? `2px solid ${C.primary}` : '2px solid transparent', marginBottom: -2, fontFamily: 'inherit' }}>
+            style={{ padding: '10px 16px', border: `1px solid ${tab === t ? C.primary + '30' : C.border}`, background: tab === t ? C.primary + '12' : C.cardBg, cursor: 'pointer', fontSize: 13, fontWeight: tab === t ? 700 : 500, color: tab === t ? C.primary : C.textSecondary, borderRadius: 999, fontFamily: 'inherit', boxShadow: tab === t ? '0 8px 18px rgba(0,58,107,0.10)' : 'none' }}>
             {t}
           </button>
         ))}
@@ -923,8 +1474,9 @@ export default function ProjectDetail() {
       {tab === 'Risks' && <RisksTab project={project} onManageRisks={() => navigate(`/dashboard/projects/${id}/risks`)} />}
       {tab === 'Team' && <TeamTab project={project} />}
       {tab === 'Activity' && <ActivityTab project={project} onAddComment={comment => addComment(id, comment)} />}
-      {tab === 'Tasks' && <TasksTab project={project} onAddTask={task => addTask(id, task)} onMoveTask={(taskId, status) => updateTaskStatus(id, taskId, status)} />}
+      {tab === 'Tasks' && <TasksBoardTab project={project} onAddTask={task => addTask(id, task)} onMoveTask={(taskId, status) => updateTaskStatus(id, taskId, status)} />}
       {tab === 'Timeline' && <TimelineTab project={project} />}
+      {tab === 'PERT' && <PertTab project={project} />}
       {tab === 'Change Requests' && <ChangeRequestsTab projectId={id} />}
     </div>
   )
