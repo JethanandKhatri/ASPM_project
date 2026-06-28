@@ -352,7 +352,7 @@ function BacklogTab({ allTasks, sprints, projects, teamMembers }) {
   const filtered    = selProject === 'all' ? allTasks : allTasks.filter(t => t.projectId === selProject)
   // Q17: exclude completed sprints — undone tasks from finished sprints return to backlog
   const assignedIds = new Set(sprints.filter(s => s.status !== 'completed').flatMap(s => s.taskIds||[]))
-  const unassigned  = filtered.filter(t => !assignedIds.has(t.id))
+  const unassigned  = filtered.filter(t => !assignedIds.has(t.id) && t.status !== 'Done')
   const active      = sprints.filter(s => s.status !== 'completed')
   const completed   = sprints.filter(s => s.status === 'completed')
 
