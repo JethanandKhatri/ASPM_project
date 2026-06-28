@@ -617,6 +617,19 @@ export function ProjectProvider({ children }) {
     await loadAll()
   }
 
+  async function chainTaskDependencies(taskIds) {
+    const ids = [...new Set((taskIds || []).filter(Boolean))]
+    if (ids.length === 0) return
+
+    for (let i = 0; i < ids.length; i++) {
+      await db.from('tasks').update({
+        depends_on: i === 0 ? [] : [ids[i - 1]],
+      }).eq('id', ids[i])
+    }
+
+    await loadAll()
+  }
+
   async function updateTaskStatus(projectId, taskId, status) {
     await db.from('tasks').update({ status }).eq('id', taskId)
     setProjects(prev => prev.map(p =>
@@ -661,7 +674,7 @@ export function ProjectProvider({ children }) {
       addEstimation,
       addRisk, updateRisk, deleteRisk,
       addComment,
-      addTask, updateTask, updateTaskStatus,
+      addTask, updateTask, updateTaskStatus, chainTaskDependencies,
       markNotificationRead, markAllRead,
       getActuals, saveActuals,
       createNotification,

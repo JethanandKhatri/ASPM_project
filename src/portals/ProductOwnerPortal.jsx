@@ -845,7 +845,7 @@ function TraceabilityTab({ projects, allStories, allEpics, allReleases, allRisks
 // ── PERT / DEPENDENCIES TAB ──────────────────────────────────────────────────
 function DependenciesTab({ projects, allStories }) {
   const C = useThemeColors()
-  const { updateTask } = useProjects()
+  const { updateTask, chainTaskDependencies } = useProjects()
   const [selProjectId, setSelProjectId] = useState(projects[0]?.id || '')
   const [selStoryId,   setSelStoryId]   = useState('')
   const [editTask,     setEditTask]     = useState(null)
@@ -876,6 +876,15 @@ function DependenciesTab({ projects, allStories }) {
   }
   function toggleDep(taskId) {
     setDepInput(prev => prev.includes(taskId) ? prev.filter(d => d !== taskId) : [...prev, taskId])
+  }
+
+  async function chainVisibleTasks() {
+    if (storyTasks.length < 2) return
+    const ok = window.confirm(
+      'This will chain the visible tasks in order and replace their current dependencies. Continue?'
+    )
+    if (!ok) return
+    await chainTaskDependencies(storyTasks.map(t => t.id))
   }
 
   // ── PERT layout using topological sort ────────────────────────────────────
@@ -1052,7 +1061,31 @@ function DependenciesTab({ projects, allStories }) {
       <div style={{ display:'grid', gridTemplateColumns:'360px minmax(0, 1fr)', gap:20, alignItems:'start', width:'100%' }}>
         {/* Task dependency list */}
         <Card C={C} style={{ borderRadius:18, border:'1px solid #D8E6F2', boxShadow:'0 16px 30px rgba(8,43,74,0.06)' }}>
-          <SecTitle C={C}>Task Dependencies</SecTitle>
+          <SecTitle
+            C={C}
+            action={
+              <button
+                onClick={chainVisibleTasks}
+                disabled={storyTasks.length < 2}
+                style={{
+                  padding:'7px 12px',
+                  background: storyTasks.length < 2 ? C.border : C.primary,
+                  color:'#fff',
+                  border:'none',
+                  borderRadius:8,
+                  fontSize:11,
+                  fontWeight:700,
+                  cursor: storyTasks.length < 2 ? 'not-allowed' : 'pointer',
+                  fontFamily:'inherit',
+                  opacity: storyTasks.length < 2 ? 0.65 : 1,
+                }}
+              >
+                Chain in order
+              </button>
+            }
+          >
+            Task Dependencies
+          </SecTitle>
           {storyTasks.length === 0
             ? <p style={{ margin:0, fontSize:13, color:C.textSecondary }}>No tasks found. {!selStoryId && 'Select a story to filter.'}</p>
             : storyTasks.map(t => {

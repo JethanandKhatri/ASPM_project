@@ -718,17 +718,67 @@ function TasksBoardTab({ project, onAddTask, onMoveTask }) {
 }
 
 // ---- Enhanced Timeline / Gantt Tab ----
+function TimelineEditModal({ item, form, setForm, onClose, onSave, C }) {
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div style={{ background: C.cardBg, borderRadius: 14, padding: 26, width: 480, boxShadow: '0 12px 40px rgba(0,0,0,0.18)', border: `1px solid ${C.border}` }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+          <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: C.textPrimary }}>Edit Gantt Item</h3>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: C.textSecondary, lineHeight: 1, padding: 2 }}>x</button>
+        </div>
+        <div style={{ fontSize: 12, color: C.textSecondary, marginBottom: 16 }}>{item?.name}</div>
+        <div style={{ display: 'grid', gap: 12 }}>
+          <div>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textPrimary, marginBottom: 4 }}>Rank</label>
+            <input
+              type="number"
+              min="0"
+              value={form.rank}
+              onChange={e => setForm(f => ({ ...f, rank: e.target.value }))}
+              style={{ width: '100%', padding: '9px 12px', border: `1.5px solid ${C.border}`, borderRadius: 8, fontSize: 13, background: C.cardBg, color: C.textPrimary, fontFamily: 'inherit', boxSizing: 'border-box' }}
+            />
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textPrimary, marginBottom: 4 }}>Story Points / Duration</label>
+            <input
+              type="number"
+              min="1"
+              value={form.storyPoints}
+              onChange={e => setForm(f => ({ ...f, storyPoints: e.target.value }))}
+              style={{ width: '100%', padding: '9px 12px', border: `1.5px solid ${C.border}`, borderRadius: 8, fontSize: 13, background: C.cardBg, color: C.textPrimary, fontFamily: 'inherit', boxSizing: 'border-box' }}
+            />
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textPrimary, marginBottom: 4 }}>Status</label>
+            <select
+              value={form.status}
+              onChange={e => setForm(f => ({ ...f, status: e.target.value }))}
+              style={{ width: '100%', padding: '9px 12px', border: `1.5px solid ${C.border}`, borderRadius: 8, fontSize: 13, background: C.cardBg, color: C.textPrimary, fontFamily: 'inherit', boxSizing: 'border-box' }}
+            >
+              <option value="To Do">To Do</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Done">Done</option>
+            </select>
+          </div>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20 }}>
+          <button onClick={onClose} style={{ padding: '8px 16px', background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 13, cursor: 'pointer', color: C.textSecondary, fontFamily: 'inherit' }}>Cancel</button>
+          <button onClick={onSave} style={{ padding: '8px 18px', background: C.primary, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Save</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function TimelineTab({ project }) {
   const C = useThemeColors()
+  const { updateStory } = useProjects()
+  const [editItem, setEditItem] = useState(null)
+  const [editForm, setEditForm] = useState({ rank: '0', storyPoints: '3', status: 'To Do' })
   const today = new Date()
   const start = new Date(project.startDate)
   const end = new Date(project.deadline)
   const totalMs = Math.max(end - start, 1)
-  const statusColors = {
-    Done: { fill: C.success, track: C.success + '14', text: C.success },
-    'In Progress': { fill: C.primary, track: C.primary + '14', text: C.primary },
-    'To Do': { fill: '#E7B84B', track: '#DCEAF6', text: '#8A6410' },
-  }
   const overdue = today > end
 
   const months = []
@@ -739,23 +789,56 @@ function TimelineTab({ project }) {
     cur.setMonth(cur.getMonth() + 1)
   }
 
+  const statusColors = {
+    Done: { fill: C.success, track: C.success + '14', text: C.success },
+    'In Progress': { fill: C.primary, track: C.primary + '14', text: C.primary },
+    'To Do': { fill: '#E7B84B', track: '#DCEAF6', text: '#8A6410' },
+  }
+  const progressForStatus = { Done: 100, 'In Progress': 58, 'To Do': 18 }
+
+  const orderedFeatures = (project.features || [])
+    .map((f, idx) => ({
+      ...f,
+      _idx: idx,
+      _duration: Math.max(1, parseInt(f.storyPoints, 10) || 3),
+    }))
+    .sort((a, b) => (a.rank || 0) - (b.rank || 0) || a._idx - b._idx)
+
+  const totalPlannedDays = orderedFeatures.reduce((sum, f) => sum + f._duration, 0) || 1
+  const chartMinWidth = Math.max(860, months.length * 140)
+  const todayPct = Math.min(100, Math.max(0, ((today - start) / totalMs) * 100))
+  const hasTodayMarker = today >= start && today <= end
+
   function pct(d) {
     return Math.min(100, Math.max(0, ((new Date(d) - start) / totalMs) * 100))
   }
 
-  const todayPct = pct(today)
-  const totalDays = Math.max(1, Math.ceil(totalMs / 86400000))
-  const hasTodayMarker = today >= start && today <= end
-  const featureCount = project.features.length
-  const chartMinWidth = Math.max(760, months.length * 140)
+  function openEdit(item) {
+    setEditItem(item)
+    setEditForm({
+      rank: String(item.rank || 0),
+      storyPoints: String(item.storyPoints || 3),
+      status: item.status || 'To Do',
+    })
+  }
+
+  async function saveEdit() {
+    if (!editItem) return
+    await updateStory(project.id, editItem.id, {
+      rank: parseInt(editForm.rank, 10) || 0,
+      storyPoints: Math.max(1, parseInt(editForm.storyPoints, 10) || 1),
+      status: editForm.status,
+    })
+    setEditItem(null)
+  }
 
   return (
     <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 12, padding: 22, boxShadow: '0 10px 24px rgba(0,58,107,0.06)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, marginBottom: 18, flexWrap: 'wrap' }}>
         <div>
-          <h4 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: C.textPrimary }}>Gantt Chart - Feature Timeline</h4>
+          <h4 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: C.textPrimary }}>Professional Gantt Timeline</h4>
           <p style={{ margin: '6px 0 0', fontSize: 12, color: C.textSecondary }}>
-            {featureCount} feature{featureCount !== 1 ? 's' : ''} across {totalDays} day{totalDays !== 1 ? 's' : ''}
+            Features are scheduled by rank. Story points control bar length, and status controls color.
           </p>
         </div>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
@@ -773,11 +856,12 @@ function TimelineTab({ project }) {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 10, marginBottom: 18 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 10, marginBottom: 18 }}>
         {[
-          { label: 'Project Start', value: project.startDate, color: C.primary },
-          { label: 'Deadline', value: project.deadline, color: overdue ? C.danger : C.warning },
-          { label: 'Today Marker', value: hasTodayMarker ? today.toISOString().split('T')[0] : 'Outside range', color: hasTodayMarker ? C.danger : C.textSecondary },
+          { label: 'Features', value: orderedFeatures.length, color: C.primary },
+          { label: 'Planned Days', value: totalPlannedDays, color: C.warning },
+          { label: 'Project Start', value: project.startDate, color: C.success },
+          { label: 'Deadline', value: project.deadline, color: overdue ? C.danger : C.textSecondary },
         ].map((item) => (
           <div key={item.label} style={{ padding: '10px 12px', borderRadius: 10, background: C.mainBg, border: `1px solid ${C.border}` }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: C.textSecondary, textTransform: 'uppercase', letterSpacing: 0.4 }}>{item.label}</div>
@@ -789,10 +873,10 @@ function TimelineTab({ project }) {
       <div style={{ overflowX: 'auto', paddingBottom: 4 }}>
         <div style={{ minWidth: chartMinWidth }}>
           <div style={{ display: 'flex', marginBottom: 10 }}>
-            <div style={{ width: 220, flexShrink: 0, paddingRight: 16 }}>
+            <div style={{ width: 260, flexShrink: 0, paddingRight: 16 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: C.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 }}>Features</div>
             </div>
-            <div style={{ flex: 1, position: 'relative', height: 26, background: C.mainBg, borderRadius: 8, border: `1px solid ${C.border}` }}>
+            <div style={{ flex: 1, position: 'relative', height: 30, background: C.mainBg, borderRadius: 8, border: `1px solid ${C.border}`, overflow: 'hidden' }}>
               {months.map((m, i) => {
                 const left = pct(m)
                 return (
@@ -806,65 +890,79 @@ function TimelineTab({ project }) {
 
           <div style={{ position: 'relative' }}>
             {hasTodayMarker && (
-              <div style={{ position: 'absolute', left: `calc(220px + ${todayPct}% * (100% - 220px) / 100)`, top: 0, bottom: 0, width: 3, background: C.danger, zIndex: 3, opacity: 0.9, boxShadow: `0 0 0 2px ${C.cardBg}` }} />
+              <div style={{ position: 'absolute', left: `calc(260px + ${todayPct}% * (100% - 260px) / 100)`, top: 0, bottom: 0, width: 3, background: C.danger, zIndex: 3, opacity: 0.95, boxShadow: `0 0 0 2px ${C.cardBg}` }} />
             )}
 
-            {project.features.map((f, i) => {
-              const segCount = project.features.length
-              const segDuration = totalMs / segCount
-              const segStart = start.getTime() + i * segDuration
-              const leftPct = ((segStart - start.getTime()) / totalMs) * 100
-              const widthPct = (segDuration / totalMs) * 100
+            {months.map((m, i) => {
+              const lp = pct(m)
+              return lp > 0 && lp < 100 ? (
+                <div key={`grid-${i}`} style={{ position: 'absolute', left: `calc(260px + ${lp}% * (100% - 260px) / 100)`, top: 0, bottom: 0, width: 1, background: '#D7E6F2', zIndex: 0 }} />
+              ) : null
+            })}
+
+            {orderedFeatures.length === 0 ? (
+              <div style={{ padding: '24px 0', color: C.textSecondary, fontSize: 13 }}>No features to display.</div>
+            ) : orderedFeatures.map((f, i) => {
+              const beforeDays = orderedFeatures.slice(0, i).reduce((sum, item) => sum + item._duration, 0)
+              const leftPct = (beforeDays / totalPlannedDays) * 100
+              const widthPct = (f._duration / totalPlannedDays) * 100
               const isOverdue = f.status !== 'Done' && overdue
               const statusCfg = statusColors[f.status] || statusColors['To Do']
-              const barFill = isOverdue ? C.danger : statusCfg.fill
-              const barText = isOverdue ? '#FFFFFF' : statusCfg.text
-              const trackBg = isOverdue ? C.danger + '14' : statusCfg.track
+              const progress = progressForStatus[f.status] ?? 20
+              const startDate = new Date(start.getTime() + (beforeDays / totalPlannedDays) * totalMs)
+              const endDate = new Date(start.getTime() + ((beforeDays + f._duration) / totalPlannedDays) * totalMs)
 
               return (
-                <div key={f.id} style={{ display: 'flex', alignItems: 'center', marginBottom: 12, gap: 0 }}>
-                  <div style={{ width: 220, fontSize: 12, color: C.textPrimary, flexShrink: 0, paddingRight: 16 }} title={f.name}>
-                    <div style={{ fontWeight: 600, lineHeight: 1.35, wordBreak: 'break-word' }}>{f.name}</div>
+                <div key={f.id} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12, position: 'relative', zIndex: 1 }}>
+                  <div style={{ width: 260, flexShrink: 0, paddingRight: 4 }} title={f.name}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: C.textPrimary, lineHeight: 1.35, wordBreak: 'break-word' }}>{f.name}</div>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: C.textSecondary, background: C.mainBg, border: `1px solid ${C.border}`, borderRadius: 999, padding: '2px 7px' }}>R{f.rank || 0}</span>
+                    </div>
+                    <div style={{ fontSize: 11, color: C.textSecondary, marginTop: 3 }}>
+                      {f._duration}d · {startDate.toISOString().split('T')[0]} to {endDate.toISOString().split('T')[0]}
+                    </div>
                   </div>
-                  <div style={{ flex: 1, height: 30, background: '#F3F8FC', borderRadius: 8, position: 'relative', overflow: 'hidden', border: `1px solid ${C.border}` }}>
-                    {months.map((m, mi) => {
-                      const lp = pct(m)
-                      return lp > 0 && lp < 100 ? (
-                        <div key={mi} style={{ position: 'absolute', left: `${lp}%`, top: 0, bottom: 0, width: 1, background: '#D7E6F2' }} />
-                      ) : null
-                    })}
-                    <div style={{ position: 'absolute', inset: 0, background: trackBg }} />
+
+                  <div style={{ flex: 1, height: 34, background: '#F3F8FC', borderRadius: 10, position: 'relative', overflow: 'hidden', border: `1px solid ${C.border}` }}>
+                    <div style={{ position: 'absolute', inset: 0, background: isOverdue ? C.danger + '10' : statusCfg.track }} />
                     <div style={{
                       position: 'absolute',
                       left: `${leftPct}%`,
                       width: `${widthPct}%`,
-                      top: 3,
-                      bottom: 3,
-                      background: `linear-gradient(135deg, ${barFill}, ${barFill}DD)`,
-                      borderRadius: 7,
+                      top: 4,
+                      bottom: 4,
+                      background: `linear-gradient(135deg, ${statusCfg.fill}, ${statusCfg.fill}DD)`,
+                      borderRadius: 8,
                       display: 'flex',
                       alignItems: 'center',
                       padding: '0 10px',
-                      transition: 'background 0.2s',
                       boxShadow: '0 6px 16px rgba(27,88,134,0.14)',
+                      minWidth: 70,
                     }}>
-                      <span style={{ fontSize: 10, color: barText, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', letterSpacing: 0.2 }}>
+                      <div style={{ width: `${progress}%`, height: '100%', background: 'rgba(255,255,255,0.28)', borderRadius: 6, position: 'absolute', left: 0, top: 0 }} />
+                      <span style={{ position: 'relative', zIndex: 1, fontSize: 10, color: '#fff', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {isOverdue ? 'Overdue' : f.status}
                       </span>
                     </div>
                   </div>
+
+                  <button
+                    onClick={() => openEdit(f)}
+                    style={{ flexShrink: 0, padding: '6px 10px', background: C.primary + '12', color: C.primary, border: `1px solid ${C.primary}25`, borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
+                  >
+                    Edit
+                  </button>
                 </div>
               )
             })}
           </div>
 
           <div style={{ display: 'flex', marginTop: 10 }}>
-            <div style={{ width: 220, flexShrink: 0 }} />
+            <div style={{ width: 260, flexShrink: 0 }} />
             <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: C.mainBg, borderRadius: 8, border: `1px solid ${C.border}` }}>
               <span style={{ fontSize: 11, color: C.textSecondary }}><strong style={{ color: C.textPrimary }}>Start:</strong> {project.startDate}</span>
-              {hasTodayMarker && (
-                <span style={{ fontSize: 11, color: C.danger, fontWeight: 700 }}>Today</span>
-              )}
+              {hasTodayMarker && <span style={{ fontSize: 11, color: C.danger, fontWeight: 700 }}>Today</span>}
               <span style={{ fontSize: 11, color: overdue ? C.danger : C.textSecondary, fontWeight: overdue ? 700 : 500 }}>
                 <strong style={{ color: overdue ? C.danger : C.textPrimary }}>End:</strong> {project.deadline}{overdue ? ' !' : ''}
               </span>
@@ -872,6 +970,17 @@ function TimelineTab({ project }) {
           </div>
         </div>
       </div>
+
+      {editItem && (
+        <TimelineEditModal
+          item={editItem}
+          form={editForm}
+          setForm={setEditForm}
+          onClose={() => setEditItem(null)}
+          onSave={saveEdit}
+          C={C}
+        />
+      )}
     </div>
   )
 }
@@ -1015,7 +1124,7 @@ function buildPertLayout(tasks) {
 
 function PertTab({ project }) {
   const C = useThemeColors()
-  const { updateTask } = useProjects()
+  const { updateTask, chainTaskDependencies } = useProjects()
   const [selStoryId, setSelStoryId] = useState('')
   const [editTask, setEditTask]     = useState(null)
   const [depInput, setDepInput]     = useState([])
@@ -1034,6 +1143,15 @@ function PertTab({ project }) {
   }
   function toggleDep(taskId) {
     setDepInput(prev => prev.includes(taskId) ? prev.filter(d => d !== taskId) : [...prev, taskId])
+  }
+
+  async function chainVisibleTasks() {
+    if (storyTasks.length < 2) return
+    const ok = window.confirm(
+      'This will chain the visible tasks in order and replace their current dependencies. Continue?'
+    )
+    if (!ok) return
+    await chainTaskDependencies(storyTasks.map(t => t.id))
   }
 
   const { nodes, edges, startEdges, endEdges, startNode, endNode, width, height, projectDuration, criticalTaskIds, float, dur } = buildPertLayout(storyTasks)
@@ -1058,7 +1176,7 @@ function PertTab({ project }) {
   return (
     <div>
       {/* Filter */}
-      <div style={{ display: 'flex', gap: 12, marginBottom: 18, alignItems: 'flex-end' }}>
+      <div style={{ display: 'flex', gap: 12, marginBottom: 18, alignItems: 'flex-end', flexWrap: 'wrap' }}>
         <div>
           <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textSecondary, marginBottom: 4 }}>Filter by Story</label>
           <select value={selStoryId} onChange={e => setSelStoryId(e.target.value)}
@@ -1066,6 +1184,26 @@ function PertTab({ project }) {
             <option value="">All tasks</option>
             {(project.features || []).map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
           </select>
+        </div>
+        <button
+          onClick={chainVisibleTasks}
+          disabled={storyTasks.length < 2}
+          style={{
+            padding: '9px 14px',
+            background: storyTasks.length < 2 ? C.border : C.primary,
+            color: '#fff',
+            border: 'none',
+            borderRadius: 8,
+            fontSize: 12,
+            fontWeight: 700,
+            cursor: storyTasks.length < 2 ? 'not-allowed' : 'pointer',
+            fontFamily: 'inherit',
+            opacity: storyTasks.length < 2 ? 0.65 : 1,
+          }}>
+          Chain tasks in order
+        </button>
+        <div style={{ fontSize: 11, color: C.textSecondary, maxWidth: 360, lineHeight: 1.45 }}>
+          Use this when the tasks should happen one after another instead of in parallel.
         </div>
       </div>
 
